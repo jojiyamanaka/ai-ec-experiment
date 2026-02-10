@@ -1,19 +1,20 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
-import type { Product } from '../data/mockProducts'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import type { Product, CartItem as ApiCartItem } from '../types/api'
+import * as api from '../lib/api'
 
-// カート内の商品アイテム
-export interface CartItem {
-  product: Product
-  quantity: number
-}
+// カート内の商品アイテム（APIの型を再エクスポート）
+export type CartItem = ApiCartItem
 
 interface CartContextType {
   items: CartItem[]
-  addToCart: (product: Product) => void
-  removeFromCart: (productId: number) => void
-  updateQuantity: (productId: number, quantity: number) => void
-  getTotalQuantity: () => number
-  getTotalPrice: () => number
+  totalQuantity: number
+  totalPrice: number
+  loading: boolean
+  error: string | null
+  addToCart: (product: Product, quantity?: number) => Promise<void>
+  removeFromCart: (itemId: number) => Promise<void>
+  updateQuantity: (itemId: number, quantity: number) => Promise<void>
+  refreshCart: () => Promise<void>
   clearCart: () => void
 }
 
@@ -21,76 +22,130 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [totalQuantity, setTotalQuantity] = useState(0)
+  const [totalPrice, setTotalPrice] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // カート情報を取得
+  const refreshCart = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await api.getCart()
+      if (response.success && response.data) {
+        setItems(response.data.items)
+        setTotalQuantity(response.data.totalQuantity)
+        setTotalPrice(response.data.totalPrice)
+      } else {
+        setError(response.error?.message || 'カートの取得に失敗しました')
+      }
+    } catch (err) {
+      setError('カートの取得中にエラーが発生しました')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 初回マウント時にカートを取得
+  useEffect(() => {
+    refreshCart()
+  }, [])
 
   // カートに商品を追加
-  const addToCart = (product: Product) => {
-    setItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (item) => item.product.id === product.id
-      )
-
-      if (existingItem) {
-        // 既にカートにある場合は数量を増やす
-        return prevItems.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+  const addToCart = async (product: Product, quantity = 1) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await api.addToCart({
+        productId: product.id,
+        quantity,
+      })
+      if (response.success && response.data) {
+        setItems(response.data.items)
+        setTotalQuantity(response.data.totalQuantity)
+        setTotalPrice(response.data.totalPrice)
       } else {
-        // 新規追加
-        return [...prevItems, { product, quantity: 1 }]
+        throw new Error(response.error?.message || 'カートへの追加に失敗しました')
       }
-    })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      console.error('カート追加エラー:', err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
   }
 
   // カートから商品を削除
-  const removeFromCart = (productId: number) => {
-    setItems((prevItems) =>
-      prevItems.filter((item) => item.product.id !== productId)
-    )
+  const removeFromCart = async (itemId: number) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await api.removeFromCart(itemId)
+      if (response.success && response.data) {
+        setItems(response.data.items)
+        setTotalQuantity(response.data.totalQuantity)
+        setTotalPrice(response.data.totalPrice)
+      } else {
+        throw new Error(response.error?.message || 'カートからの削除に失敗しました')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      console.error('カート削除エラー:', err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 数量を更新
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = async (itemId: number, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId)
+      await removeFromCart(itemId)
       return
     }
 
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
-    )
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await api.updateCartItemQuantity(itemId, { quantity })
+      if (response.success && response.data) {
+        setItems(response.data.items)
+        setTotalQuantity(response.data.totalQuantity)
+        setTotalPrice(response.data.totalPrice)
+      } else {
+        throw new Error(response.error?.message || '数量の変更に失敗しました')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
+      console.error('数量更新エラー:', err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // カート内の総数量を取得
-  const getTotalQuantity = () => {
-    return items.reduce((total, item) => total + item.quantity, 0)
-  }
-
-  // カート内の合計金額を取得
-  const getTotalPrice = () => {
-    return items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    )
-  }
-
-  // カートをクリア
+  // カートをクリア（ローカルのみ）
   const clearCart = () => {
     setItems([])
+    setTotalQuantity(0)
+    setTotalPrice(0)
   }
 
   return (
     <CartContext.Provider
       value={{
         items,
+        totalQuantity,
+        totalPrice,
+        loading,
+        error,
         addToCart,
         removeFromCart,
         updateQuantity,
-        getTotalQuantity,
-        getTotalPrice,
+        refreshCart,
         clearCart,
       }}
     >

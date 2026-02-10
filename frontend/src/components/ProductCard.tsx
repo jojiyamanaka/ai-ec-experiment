@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import type { Product } from '../data/mockProducts'
+import type { Product } from '../types/api'
 
 interface ProductCardProps {
   product: Product

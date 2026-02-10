@@ -2,8 +2,7 @@ import { Link, Outlet } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 
 export default function Layout() {
-  const { getTotalQuantity } = useCart()
-  const cartQuantity = getTotalQuantity()
+  const { totalQuantity } = useCart()
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -31,9 +30,9 @@ export default function Layout() {
               />
             </svg>
             <span className="text-sm font-medium">カート</span>
-            {cartQuantity > 0 && (
+            {totalQuantity > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                {cartQuantity}
+                {totalQuantity}
               </span>
             )}
           </Link>

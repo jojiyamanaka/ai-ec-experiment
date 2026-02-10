@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 
 export default function CartPage() {
-  const { items, updateQuantity, removeFromCart, getTotalPrice } = useCart()
+  const { items, totalPrice, updateQuantity, removeFromCart } = useCart()
   const navigate = useNavigate()
 
   // カートが空の場合
@@ -41,13 +41,16 @@ export default function CartPage() {
     )
   }
 
-  const totalPrice = getTotalPrice()
-
-  const handleQuantityChange = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId)
-    } else {
-      updateQuantity(productId, newQuantity)
+  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+    try {
+      if (newQuantity <= 0) {
+        await removeFromCart(itemId)
+      } else {
+        await updateQuantity(itemId, newQuantity)
+      }
+    } catch (error) {
+      console.error('数量変更エラー:', error)
+      alert('数量の変更に失敗しました')
     }
   }
 
@@ -95,7 +98,7 @@ export default function CartPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => removeFromCart(item.product.id)}
+                      onClick={() => removeFromCart(item.id)}
                       className="text-gray-400 hover:text-red-600"
                       aria-label="削除"
                     >
@@ -120,10 +123,7 @@ export default function CartPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() =>
-                          handleQuantityChange(
-                            item.product.id,
-                            item.quantity - 1
-                          )
+                          handleQuantityChange(item.id, item.quantity - 1)
                         }
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
                         aria-label="数量を減らす"
@@ -149,7 +149,7 @@ export default function CartPage() {
                         value={item.quantity}
                         onChange={(e) =>
                           handleQuantityChange(
-                            item.product.id,
+                            item.id,
                             parseInt(e.target.value) || 0
                           )
                         }
@@ -157,10 +157,7 @@ export default function CartPage() {
                       />
                       <button
                         onClick={() =>
-                          handleQuantityChange(
-                            item.product.id,
-                            item.quantity + 1
-                          )
+                          handleQuantityChange(item.id, item.quantity + 1)
                         }
                         className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
                         aria-label="数量を増やす"

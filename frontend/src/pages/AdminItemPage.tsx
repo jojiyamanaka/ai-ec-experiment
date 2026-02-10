@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import { useProducts } from '../contexts/ProductContext'
-import type { Product } from '../data/mockProducts'
+import type { UpdateProductRequest } from '../types/api'
 
 export default function AdminItemPage() {
   const { products, updateProduct } = useProducts()
   const [editedProducts, setEditedProducts] = useState<
-    Record<number, Partial<Product>>
+    Record<number, UpdateProductRequest>
   >({})
   const [savedMessage, setSavedMessage] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // 商品の編集内容を一時保存
-  const handleEdit = (id: number, field: keyof Product, value: any) => {
+  const handleEdit = (
+    id: number,
+    field: keyof UpdateProductRequest,
+    value: number | boolean
+  ) => {
     setEditedProducts((prev) => ({
       ...prev,
       [id]: {
@@ -21,18 +26,33 @@ export default function AdminItemPage() {
   }
 
   // 変更を保存
-  const handleSave = () => {
-    Object.entries(editedProducts).forEach(([id, updates]) => {
-      updateProduct(Number(id), updates)
-    })
-    setEditedProducts({})
-    setSavedMessage(true)
-    setTimeout(() => setSavedMessage(false), 3000)
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      // すべての更新を並列実行
+      await Promise.all(
+        Object.entries(editedProducts).map(([id, updates]) =>
+          updateProduct(Number(id), updates)
+        )
+      )
+      setEditedProducts({})
+      setSavedMessage(true)
+      setTimeout(() => setSavedMessage(false), 3000)
+    } catch (error) {
+      console.error('保存エラー:', error)
+      alert('保存に失敗しました')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // 編集された値または元の値を取得
-  const getValue = (product: Product, field: keyof Product) => {
-    return editedProducts[product.id]?.[field] ?? product[field]
+  const getValue = (
+    productId: number,
+    field: keyof UpdateProductRequest,
+    defaultValue: number | boolean
+  ) => {
+    return editedProducts[productId]?.[field] ?? defaultValue
   }
 
   // 変更があるかチェック
@@ -102,7 +122,7 @@ export default function AdminItemPage() {
                 <td className="whitespace-nowrap px-6 py-4">
                   <input
                     type="number"
-                    value={getValue(product, 'price')}
+                    value={getValue(product.id, 'price', product.price)}
                     onChange={(e) =>
                       handleEdit(
                         product.id,
@@ -116,7 +136,7 @@ export default function AdminItemPage() {
                 <td className="whitespace-nowrap px-6 py-4">
                   <input
                     type="number"
-                    value={getValue(product, 'stock')}
+                    value={getValue(product.id, 'stock', product.stock)}
                     onChange={(e) =>
                       handleEdit(
                         product.id,
@@ -133,25 +153,27 @@ export default function AdminItemPage() {
                       handleEdit(
                         product.id,
                         'isPublished',
-                        !getValue(product, 'isPublished')
+                        !getValue(product.id, 'isPublished', product.isPublished)
                       )
                     }
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      getValue(product, 'isPublished')
+                      getValue(product.id, 'isPublished', product.isPublished)
                         ? 'bg-blue-600'
                         : 'bg-gray-200'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        getValue(product, 'isPublished')
+                        getValue(product.id, 'isPublished', product.isPublished)
                           ? 'translate-x-6'
                           : 'translate-x-1'
                       }`}
                     />
                   </button>
                   <span className="ml-3 text-sm text-gray-700">
-                    {getValue(product, 'isPublished') ? '公開' : '非公開'}
+                    {getValue(product.id, 'isPublished', product.isPublished)
+                      ? '公開'
+                      : '非公開'}
                   </span>
                 </td>
               </tr>
@@ -164,14 +186,14 @@ export default function AdminItemPage() {
       <div className="mt-6 flex justify-end">
         <button
           onClick={handleSave}
-          disabled={!hasChanges}
+          disabled={!hasChanges || isSaving}
           className={`rounded-lg px-6 py-3 font-medium text-white ${
-            hasChanges
+            hasChanges && !isSaving
               ? 'bg-blue-600 hover:bg-blue-700'
               : 'cursor-not-allowed bg-gray-400'
           }`}
         >
-          保存
+          {isSaving ? '保存中...' : '保存'}
         </button>
       </div>
     </div>

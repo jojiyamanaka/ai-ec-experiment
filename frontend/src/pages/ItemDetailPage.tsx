@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 import { useProducts } from '../contexts/ProductContext'
@@ -28,6 +29,7 @@ export default function ItemDetailPage() {
   const { addToCart } = useCart()
   const { products } = useProducts()
   const product = products.find((p) => p.id === Number(id))
+  const [isAdding, setIsAdding] = useState(false)
 
   if (!product) {
     return (
@@ -40,9 +42,16 @@ export default function ItemDetailPage() {
   const stockStatus = getStockStatus(product.stock)
   const isSoldOut = product.stock === 0
 
-  const handleAddToCart = () => {
-    addToCart(product)
-    navigate('/order/cart')
+  const handleAddToCart = async () => {
+    setIsAdding(true)
+    try {
+      await addToCart(product)
+      navigate('/order/cart')
+    } catch (error) {
+      console.error('カート追加エラー:', error)
+      alert('カートへの追加に失敗しました')
+      setIsAdding(false)
+    }
   }
 
   return (
@@ -72,14 +81,14 @@ export default function ItemDetailPage() {
           </p>
           <button
             onClick={handleAddToCart}
-            disabled={isSoldOut}
+            disabled={isSoldOut || isAdding}
             className={`mt-8 w-full rounded-lg px-6 py-3 font-medium text-white ${
-              isSoldOut
+              isSoldOut || isAdding
                 ? 'cursor-not-allowed bg-gray-400'
                 : 'bg-blue-600 hover:bg-blue-700'
             }`}
           >
-            {isSoldOut ? '売り切れ' : 'カートに追加'}
+            {isSoldOut ? '売り切れ' : isAdding ? '追加中...' : 'カートに追加'}
           </button>
         </div>
       </div>

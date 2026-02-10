@@ -1,0 +1,166 @@
+import type {
+  ApiResponse,
+  Product,
+  ProductListResponse,
+  Cart,
+  Order,
+  AddToCartRequest,
+  UpdateQuantityRequest,
+  UpdateProductRequest,
+  CreateOrderRequest,
+} from '../types/api'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
+// セッションIDの生成・取得
+const getSessionId = (): string => {
+  let sessionId = localStorage.getItem('sessionId')
+  if (!sessionId) {
+    sessionId = `session-${Date.now()}-${Math.random().toString(36).substring(7)}`
+    localStorage.setItem('sessionId', sessionId)
+  }
+  return sessionId
+}
+
+// 共通fetch関数
+async function fetchApi<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint}`
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+
+  // カート・注文関連のエンドポイントにはセッションIDを付与
+  if (endpoint.includes('/order')) {
+    headers['X-Session-Id'] = getSessionId()
+  }
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    })
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('API Error:', error)
+    return {
+      success: false,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: 'ネットワークエラーが発生しました',
+      },
+    }
+  }
+}
+
+// ============================================
+// 商品 API
+// ============================================
+
+/**
+ * 商品一覧取得
+ */
+export async function getItems(
+  page = 1,
+  limit = 20
+): Promise<ApiResponse<ProductListResponse>> {
+  return fetchApi<ProductListResponse>(`/api/item?page=${page}&limit=${limit}`)
+}
+
+/**
+ * 商品詳細取得
+ */
+export async function getItemById(id: number): Promise<ApiResponse<Product>> {
+  return fetchApi<Product>(`/api/item/${id}`)
+}
+
+/**
+ * 商品更新（管理用）
+ */
+export async function updateItem(
+  id: number,
+  updates: UpdateProductRequest
+): Promise<ApiResponse<Product>> {
+  return fetchApi<Product>(`/api/item/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  })
+}
+
+// ============================================
+// カート API
+// ============================================
+
+/**
+ * カート取得
+ */
+export async function getCart(): Promise<ApiResponse<Cart>> {
+  return fetchApi<Cart>('/api/order/cart')
+}
+
+/**
+ * カートに商品追加
+ */
+export async function addToCart(
+  request: AddToCartRequest
+): Promise<ApiResponse<Cart>> {
+  return fetchApi<Cart>('/api/order/cart/items', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
+/**
+ * カート内商品の数量変更
+ */
+export async function updateCartItemQuantity(
+  itemId: number,
+  request: UpdateQuantityRequest
+): Promise<ApiResponse<Cart>> {
+  return fetchApi<Cart>(`/api/order/cart/items/${itemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  })
+}
+
+/**
+ * カートから商品削除
+ */
+export async function removeFromCart(itemId: number): Promise<ApiResponse<Cart>> {
+  return fetchApi<Cart>(`/api/order/cart/items/${itemId}`, {
+    method: 'DELETE',
+  })
+}
+
+// ============================================
+// 注文 API
+// ============================================
+
+/**
+ * 注文作成
+ */
+export async function createOrder(
+  request: CreateOrderRequest
+): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>('/api/order', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
+/**
+ * 注文詳細取得
+ */
+export async function getOrderById(id: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/order/${id}`)
+}
+
+/**
+ * セッションIDを取得（外部公開用）
+ */
+export { getSessionId }

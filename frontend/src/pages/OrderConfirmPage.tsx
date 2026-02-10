@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
+import * as api from '../lib/api'
 
 export default function OrderConfirmPage() {
-  const { items, getTotalPrice, clearCart } = useCart()
+  const { items, totalPrice, clearCart } = useCart()
   const navigate = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // カートが空の場合はカート画面にリダイレクト
   if (items.length === 0) {
@@ -27,34 +30,40 @@ export default function OrderConfirmPage() {
     )
   }
 
-  const totalPrice = getTotalPrice()
+  const handleConfirmOrder = async () => {
+    setIsSubmitting(true)
+    try {
+      // 注文を作成
+      const response = await api.createOrder({
+        cartId: api.getSessionId(),
+      })
 
-  // 注文番号を生成する関数
-  const generateOrderNumber = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
-    return `ORD-${year}${month}${day}-${random}`
-  }
+      if (response.success && response.data) {
+        // カートをクリア
+        clearCart()
 
-  const handleConfirmOrder = () => {
-    const orderNumber = generateOrderNumber()
-    const orderItems = [...items] // カートの内容をコピー
-    const orderTotal = totalPrice
-
-    // カートをクリア
-    clearCart()
-
-    // 注文情報を持って完了画面へ遷移
-    navigate('/order/complete', {
-      state: {
-        orderNumber,
-        items: orderItems,
-        totalPrice: orderTotal,
-      },
-    })
+        // 注文情報を持って完了画面へ遷移
+        navigate('/order/complete', {
+          state: {
+            orderNumber: response.data.orderNumber,
+            items: response.data.items,
+            totalPrice: response.data.totalPrice,
+            orderId: response.data.orderId,
+          },
+        })
+      } else {
+        throw new Error(response.error?.message || '注文の作成に失敗しました')
+      }
+    } catch (error) {
+      console.error('注文作成エラー:', error)
+      alert(
+        error instanceof Error
+          ? error.message
+          : '注文の作成に失敗しました。もう一度お試しください。'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -138,9 +147,10 @@ export default function OrderConfirmPage() {
       <div className="space-y-3">
         <button
           onClick={handleConfirmOrder}
-          className="w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+          disabled={isSubmitting}
+          className="w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
-          注文を確定する
+          {isSubmitting ? '処理中...' : '注文を確定する'}
         </button>
         <Link
           to="/order/cart"
