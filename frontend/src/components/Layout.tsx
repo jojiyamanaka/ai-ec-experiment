@@ -1,6 +1,10 @@
 import { Link, Outlet } from 'react-router'
+import { useCart } from '../contexts/CartContext'
 
 export default function Layout() {
+  const { getTotalQuantity } = useCart()
+  const cartQuantity = getTotalQuantity()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -9,8 +13,8 @@ export default function Layout() {
             AI EC Shop
           </Link>
           <Link
-            to="/cart"
-            className="flex items-center gap-2 rounded-lg px-4 py-2 hover:bg-gray-100"
+            to="/order/cart"
+            className="relative flex items-center gap-2 rounded-lg px-4 py-2 hover:bg-gray-100"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -27,6 +31,11 @@ export default function Layout() {
               />
             </svg>
             <span className="text-sm font-medium">カート</span>
+            {cartQuantity > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                {cartQuantity}
+              </span>
+            )}
           </Link>
         </div>
       </header>

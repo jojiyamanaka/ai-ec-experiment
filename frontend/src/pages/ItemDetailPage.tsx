@@ -1,8 +1,31 @@
-import { useParams } from 'react-router'
+import { useParams, useNavigate } from 'react-router'
 import { mockProducts } from '../data/mockProducts'
+import { useCart } from '../contexts/CartContext'
+
+// 在庫状態を判定する関数
+function getStockStatus(stock: number) {
+  if (stock === 0) {
+    return {
+      text: '売り切れ',
+      color: 'bg-gray-400 text-white',
+    }
+  } else if (stock >= 1 && stock <= 5) {
+    return {
+      text: '残りわずか',
+      color: 'bg-orange-500 text-white',
+    }
+  } else {
+    return {
+      text: '在庫あり',
+      color: 'bg-green-500 text-white',
+    }
+  }
+}
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
   const product = mockProducts.find((p) => p.id === Number(id))
 
   if (!product) {
@@ -11,6 +34,14 @@ export default function ItemDetailPage() {
         <p className="text-center text-gray-500">商品が見つかりません</p>
       </div>
     )
+  }
+
+  const stockStatus = getStockStatus(product.stock)
+  const isSoldOut = product.stock === 0
+
+  const handleAddToCart = () => {
+    addToCart(product)
+    navigate('/order/cart')
   }
 
   return (
@@ -25,12 +56,29 @@ export default function ItemDetailPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-          <p className="mt-4 text-2xl font-bold text-blue-600">
-            ¥{product.price.toLocaleString()}
+          <div className="mt-4 flex items-center gap-4">
+            <p className="text-2xl font-bold text-blue-600">
+              ¥{product.price.toLocaleString()}
+            </p>
+            <span
+              className={`rounded-full px-4 py-1 text-sm font-medium ${stockStatus.color}`}
+            >
+              {stockStatus.text}
+            </span>
+          </div>
+          <p className="mt-6 leading-relaxed text-gray-600">
+            {product.description}
           </p>
-          <p className="mt-6 text-gray-600">{product.description}</p>
-          <button className="mt-8 w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700">
-            カートに追加
+          <button
+            onClick={handleAddToCart}
+            disabled={isSoldOut}
+            className={`mt-8 w-full rounded-lg px-6 py-3 font-medium text-white ${
+              isSoldOut
+                ? 'cursor-not-allowed bg-gray-400'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {isSoldOut ? '売り切れ' : 'カートに追加'}
           </button>
         </div>
       </div>
