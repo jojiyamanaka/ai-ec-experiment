@@ -1,0 +1,33 @@
+# 開発用 Dockerfile
+FROM eclipse-temurin:21-jdk-alpine
+
+# curl と wget をインストール（Maven Wrapper のダウンロードに必要）
+RUN apk add --no-cache curl wget
+
+WORKDIR /app
+
+# Maven Wrapper をコピー
+COPY mvnw .
+COPY .mvn .mvn
+
+# pom.xml をコピー
+COPY pom.xml .
+
+# Maven Wrapper JAR をダウンロード
+RUN mkdir -p .mvn/wrapper && \
+    wget -O .mvn/wrapper/maven-wrapper.jar \
+    https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.2/maven-wrapper-3.3.2.jar
+
+# mvnw に実行権限を付与
+RUN chmod +x mvnw
+
+# 依存関係をダウンロード（キャッシュ効率化）
+RUN ./mvnw dependency:go-offline -B || true
+
+# ソースコードはボリュームマウントするのでここではコピーしない
+
+# Spring Boot デフォルトポート
+EXPOSE 8080
+
+# Spring Boot DevTools によるホットリロード有効化
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"]
