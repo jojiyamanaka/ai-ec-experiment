@@ -5,6 +5,7 @@ export interface Product {
   image: string
   description: string
   stock: number
+  isPublished: boolean
 }
 
 export const mockProducts: Product[] = [
@@ -15,6 +16,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/3b82f6/ffffff?text=Product+1',
     description: '高音質で長時間バッテリー対応のワイヤレスイヤホン',
     stock: 12,
+    isPublished: true,
   },
   {
     id: 2,
@@ -23,6 +25,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/8b5cf6/ffffff?text=Product+2',
     description: '健康管理機能が充実したスマートウォッチ',
     stock: 3,
+    isPublished: true,
   },
   {
     id: 3,
@@ -31,6 +34,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/ec4899/ffffff?text=Product+3',
     description: '大容量20000mAhのモバイルバッテリー',
     stock: 0,
+    isPublished: true,
   },
   {
     id: 4,
@@ -39,6 +43,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/10b981/ffffff?text=Product+4',
     description: '防水機能付きポータブルスピーカー',
     stock: 8,
+    isPublished: true,
   },
   {
     id: 5,
@@ -47,6 +52,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/f59e0b/ffffff?text=Product+5',
     description: '静音設計の高精度ワイヤレスマウス',
     stock: 5,
+    isPublished: true,
   },
   {
     id: 6,
@@ -55,6 +61,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/ef4444/ffffff?text=Product+6',
     description: '多機能7-in-1 USB-Cハブ',
     stock: 15,
+    isPublished: true,
   },
   {
     id: 7,
@@ -63,6 +70,7 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/06b6d4/ffffff?text=Product+7',
     description: '最高峰のノイズキャンセリング技術搭載',
     stock: 1,
+    isPublished: true,
   },
   {
     id: 8,
@@ -71,5 +79,6 @@ export const mockProducts: Product[] = [
     image: 'https://placehold.co/400x300/84cc16/ffffff?text=Product+8',
     description: '3台同時充電可能なワイヤレス充電パッド',
     stock: 20,
+    isPublished: true,
   },
 ]

@@ -6,7 +6,7 @@ export default function Layout() {
   const cartQuantity = getTotalQuantity()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <Link to="/" className="text-2xl font-bold text-gray-900">
@@ -39,9 +39,24 @@ export default function Layout() {
           </Link>
         </div>
       </header>
-      <main>
+      <main className="flex-1">
         <Outlet />
       </main>
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              © 2025 AI EC Shop. All rights reserved.
+            </p>
+            <Link
+              to="/bo/item"
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              管理画面
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

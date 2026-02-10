@@ -1,9 +1,10 @@
 import { Link } from 'react-router'
 import ProductCard from '../components/ProductCard'
-import { mockProducts } from '../data/mockProducts'
+import { useProducts } from '../contexts/ProductContext'
 
 export default function HomePage() {
-  const recommendedProducts = mockProducts.slice(0, 3)
+  const { getPublishedProducts } = useProducts()
+  const recommendedProducts = getPublishedProducts().slice(0, 3)
 
   return (
     <div>

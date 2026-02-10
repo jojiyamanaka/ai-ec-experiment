@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router'
-import { mockProducts } from '../data/mockProducts'
 import { useCart } from '../contexts/CartContext'
+import { useProducts } from '../contexts/ProductContext'
 
 // 在庫状態を判定する関数
 function getStockStatus(stock: number) {
@@ -26,7 +26,8 @@ export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { addToCart } = useCart()
-  const product = mockProducts.find((p) => p.id === Number(id))
+  const { products } = useProducts()
+  const product = products.find((p) => p.id === Number(id))
 
   if (!product) {
     return (
