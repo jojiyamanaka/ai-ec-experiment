@@ -46,12 +46,17 @@ public class ProductService {
     }
 
     /**
-     * 商品詳細を取得
+     * 商品詳細を取得（公開されている商品のみ）
      */
     @Transactional(readOnly = true)
     public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
+
+        // 非公開商品は取得できない（セキュリティ対策）
+        if (!product.getIsPublished()) {
+            throw new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません");
+        }
 
         return ProductDto.fromEntity(product);
     }
