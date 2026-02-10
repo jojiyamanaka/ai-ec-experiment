@@ -25,6 +25,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final CartService cartService;
+    private final InventoryService inventoryService;
 
     /**
      * 注文を作成
@@ -44,13 +45,6 @@ public class OrderService {
             throw new BusinessException("CART_EMPTY", "カートが空です");
         }
 
-        // 在庫チェック
-        cart.getItems().forEach(cartItem -> {
-            if (cartItem.getProduct().getStock() < cartItem.getQuantity()) {
-                throw new BusinessException("OUT_OF_STOCK", "在庫が不足している商品があります");
-            }
-        });
-
         // 注文を作成
         Order order = new Order();
         order.setOrderNumber(generateOrderNumber());
@@ -69,10 +63,34 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // カートをクリア
-        cartService.clearCart(sessionId);
+        // 仮引当 → 本引当に変換（stock 減少込み）
+        inventoryService.commitReservations(sessionId, savedOrder);
+
+        // カートをクリア（仮引当の解除はスキップ、既に本引当済み）
+        cartRepository.findBySessionId(sessionId)
+                .ifPresent(c -> {
+                    c.getItems().clear();
+                    cartRepository.save(c);
+                });
 
         return OrderDto.fromEntity(savedOrder);
+    }
+
+    /**
+     * 注文キャンセル
+     */
+    @Transactional
+    public void cancelOrder(Long orderId, String sessionId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+
+        // セッションIDが一致するか確認
+        if (!order.getSessionId().equals(sessionId)) {
+            throw new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません");
+        }
+
+        // 本引当を解除（stock 戻し + ステータス変更込み）
+        inventoryService.releaseCommittedReservations(orderId);
     }
 
     /**

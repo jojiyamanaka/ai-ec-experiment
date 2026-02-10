@@ -38,6 +38,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 競合例外（409 Conflict）
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConflictException(ConflictException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
+    }
+
+    /**
      * バリデーション例外
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

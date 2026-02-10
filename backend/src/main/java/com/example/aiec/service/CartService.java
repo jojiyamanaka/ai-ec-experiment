@@ -5,7 +5,6 @@ import com.example.aiec.dto.CartDto;
 import com.example.aiec.entity.Cart;
 import com.example.aiec.entity.CartItem;
 import com.example.aiec.entity.Product;
-import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.CartItemRepository;
 import com.example.aiec.repository.CartRepository;
@@ -27,6 +26,7 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final InventoryService inventoryService;
 
     /**
      * カートを取得（存在しない場合は作成）
@@ -50,10 +50,8 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
 
-        // 在庫チェック
-        if (product.getStock() < request.getQuantity()) {
-            throw new BusinessException("OUT_OF_STOCK", "在庫が不足しています");
-        }
+        // 仮引当を作成（有効在庫チェック込み）
+        inventoryService.createReservation(sessionId, request.getProductId(), request.getQuantity());
 
         // 既存のカートアイテムを検索
         Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
@@ -62,12 +60,6 @@ public class CartService {
             // 既存のアイテムがある場合は数量を追加
             CartItem item = existingItem.get();
             int newQuantity = item.getQuantity() + request.getQuantity();
-
-            // 新しい数量でも在庫チェック
-            if (product.getStock() < newQuantity) {
-                throw new BusinessException("OUT_OF_STOCK", "在庫が不足しています");
-            }
-
             item.setQuantity(newQuantity);
             cartItemRepository.save(item);
         } else {
@@ -100,10 +92,8 @@ public class CartService {
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "カート内に商品が見つかりません"));
 
-        // 在庫チェック
-        if (product.getStock() < quantity) {
-            throw new BusinessException("OUT_OF_STOCK", "在庫が不足しています");
-        }
+        // 仮引当を更新（有効在庫チェック込み）
+        inventoryService.updateReservation(sessionId, productId, quantity);
 
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
@@ -128,6 +118,9 @@ public class CartService {
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "カート内に商品が見つかりません"));
 
+        // 仮引当を解除
+        inventoryService.releaseReservation(sessionId, productId);
+
         cart.removeItem(cartItem);
         cartItemRepository.delete(cartItem);
 
@@ -142,6 +135,9 @@ public class CartService {
      */
     @Transactional
     public void clearCart(String sessionId) {
+        // 全仮引当を解除
+        inventoryService.releaseAllReservations(sessionId);
+
         cartRepository.findBySessionId(sessionId)
                 .ifPresent(cart -> {
                     cart.getItems().clear();
