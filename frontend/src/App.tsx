@@ -5,6 +5,8 @@ import HomePage from './pages/HomePage'
 import ItemListPage from './pages/ItemListPage'
 import ItemDetailPage from './pages/ItemDetailPage'
 import CartPage from './pages/CartPage'
+import OrderConfirmPage from './pages/OrderConfirmPage'
+import OrderCompletePage from './pages/OrderCompletePage'
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
             <Route path="/item" element={<ItemListPage />} />
             <Route path="/item/:id" element={<ItemDetailPage />} />
             <Route path="/order/cart" element={<CartPage />} />
+            <Route path="/order/reg" element={<OrderConfirmPage />} />
+            <Route path="/order/complete" element={<OrderCompletePage />} />
           </Route>
         </Routes>
       </BrowserRouter>
