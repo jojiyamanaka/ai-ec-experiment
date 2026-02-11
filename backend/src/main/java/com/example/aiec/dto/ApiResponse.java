@@ -29,7 +29,14 @@ public class ApiResponse<T> {
      * エラーレスポンスを生成
      */
     public static <T> ApiResponse<T> error(String code, String message) {
-        return new ApiResponse<>(false, null, new ErrorDetail(code, message));
+        return new ApiResponse<>(false, null, new ErrorDetail(code, message, null));
+    }
+
+    /**
+     * 詳細情報付きエラーレスポンスを生成
+     */
+    public static <T> ApiResponse<T> errorWithDetails(String code, String message, Object details) {
+        return new ApiResponse<>(false, null, new ErrorDetail(code, message, details));
     }
 
     /**
@@ -41,6 +48,8 @@ public class ApiResponse<T> {
     public static class ErrorDetail {
         private String code;
         private String message;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private Object details;
     }
 
 }

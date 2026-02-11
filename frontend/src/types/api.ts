@@ -38,15 +38,26 @@ export interface Order {
   updatedAt?: string
 }
 
+// 在庫不足商品の詳細情報
+export interface StockShortageDetail {
+  productId: number
+  productName: string
+  requestedQuantity: number
+  availableStock: number
+}
+
+// APIエラー情報
+export interface ApiError {
+  code: string
+  message: string
+  details?: StockShortageDetail[]
+}
+
 // API レスポンス共通型
 export interface ApiResponse<T> {
   success: boolean
   data?: T
-  error?: {
-    code: string
-    message: string
-    details?: unknown
-  }
+  error?: ApiError
 }
 
 // リクエスト型

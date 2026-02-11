@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 import * as api from '../lib/api'
+import type { ApiError } from '../types/api'
 
 export default function OrderConfirmPage() {
   const { items, totalPrice, clearCart } = useCart()
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<ApiError | null>(null)
 
   // カートが空の場合はカート画面にリダイレクト
   if (items.length === 0) {
@@ -32,6 +34,7 @@ export default function OrderConfirmPage() {
 
   const handleConfirmOrder = async () => {
     setIsSubmitting(true)
+    setError(null) // エラーをクリア
     try {
       // 注文を作成
       const response = await api.createOrder({
@@ -53,15 +56,22 @@ export default function OrderConfirmPage() {
           },
         })
       } else {
-        throw new Error(response.error?.message || '注文の作成に失敗しました')
+        // エラー情報を設定
+        if (response.error) {
+          setError(response.error)
+        } else {
+          setError({
+            code: 'UNKNOWN_ERROR',
+            message: '注文の作成に失敗しました',
+          })
+        }
       }
     } catch (error) {
       console.error('注文作成エラー:', error)
-      alert(
-        error instanceof Error
-          ? error.message
-          : '注文の作成に失敗しました。もう一度お試しください。'
-      )
+      setError({
+        code: 'NETWORK_ERROR',
+        message: error instanceof Error ? error.message : '注文の作成に失敗しました。もう一度お試しください。',
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -143,6 +153,49 @@ export default function OrderConfirmPage() {
           </div>
         </div>
       </div>
+
+      {/* エラー表示 */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4">
+          <div className="flex items-start">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-5 w-5 text-red-600"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+              />
+            </svg>
+            <div className="ml-3 flex-1">
+              <h3 className="font-medium text-red-800">{error.message}</h3>
+              {error.code === 'OUT_OF_STOCK' && error.details && error.details.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-red-700">以下の商品の在庫が不足しています：</p>
+                  <ul className="mt-2 space-y-1 text-sm text-red-700">
+                    {error.details.map((detail) => (
+                      <li key={detail.productId} className="flex items-center">
+                        <span className="font-medium">{detail.productName}</span>
+                        <span className="ml-2">
+                          （要求: {detail.requestedQuantity}個、在庫: {detail.availableStock}個）
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-sm text-red-700">
+                    カートに戻って数量を調整してください。
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* アクションボタン */}
       <div className="space-y-3">
