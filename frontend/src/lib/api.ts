@@ -161,6 +161,49 @@ export async function getOrderById(id: number): Promise<ApiResponse<Order>> {
 }
 
 /**
+ * 注文キャンセル
+ */
+export async function cancelOrder(orderId: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/order/${orderId}/cancel`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * 注文確認（管理者用）
+ */
+export async function confirmOrder(orderId: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/order/${orderId}/confirm`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * 注文発送（管理者用）
+ */
+export async function shipOrder(orderId: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/order/${orderId}/ship`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * 注文配達完了（管理者用）
+ */
+export async function deliverOrder(orderId: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/order/${orderId}/deliver`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * 全注文取得（管理者用）
+ */
+export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
+  return fetchApi<Order[]>('/api/order')
+}
+
+/**
  * セッションIDを取得（外部公開用）
  */
 export { getSessionId }

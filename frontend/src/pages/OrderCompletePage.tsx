@@ -1,15 +1,21 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import type { CartItem } from '../contexts/CartContext'
+import * as api from '../lib/api'
 
 interface OrderCompleteState {
   orderNumber: string
   items: CartItem[]
   totalPrice: number
+  orderId: number
+  status: string
 }
 
 export default function OrderCompletePage() {
   const location = useLocation()
   const state = location.state as OrderCompleteState | null
+  const [orderStatus, setOrderStatus] = useState<string>(state?.status || 'PENDING')
+  const [isCancelling, setIsCancelling] = useState(false)
 
   // 注文情報がない場合（直接URLアクセスなど）
   if (!state) {
@@ -34,6 +40,29 @@ export default function OrderCompletePage() {
   }
 
   const { orderNumber, items, totalPrice } = state
+
+  const handleCancelOrder = async () => {
+    if (!state?.orderId) return
+    if (!window.confirm('本当にキャンセルしますか？\n\nキャンセル後は在庫が戻りますが、注文は復元できません。')) {
+      return
+    }
+
+    setIsCancelling(true)
+    try {
+      const response = await api.cancelOrder(state.orderId)
+      if (response.success && response.data) {
+        setOrderStatus(response.data.status)
+        alert('注文をキャンセルしました')
+      } else {
+        throw new Error(response.error?.message || 'キャンセルに失敗しました')
+      }
+    } catch (error) {
+      console.error('キャンセルエラー:', error)
+      alert(error instanceof Error ? error.message : '通信エラーが発生しました')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -144,6 +173,17 @@ export default function OrderCompletePage() {
         >
           買い物を続ける
         </Link>
+        {orderStatus === 'PENDING' && (
+          <div className="mt-4">
+            <button
+              onClick={handleCancelOrder}
+              disabled={isCancelling}
+              className="text-sm text-red-600 hover:text-red-700 underline disabled:opacity-50"
+            >
+              {isCancelling ? 'キャンセル中...' : '注文をキャンセル'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

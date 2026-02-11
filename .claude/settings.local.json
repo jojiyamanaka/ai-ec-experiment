@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(chmod:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl.exe:*)",
+      "Bash(findstr:*)",
+      "Bash(docker ps:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(curl:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(python3:*)",
+      "Bash(git checkout:*)",
+      "Bash(bash:*)",
+      "Bash(__NEW_LINE_f422e5a94b56b69c__ echo \"=== テスト 2: 注文確認（PENDING → CONFIRMED） ===\")",
+      "Bash(__NEW_LINE_96e322e023cea9b6__ echo \"=== テスト 3: 注文発送（CONFIRMED → SHIPPED） ===\")",
+      "Bash(__NEW_LINE_d38f27761b00011a__ echo \"=== テスト 4: 配達完了（SHIPPED → DELIVERED） ===\")",
+      "Bash(echo \"=== フロントエンド確認URL ===\n商品一覧: http://localhost:5173\n注文詳細: http://localhost:5173/order/5\n管理画面: http://localhost:5173/bo/order\n\n=== バックエンドAPI確認 ===\n全注文: curl http://localhost:8080/api/order\")"
+    ]
+  }
+}

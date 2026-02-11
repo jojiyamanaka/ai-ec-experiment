@@ -515,6 +515,214 @@ GET /api/order/:id
 
 ---
 
+### 10. 注文キャンセル（顧客向け）
+注文をキャンセルします。在庫が戻ります。
+
+**エンドポイント**
+```
+POST /api/order/:id/cancel
+```
+
+**ヘッダー**
+| ヘッダー | 値 | 必須 | 説明 |
+|---------|-----|------|------|
+| X-Session-Id | string | ○ | セッションID |
+
+**パスパラメータ**
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | number | 注文ID |
+
+**レスポンス**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "orderNumber": "ORD-20250210-001",
+    "items": [...],
+    "totalPrice": 17960,
+    "status": "CANCELLED",
+    "createdAt": "2025-02-10T12:00:00Z",
+    "updatedAt": "2025-02-10T12:05:00Z"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ORDER_NOT_FOUND",
+    "message": "注文が見つかりません"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ORDER_NOT_CANCELLABLE",
+    "message": "この注文はキャンセルできません"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ALREADY_CANCELLED",
+    "message": "この注文は既にキャンセルされています"
+  }
+}
+```
+
+---
+
+### 11. 注文確認（管理者向け）
+注文を確認します（PENDING → CONFIRMED）。
+
+**エンドポイント**
+```
+POST /api/order/:id/confirm
+```
+
+**パスパラメータ**
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | number | 注文ID |
+
+**レスポンス**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "orderNumber": "ORD-20250210-001",
+    "items": [...],
+    "totalPrice": 17960,
+    "status": "CONFIRMED",
+    "createdAt": "2025-02-10T12:00:00Z",
+    "updatedAt": "2025-02-10T12:10:00Z"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_STATUS_TRANSITION",
+    "message": "この注文は確認できません（現在のステータス: SHIPPED）"
+  }
+}
+```
+
+---
+
+### 12. 注文発送（管理者向け）
+注文を発送します（CONFIRMED → SHIPPED）。
+
+**エンドポイント**
+```
+POST /api/order/:id/ship
+```
+
+**パスパラメータ**
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | number | 注文ID |
+
+**レスポンス**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "orderNumber": "ORD-20250210-001",
+    "items": [...],
+    "totalPrice": 17960,
+    "status": "SHIPPED",
+    "createdAt": "2025-02-10T12:00:00Z",
+    "updatedAt": "2025-02-10T12:15:00Z"
+  }
+}
+```
+
+---
+
+### 13. 注文配達完了（管理者向け）
+注文を配達完了にします（SHIPPED → DELIVERED）。
+
+**エンドポイント**
+```
+POST /api/order/:id/deliver
+```
+
+**パスパラメータ**
+| パラメータ | 型 | 説明 |
+|-----------|-----|------|
+| id | number | 注文ID |
+
+**レスポンス**
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 1,
+    "orderNumber": "ORD-20250210-001",
+    "items": [...],
+    "totalPrice": 17960,
+    "status": "DELIVERED",
+    "createdAt": "2025-02-10T12:00:00Z",
+    "updatedAt": "2025-02-10T13:00:00Z"
+  }
+}
+```
+
+---
+
+### 14. 全注文取得（管理者向け）
+すべての注文を取得します。
+
+**エンドポイント**
+```
+GET /api/order
+```
+
+**レスポンス**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "orderId": 1,
+      "orderNumber": "ORD-20250210-001",
+      "items": [...],
+      "totalPrice": 17960,
+      "status": "PENDING",
+      "createdAt": "2025-02-10T12:00:00Z",
+      "updatedAt": "2025-02-10T12:00:00Z"
+    },
+    {
+      "orderId": 2,
+      "orderNumber": "ORD-20250210-002",
+      "items": [...],
+      "totalPrice": 25000,
+      "status": "CONFIRMED",
+      "createdAt": "2025-02-10T13:00:00Z",
+      "updatedAt": "2025-02-10T13:10:00Z"
+    }
+  ]
+}
+```
+
+---
+
 ## データモデル
 
 ### Product（商品）
@@ -580,6 +788,9 @@ GET /api/order/:id
 | OUT_OF_STOCK | 在庫が不足しています |
 | CART_EMPTY | カートが空です |
 | ORDER_NOT_FOUND | 注文が見つかりません |
+| ORDER_NOT_CANCELLABLE | この注文はキャンセルできません |
+| ALREADY_CANCELLED | この注文は既にキャンセルされています |
+| INVALID_STATUS_TRANSITION | 不正な状態遷移です |
 | INVALID_QUANTITY | 無効な数量です |
 | INVALID_REQUEST | 無効なリクエストです |
 | INTERNAL_ERROR | 内部エラーが発生しました |

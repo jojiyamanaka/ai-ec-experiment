@@ -80,7 +80,7 @@ public class OrderService {
      * 注文キャンセル
      */
     @Transactional
-    public void cancelOrder(Long orderId, String sessionId) {
+    public OrderDto cancelOrder(Long orderId, String sessionId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
 
@@ -91,6 +91,10 @@ public class OrderService {
 
         // 本引当を解除（stock 戻し + ステータス変更込み）
         inventoryService.releaseCommittedReservations(orderId);
+
+        // 注文を再取得（InventoryServiceで更新されたため）
+        order = orderRepository.findById(orderId).orElseThrow();
+        return OrderDto.fromEntity(order);
     }
 
     /**
@@ -107,6 +111,70 @@ public class OrderService {
         }
 
         return OrderDto.fromEntity(order);
+    }
+
+    /**
+     * 注文を確認（PENDING → CONFIRMED）
+     */
+    @Transactional
+    public OrderDto confirmOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+
+        if (order.getStatus() != Order.OrderStatus.PENDING) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                "この注文は確認できません（現在のステータス: " + order.getStatus() + "）");
+        }
+
+        order.setStatus(Order.OrderStatus.CONFIRMED);
+        order = orderRepository.save(order);
+        return OrderDto.fromEntity(order);
+    }
+
+    /**
+     * 注文を発送（CONFIRMED → SHIPPED）
+     */
+    @Transactional
+    public OrderDto shipOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+
+        if (order.getStatus() != Order.OrderStatus.CONFIRMED) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                "この注文は発送できません（現在のステータス: " + order.getStatus() + "）");
+        }
+
+        order.setStatus(Order.OrderStatus.SHIPPED);
+        order = orderRepository.save(order);
+        return OrderDto.fromEntity(order);
+    }
+
+    /**
+     * 注文を配達完了（SHIPPED → DELIVERED）
+     */
+    @Transactional
+    public OrderDto deliverOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+
+        if (order.getStatus() != Order.OrderStatus.SHIPPED) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                "この注文は配達完了にできません（現在のステータス: " + order.getStatus() + "）");
+        }
+
+        order.setStatus(Order.OrderStatus.DELIVERED);
+        order = orderRepository.save(order);
+        return OrderDto.fromEntity(order);
+    }
+
+    /**
+     * 全注文を取得（管理者用）
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<OrderDto> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(OrderDto::fromEntity)
+                .toList();
     }
 
     /**

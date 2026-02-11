@@ -291,89 +291,147 @@ return prefix + String.format("%03d", sequence);
 
 ---
 
-## 7. 注文の状態遷移（現在未実装）
+## 7. 注文の状態遷移 ✅ 実装済み
 
-### 7-1. PENDING → CONFIRMED への遷移
+### 7-1. PENDING → CONFIRMED への遷移 ✅
+
+**API**: `POST /api/order/:id/confirm`
 
 **Given**: 注文のステータスが `PENDING`
 **When**: 管理者が注文内容を確認する
 **Then**:
-- **本来あるべき動作**:
-  - 注文ステータスが `CONFIRMED` に変更される
-  - 在庫の引き当てが確定する
-  - 決済処理が実行される
-- **現在の実装**: ❌ 未実装
+- ✅ 注文ステータスが `CONFIRMED` に変更される
+- ✅ 更新日時（`updatedAt`）が更新される
+- ✅ 変更後の注文データを返す
+- ⚠️ 決済処理は未実装（Phase 2以降）
 
-**実装状況**: 未実装（ギャップ分析レポート `docs/gap-analysis.md` の「2-2」で指摘済み）
+**バリデーション**:
+- PENDING 以外の状態からは遷移不可
+- エラー `INVALID_STATUS_TRANSITION`「この注文は確認できません（現在のステータス: XXX）」
+
+**実装箇所**:
+- `OrderService.confirmOrder()` - backend/src/main/java/com/example/aiec/service/OrderService.java
+- `OrderController.confirmOrder()` - backend/src/main/java/com/example/aiec/controller/OrderController.java
 
 ---
 
-### 7-2. CONFIRMED → SHIPPED への遷移
+### 7-2. CONFIRMED → SHIPPED への遷移 ✅
+
+**API**: `POST /api/order/:id/ship`
 
 **Given**: 注文のステータスが `CONFIRMED`
 **When**: 管理者が商品を発送する
 **Then**:
-- **本来あるべき動作**:
-  - 注文ステータスが `SHIPPED` に変更される
-  - 追跡番号が発行される
-  - 発送通知メールが送信される
-- **現在の実装**: ❌ 未実装
+- ✅ 注文ステータスが `SHIPPED` に変更される
+- ✅ 更新日時（`updatedAt`）が更新される
+- ✅ 変更後の注文データを返す
+- ⚠️ 追跡番号発行・発送通知メールは未実装（Phase 2以降）
 
-**実装状況**: 未実装
+**バリデーション**:
+- CONFIRMED 以外の状態からは遷移不可
+- エラー `INVALID_STATUS_TRANSITION`「この注文は発送できません（現在のステータス: XXX）」
+
+**実装箇所**:
+- `OrderService.shipOrder()` - backend/src/main/java/com/example/aiec/service/OrderService.java
+- `OrderController.shipOrder()` - backend/src/main/java/com/example/aiec/controller/OrderController.java
 
 ---
 
-### 7-3. SHIPPED → DELIVERED への遷移
+### 7-3. SHIPPED → DELIVERED への遷移 ✅
+
+**API**: `POST /api/order/:id/deliver`
 
 **Given**: 注文のステータスが `SHIPPED`
 **When**: 配送業者が商品を配達完了する
 **Then**:
-- **本来あるべき動作**:
-  - 注文ステータスが `DELIVERED` に変更される
-  - 配達完了通知が送信される
-- **現在の実装**: ❌ 未実装
+- ✅ 注文ステータスが `DELIVERED` に変更される
+- ✅ 更新日時（`updatedAt`）が更新される
+- ✅ 変更後の注文データを返す
+- ⚠️ 配達完了通知は未実装（Phase 2以降）
 
-**実装状況**: 未実装
+**バリデーション**:
+- SHIPPED 以外の状態からは遷移不可
+- エラー `INVALID_STATUS_TRANSITION`「この注文は配達完了にできません（現在のステータス: XXX）」
+
+**実装箇所**:
+- `OrderService.deliverOrder()` - backend/src/main/java/com/example/aiec/service/OrderService.java
+- `OrderController.deliverOrder()` - backend/src/main/java/com/example/aiec/controller/OrderController.java
 
 ---
 
-### 7-4. PENDING/CONFIRMED → CANCELLED への遷移
+### 7-4. PENDING/CONFIRMED → CANCELLED への遷移 ✅
+
+**API**: `POST /api/order/:id/cancel`
 
 **Given**: 注文のステータスが `PENDING` または `CONFIRMED`
 **When**: 顧客または管理者が注文をキャンセルする
 **Then**:
-- **本来あるべき動作**:
-  - 注文ステータスが `CANCELLED` に変更される
-  - 引き当てた在庫を商品の `stock` に戻す
-  - 決済をキャンセル
-  - キャンセル通知メールを送信
-- **現在の実装**: ❌ 未実装
+- ✅ 注文ステータスが `CANCELLED` に変更される
+- ✅ 本引当レコード（`stock_reservations`）を削除
+- ✅ `products.stock` を引当数量分だけ増加（在庫を戻す）
+- ✅ 更新日時（`updatedAt`）が更新される
+- ⚠️ 決済キャンセル・通知メールは未実装（Phase 2以降）
 
-**実装状況**: 未実装（ギャップ分析レポート `docs/gap-analysis.md` の「2-3」で指摘済み）
+**バリデーション**:
+- SHIPPED/DELIVERED 状態からはキャンセル不可
+  - エラー `ORDER_NOT_CANCELLABLE`「この注文はキャンセルできません」
+- 既にキャンセル済みの注文は再キャンセル不可
+  - エラー `ALREADY_CANCELLED`「この注文は既にキャンセルされています」
+
+**実装箇所**:
+- `OrderService.cancelOrder()` - backend/src/main/java/com/example/aiec/service/OrderService.java
+- `InventoryService.releaseCommittedReservations()` - backend/src/main/java/com/example/aiec/service/InventoryService.java
+- `OrderController.cancelOrder()` - backend/src/main/java/com/example/aiec/controller/OrderController.java
 
 ---
 
-## 8. 各状態でできる操作（現在の実装）
+## 8. 各状態でできる操作
 
 ### 8-1. PENDING 状態でできる操作
 
-**現在の実装**:
+**実装済み**:
 - ✅ 注文詳細の取得（`GET /api/order/:id`）
-- ❌ 注文のキャンセル（APIエンドポイント自体が存在しない）
-- ❌ 注文内容の変更（APIエンドポイント自体が存在しない）
-- ❌ ステータスの変更（APIエンドポイント自体が存在しない）
+- ✅ 注文のキャンセル（`POST /api/order/:id/cancel`）
+- ✅ 注文の確認（`POST /api/order/:id/confirm`）- 管理者のみ
+- ❌ 注文内容の変更（未実装、Phase 2以降）
 
 **実装箇所**:
-- 注文詳細取得のみ: `OrderController.java:90-97`
+- `OrderController.java` - backend/src/main/java/com/example/aiec/controller/OrderController.java
+- `OrderService.java` - backend/src/main/java/com/example/aiec/service/OrderService.java
 
 ---
 
-### 8-2. その他のステータスでできる操作
+### 8-2. CONFIRMED 状態でできる操作
 
-**現在の実装**:
-- すべてのステータス遷移機能が未実装
-- ステータスは常に `PENDING` のまま
-- 状態遷移のAPIエンドポイントが存在しない
+**実装済み**:
+- ✅ 注文詳細の取得（`GET /api/order/:id`）
+- ✅ 注文のキャンセル（`POST /api/order/:id/cancel`）
+- ✅ 注文の発送（`POST /api/order/:id/ship`）- 管理者のみ
+
+---
+
+### 8-3. SHIPPED 状態でできる操作
+
+**実装済み**:
+- ✅ 注文詳細の取得（`GET /api/order/:id`）
+- ✅ 配達完了（`POST /api/order/:id/deliver`）- 管理者のみ
+- ❌ キャンセル不可
+
+---
+
+### 8-4. DELIVERED 状態でできる操作
+
+**実装済み**:
+- ✅ 注文詳細の取得（`GET /api/order/:id`）
+- ❌ ステータス変更不可（最終状態）
+
+---
+
+### 8-5. CANCELLED 状態でできる操作
+
+**実装済み**:
+- ✅ 注文詳細の取得（`GET /api/order/:id`）
+- ❌ ステータス変更不可（終端状態）
 
 ---
 

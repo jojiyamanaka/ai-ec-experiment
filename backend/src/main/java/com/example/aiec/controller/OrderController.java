@@ -96,4 +96,57 @@ public class OrderController {
         return ApiResponse.success(order);
     }
 
+    /**
+     * 注文キャンセル（顧客向け）
+     * POST /api/order/:id/cancel
+     */
+    @PostMapping("/{id}/cancel")
+    public ApiResponse<OrderDto> cancelOrder(
+            @RequestHeader("X-Session-Id") String sessionId,
+            @PathVariable Long id
+    ) {
+        OrderDto order = orderService.cancelOrder(id, sessionId);
+        return ApiResponse.success(order);
+    }
+
+    /**
+     * 注文確認（管理者向け）
+     * POST /api/order/:id/confirm
+     */
+    @PostMapping("/{id}/confirm")
+    public ApiResponse<OrderDto> confirmOrder(@PathVariable Long id) {
+        OrderDto order = orderService.confirmOrder(id);
+        return ApiResponse.success(order);
+    }
+
+    /**
+     * 注文発送（管理者向け）
+     * POST /api/order/:id/ship
+     */
+    @PostMapping("/{id}/ship")
+    public ApiResponse<OrderDto> shipOrder(@PathVariable Long id) {
+        OrderDto order = orderService.shipOrder(id);
+        return ApiResponse.success(order);
+    }
+
+    /**
+     * 注文配達完了（管理者向け）
+     * POST /api/order/:id/deliver
+     */
+    @PostMapping("/{id}/deliver")
+    public ApiResponse<OrderDto> deliverOrder(@PathVariable Long id) {
+        OrderDto order = orderService.deliverOrder(id);
+        return ApiResponse.success(order);
+    }
+
+    /**
+     * 全注文取得（管理者向け）
+     * GET /api/order
+     */
+    @GetMapping
+    public ApiResponse<java.util.List<OrderDto>> getAllOrders() {
+        java.util.List<OrderDto> orders = orderService.getAllOrders();
+        return ApiResponse.success(orders);
+    }
+
 }

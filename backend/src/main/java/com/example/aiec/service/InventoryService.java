@@ -176,6 +176,11 @@ public class InventoryService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
 
+        // 既にキャンセル済みチェックを追加
+        if (order.getStatus() == Order.OrderStatus.CANCELLED) {
+            throw new BusinessException("ALREADY_CANCELLED", "この注文は既にキャンセルされています");
+        }
+
         // キャンセル可能かチェック
         if (order.getStatus() == Order.OrderStatus.SHIPPED || order.getStatus() == Order.OrderStatus.DELIVERED) {
             throw new BusinessException("ORDER_NOT_CANCELLABLE", "この注文はキャンセルできません");

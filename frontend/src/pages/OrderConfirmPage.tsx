@@ -49,6 +49,7 @@ export default function OrderConfirmPage() {
             items: response.data.items,
             totalPrice: response.data.totalPrice,
             orderId: response.data.orderId,
+            status: response.data.status,
           },
         })
       } else {

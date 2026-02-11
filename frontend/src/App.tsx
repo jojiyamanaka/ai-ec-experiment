@@ -8,7 +8,9 @@ import ItemDetailPage from './pages/ItemDetailPage'
 import CartPage from './pages/CartPage'
 import OrderConfirmPage from './pages/OrderConfirmPage'
 import OrderCompletePage from './pages/OrderCompletePage'
+import OrderDetailPage from './pages/OrderDetailPage'
 import AdminItemPage from './pages/AdminItemPage'
+import AdminOrderPage from './pages/AdminOrderPage'
 
 export default function App() {
   return (
@@ -23,7 +25,9 @@ export default function App() {
               <Route path="/order/cart" element={<CartPage />} />
               <Route path="/order/reg" element={<OrderConfirmPage />} />
               <Route path="/order/complete" element={<OrderCompletePage />} />
+              <Route path="/order/:id" element={<OrderDetailPage />} />
               <Route path="/bo/item" element={<AdminItemPage />} />
+              <Route path="/bo/order" element={<AdminOrderPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
