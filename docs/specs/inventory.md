@@ -822,9 +822,9 @@ GET /api/inventory/availability/:productId
 
 ### 関連仕様書
 - `docs/SPEC.md`: 機能仕様書（在庫状態のルール: 255-280行目）
-- `docs/api-spec.md`: API仕様書（在庫エラーレスポンス: 437-453行目）
+- `docs/ui/api-spec.md`: API仕様書（在庫エラーレスポンス: 437-453行目）
 - `docs/specs/order.md`: 注文管理仕様書
-- `docs/specs/admin.md`: 管理画面仕様書
+- `docs/ui/admin-ui.md`: 管理画面UI仕様書
 - `docs/spec-implementation-gaps.md`: H-2（在庫引当未実装の課題）
 
 ### 関連実装

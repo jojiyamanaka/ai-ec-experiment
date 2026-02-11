@@ -1,12 +1,23 @@
-# 価格管理仕様書
+# 商品ドメインの詳細仕様
 
 作成日: 2026-02-10
 バージョン: 1.0
 
+**目的**: 商品マスタ、価格管理、公開制御の詳細仕様を定義する
+**スコープ**: 商品ドメインのビジネスロジック、価格計算、公開/非公開制御
+
+**関連ドキュメント**:
+- [技術仕様](../SPEC.md) - 技術方針・アーキテクチャ
+- [業務要件](../requirements.md) - ビジネスルール
+- [データモデル](../data-model.md) - Product エンティティ
+- [API仕様](../ui/api-spec.md) - 商品関連API
+
+---
+
 ## 概要
 
-本仕様書は、AI EC Experimentにおける価格・金額計算の振る舞いを定義する。
-フロントエンドおよびバックエンドの実装を基に、Given/When/Then形式で明文化する。
+本仕様書は、AI EC Experimentにおける商品ドメインの詳細仕様を定義する。
+特に価格・金額計算の振る舞いに焦点を当て、フロントエンドおよびバックエンドの実装を基に、Given/When/Then形式で明文化する。
 
 ---
 
@@ -546,8 +557,8 @@ orderItem.setSubtotal(cartItem.getProduct().getPrice() * cartItem.getQuantity())
 
 ### 関連仕様書
 - `docs/SPEC.md`: 機能仕様書
-- `docs/api-spec.md`: API仕様書（データモデル: 518-571行目）
-- `docs/gap-analysis.md`: ギャップ分析レポート（配送料・手数料: 2-1, 3-3）
+- `docs/ui/api-spec.md`: API仕様書（データモデル: 518-571行目）
+- `docs/spec-implementation-gaps.md`: ギャップ分析レポート（配送料・手数料: 2-1, 3-3）
 - `docs/specs/inventory.md`: 在庫管理仕様書
 - `docs/specs/order.md`: 注文管理仕様書
 

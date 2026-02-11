@@ -1,4 +1,16 @@
-# API 仕様書
+# API仕様（UI-バックエンド間）
+
+**目的**: フロントエンド（UI層）とバックエンド間のREST API仕様を定義する
+**スコープ**: APIエンドポイント、リクエスト/レスポンス型、エラーコード
+
+**関連ドキュメント**:
+- [技術仕様](../SPEC.md) - 技術方針・アーキテクチャ
+- [データモデル](../data-model.md) - エンティティ定義
+- [商品ドメイン](../specs/product.md) - 商品関連API
+- [在庫ドメイン](../specs/inventory.md) - 在庫引当API
+- [注文ドメイン](../specs/order.md) - 注文関連API
+
+---
 
 ## 概要
 AI EC Experiment のバックエンド API 仕様書
@@ -782,18 +794,30 @@ GET /api/order
 
 ## エラーコード一覧
 
+### バックエンドエラー（HTTPステータス: 400, 404, 409）
+
+| コード | HTTPステータス | 説明 |
+|--------|---------------|------|
+| ITEM_NOT_FOUND | 404 | 商品が見つかりません |
+| CART_NOT_FOUND | 404 | カートが見つかりません |
+| ORDER_NOT_FOUND | 404 | 注文が見つかりません |
+| RESERVATION_NOT_FOUND | 404 | 在庫引当が見つかりません |
+| OUT_OF_STOCK | 409 | 在庫が不足している商品があります |
+| INSUFFICIENT_STOCK | 409 | 有効在庫が不足しています |
+| CART_EMPTY | 400 | カートが空です |
+| ORDER_NOT_CANCELLABLE | 400 | この注文はキャンセルできません |
+| ALREADY_CANCELLED | 400 | この注文は既にキャンセルされています |
+| INVALID_STATUS_TRANSITION | 400 | 不正な状態遷移です |
+| INVALID_QUANTITY | 400 | 無効な数量です |
+| INVALID_REQUEST | 400 | 無効なリクエストです |
+| NO_RESERVATIONS | 400 | 仮引当が存在しません |
+| INTERNAL_ERROR | 500 | 内部エラーが発生しました |
+
+### フロントエンドエラー（クライアント側）
+
 | コード | 説明 |
 |--------|------|
-| ITEM_NOT_FOUND | 商品が見つかりません |
-| OUT_OF_STOCK | 在庫が不足しています |
-| CART_EMPTY | カートが空です |
-| ORDER_NOT_FOUND | 注文が見つかりません |
-| ORDER_NOT_CANCELLABLE | この注文はキャンセルできません |
-| ALREADY_CANCELLED | この注文は既にキャンセルされています |
-| INVALID_STATUS_TRANSITION | 不正な状態遷移です |
-| INVALID_QUANTITY | 無効な数量です |
-| INVALID_REQUEST | 無効なリクエストです |
-| INTERNAL_ERROR | 内部エラーが発生しました |
+| NETWORK_ERROR | ネットワークエラーが発生しました |
 
 ---
 

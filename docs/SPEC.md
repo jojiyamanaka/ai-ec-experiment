@@ -1,509 +1,498 @@
-# AI EC Experiment - 機能仕様書
+# AI EC Experiment - 技術仕様書
+
+**最終更新日**: 2025-02-11
+
+---
 
 ## プロジェクト概要
-AI がおすすめする商品を販売する EC サイトのプロトタイプ
 
-**技術スタック**
-- フロントエンド: React + TypeScript（Vite）
-- スタイリング: Tailwind CSS
-- ルーティング: React Router
-- バックエンド: Spring Boot（予定）
-- DB: SQLite（予定）
+AIがおすすめする商品を販売するECサイトのプロトタイプ。
 
----
+**目的**: AI推薦機能を備えたECサイトの技術検証とプロトタイピング
 
-## 画面一覧
-
-### 1. TOP画面（/）
-**目的**: サイトのトップページ、おすすめ商品の表示
-
-**主要要素**:
-- ヘッダー（サイト名、カートアイコン）
-- バナーエリア（キャッチコピー）
-- おすすめ商品セクション（3件表示）
-- フッター（管理画面へのリンク）
-
-**機能**:
-- おすすめ商品をカード形式で表示
-- 商品カードクリックで商品詳細へ遷移
-- 「すべて見る」で商品一覧へ遷移
-- カートアイコンに数量バッジ表示
+**技術スタック**:
+- **フロントエンド**: React 19 + TypeScript + Vite
+- **スタイリング**: Tailwind CSS 4
+- **ルーティング**: React Router v7
+- **バックエンド**: Spring Boot 3.4.2 + Java 21
+- **データベース**: SQLite + Hibernate
+- **コンテナ**: Docker + Docker Compose
 
 ---
 
-### 2. 商品一覧画面（/item）
-**目的**: 全商品の一覧表示
+## 関連ドキュメント
 
-**主要要素**:
-- ヘッダー
-- 商品一覧（グリッドレイアウト）
-- フッター
+このファイルは技術方針のみを記載します。詳細な仕様は以下のドキュメントを参照してください。
 
-**機能**:
-- 公開されている商品のみを表示
-- 各商品カードに以下を表示：
-  - 商品画像
-  - 商品名
-  - 価格
-  - 商品説明
-  - 在庫状態バッジ（在庫あり/残りわずか/売り切れ）
-- 商品カードクリックで商品詳細へ遷移
+### 📋 基本仕様ドキュメント
+- **[業務要件・ビジネスルール](./requirements.md)** - 主要機能、在庫状態のルール、注文の状態遷移
+- **[データモデル](./data-model.md)** - エンティティ定義、データベーススキーマ、型定義
 
----
+### 🖥️ UI層の仕様
+- **[顧客向け画面](./ui/customer-ui.md)** - 画面一覧、画面遷移図、UI/UX設計思想
+- **[管理画面](./ui/admin-ui.md)** - 商品管理・注文管理のUI仕様
+- **[API仕様](./ui/api-spec.md)** - APIエンドポイント、リクエスト/レスポンス仕様
 
-### 3. 商品詳細画面（/item/:id）
-**目的**: 個別商品の詳細情報表示とカート追加
+### 🔧 ドメイン層の仕様
+- **[商品ドメイン](./specs/product.md)** - 商品マスタ、価格管理、公開制御
+- **[在庫ドメイン](./specs/inventory.md)** - 在庫引当（仮引当・本引当）の詳細仕様
+- **[注文ドメイン](./specs/order.md)** - 注文フロー、状態遷移の詳細仕様
 
-**主要要素**:
-- ヘッダー
-- 商品画像（大）
-- 商品情報（名前、価格、在庫状態、説明）
-- カート追加ボタン
-- フッター
-
-**機能**:
-- 商品の詳細情報を表示
-- 在庫状態に応じたバッジ表示
-- 「カートに追加」ボタン
-  - 在庫がある場合: カートに追加して /order/cart へ遷移
-  - 売り切れの場合: ボタンを無効化
-- カートアイコンに数量バッジ表示
+### 📊 その他
+- **[仕様と実装のギャップ一覧](./spec-implementation-gaps.md)** - 未実装機能、制約事項の一覧
 
 ---
 
-### 4. カート画面（/order/cart）
-**目的**: カート内容の確認と編集
+## 技術アーキテクチャ
 
-**主要要素**:
-- ヘッダー
-- カート商品一覧
-- 注文サマリー（小計、配送料、合計）
-- アクションボタン
-- フッター
+### 全体構成
 
-**機能**:
-- カート内の商品一覧を表示（商品画像、名前、説明、単価、数量、小計）
-- 数量変更機能：
-  - +/- ボタンで数量を増減
-  - 数値入力欄で直接入力
-  - 数量を 0 にすると自動削除
-- 商品削除機能（ゴミ箱アイコン）
-- 合計金額のリアルタイム計算
-- 「レジに進む」ボタンで /order/reg へ遷移
-- 「買い物を続ける」リンクで /item へ遷移
-- カートが空の場合: 「カートは空です」メッセージと商品一覧へのリンク
-
----
-
-### 5. 注文確認画面（/order/reg）
-**目的**: 注文内容の最終確認
-
-**主要要素**:
-- ヘッダー
-- 注文商品一覧（確認のみ、編集不可）
-- お支払い金額（小計、配送料、手数料、合計）
-- アクションボタン
-- フッター
-
-**機能**:
-- カート内容を確認用に表示（数量変更不可）
-- 合計金額の表示
-- 「注文を確定する」ボタン
-  - 注文番号を生成（ORD-YYYYMMDD-XXX形式）
-  - カートをクリア
-  - 注文情報を持って /order/complete へ遷移
-- 「カートに戻る」リンクで /order/cart へ遷移
-- カートが空の場合: エラーメッセージと商品一覧へのリンク
-
----
-
-### 6. 注文完了画面（/order/complete）
-**目的**: 注文完了の通知
-
-**主要要素**:
-- ヘッダー
-- 完了メッセージ（チェックマークアイコン）
-- 注文番号
-- 注文内容サマリー
-- お知らせ（メール送信、発送通知など）
-- アクションボタン
-- フッター
-
-**機能**:
-- 注文完了メッセージを表示
-- 注文番号を強調表示
-- 注文した商品の一覧と合計金額を表示
-- 「TOPに戻る」ボタンで / へ遷移
-- 「買い物を続ける」ボタンで /item へ遷移
-- 直接URLアクセス時: エラーメッセージとTOPへのリンク
-
----
-
-### 7. 管理画面（/bo/item）
-**目的**: 商品情報の管理（価格、在庫、公開状態）
-
-**主要要素**:
-- ヘッダー
-- 商品管理テーブル
-- 保存ボタン
-- フッター
-
-**機能**:
-- 全商品をテーブル形式で表示
-- 各商品の編集機能：
-  - 価格: 数値入力欄
-  - 在庫数: 数値入力欄
-  - 公開/非公開: トグルスイッチ
-- 「保存」ボタンで変更を反映
-  - 変更がない場合はボタンを無効化
-  - 保存成功時にメッセージ表示
-- 非公開にした商品は商品一覧（/item）に表示されない
-- フッターの「管理画面」リンクからアクセス可能
-
----
-
-## 主要機能
-
-### 1. 商品閲覧機能
-**機能概要**:
-- 公開されている商品の閲覧
-- 商品の詳細情報確認
-- 在庫状態の可視化
-
-**対象画面**:
-- TOP画面
-- 商品一覧画面
-- 商品詳細画面
-
-**仕様**:
-- 非公開（isPublished = false）の商品は表示しない
-- 在庫状態は在庫数に応じて自動判定
-- 商品画像はプレースホルダーを使用
-
----
-
-### 2. カート機能
-**機能概要**:
-- カートへの商品追加
-- カート内商品の数量変更
-- カート内商品の削除
-- 合計金額の計算
-
-**対象画面**:
-- 商品詳細画面（追加）
-- カート画面（編集）
-
-**仕様**:
-- カート状態は Context API で管理
-- カートデータはメモリ上に保持（ページリロードで消失）
-- 数量を 0 にすると自動的に削除
-- 合計金額はリアルタイムで再計算
-
-**カート内データ構造**:
-```typescript
-{
-  items: CartItem[]        // カートアイテム配列
-  totalQuantity: number    // 総数量
-  totalPrice: number       // 合計金額
-}
+```
+┌──────────────────┐
+│   Frontend       │
+│  (React + Vite)  │  ← Port 5173
+└────────┬─────────┘
+         │ HTTP
+         │ (CORS)
+         ▼
+┌──────────────────┐
+│   Backend        │
+│  (Spring Boot)   │  ← Port 8080
+└────────┬─────────┘
+         │ JDBC
+         ▼
+┌──────────────────┐
+│   Database       │
+│    (SQLite)      │  ← /app/data/ec.db
+└──────────────────┘
 ```
 
 ---
 
-### 3. 注文機能
-**機能概要**:
-- カート内容の確認
-- 注文の確定
-- 注文番号の生成
+## フロントエンド技術仕様
 
-**対象画面**:
-- 注文確認画面
-- 注文完了画面
+### フレームワーク・ライブラリ
 
-**仕様**:
-- 注文番号は `ORD-YYYYMMDD-XXX` 形式で自動生成
-- 注文確定時にカートを自動クリア
-- 注文情報は React Router の state で受け渡し
-- 注文データはメモリ上に保持（永続化なし）
+- **React 19**: UIライブラリ
+- **TypeScript**: 型安全性の確保
+- **Vite**: 高速なビルドツール
+- **React Router v7**: クライアントサイドルーティング
+- **Tailwind CSS 4**: ユーティリティファーストCSS
+- **Lucide React**: アイコンライブラリ
 
-**注文フロー**:
-1. カート画面で「レジに進む」
-2. 注文確認画面で内容を確認
-3. 「注文を確定する」で注文作成
-4. カートがクリアされる
-5. 注文完了画面に遷移
+### 状態管理
 
----
+**Context API** を使用したグローバル状態管理:
 
-### 4. 商品管理機能（管理画面）
-**機能概要**:
-- 商品情報の一括編集
-- 在庫数の管理
-- 公開/非公開の切り替え
+#### ProductContext（商品データ）
+- **役割**: 商品マスタの取得・キャッシュ
+- **プロバイダー**: `ProductProvider`
+- **提供する値**:
+  ```typescript
+  {
+    products: Product[]
+    loading: boolean
+    error: string | null
+    refreshProducts: () => Promise<void>
+  }
+  ```
 
-**対象画面**:
-- 管理画面
+#### CartContext（カート状態）
+- **役割**: カート操作とバックエンドAPIとの同期
+- **プロバイダー**: `CartProvider`
+- **提供する値**:
+  ```typescript
+  {
+    items: CartItem[]
+    totalQuantity: number
+    totalPrice: number
+    addToCart: (product: Product) => Promise<void>
+    updateQuantity: (productId: number, quantity: number) => Promise<void>
+    removeFromCart: (productId: number) => Promise<void>
+    clearCart: () => Promise<void>
+  }
+  ```
 
-**仕様**:
-- 商品データは Context API で管理
-- 変更は「保存」ボタンクリック時に反映
-- 変更はメモリ上に保持（永続化なし）
-- 非公開にした商品は即座に商品一覧から非表示
+**注意**: カート状態はバックエンドAPIと同期。フロントエンドはUIのみ担当。
 
----
+### ルーティング
 
-## 在庫状態のルール
+**React Router v7** によるクライアントサイドルーティング:
 
-商品の在庫数（stock）に応じて、在庫状態を3段階で表示します。
+| パス | コンポーネント | 説明 |
+|------|---------------|------|
+| `/` | `Home` | TOP画面 |
+| `/item` | `ItemList` | 商品一覧 |
+| `/item/:id` | `ItemDetail` | 商品詳細 |
+| `/order/cart` | `Cart` | カート |
+| `/order/reg` | `OrderRegistration` | 注文確認 |
+| `/order/complete` | `OrderComplete` | 注文完了 |
+| `/order/:id` | `OrderDetail` | 注文詳細 |
+| `/bo/item` | `AdminItemManagement` | 管理画面 - 商品管理 |
+| `/bo/order` | `AdminOrderManagement` | 管理画面 - 注文管理 |
 
-| 在庫数 | 状態 | 表示 | バッジ色 | 説明 |
-|--------|------|------|----------|------|
-| 6 以上 | 在庫あり | 「在庫あり」 | 緑（bg-green-500） | 十分な在庫がある状態 |
-| 1〜5 | 残りわずか | 「残りわずか」 | オレンジ（bg-orange-500） | 在庫が少なくなっている状態 |
-| 0 | 売り切れ | 「売り切れ」 | グレー（bg-gray-400） | 在庫がない状態 |
+### API通信
 
-**在庫状態の影響**:
-- **在庫あり・残りわずか**: カートに追加可能
-- **売り切れ**: カートに追加不可（ボタンを無効化）
+**すべてのAPI呼び出しは `src/lib/api.ts` 経由で実行**:
 
-**判定ロジック**:
 ```typescript
-function getStockStatus(stock: number) {
-  if (stock === 0) {
-    return { text: '売り切れ', color: 'bg-gray-400 text-white' }
-  } else if (stock >= 1 && stock <= 5) {
-    return { text: '残りわずか', color: 'bg-orange-500 text-white' }
-  } else {
-    return { text: '在庫あり', color: 'bg-green-500 text-white' }
+// ❌ 直接fetchを使わない
+fetch('/api/item')
+
+// ✅ api.tsの関数を使う
+import { getProducts } from '@/lib/api'
+const products = await getProducts()
+```
+
+**api.ts の役割**:
+- `X-Session-Id` ヘッダーの自動付与
+- エラーレスポンスの正規化
+- 型安全なAPI呼び出し
+
+### セッション管理
+
+- **セッションID**: フロントエンドが初回アクセス時に自動生成（UUID v4）
+- **保存先**: `localStorage`（キー: `sessionId`）
+- **用途**: カート・注文データのスコープ識別
+- **ヘッダー**: `X-Session-Id` として送信（`/order` エンドポイント）
+
+### 型定義
+
+**APIのリクエスト・レスポンス型は `src/types/api.ts` に集約**:
+
+```typescript
+// 共通レスポンス型
+interface ApiResponse<T> {
+  success: boolean
+  data?: T
+  error?: {
+    code: string
+    message: string
   }
 }
+
+// エンティティ型
+interface Product { /* ... */ }
+interface CartItem { /* ... */ }
+interface Order { /* ... */ }
 ```
+
+**参照**: [data-model.md](./data-model.md) - 型定義の詳細
 
 ---
 
-## 注文の状態遷移
+## バックエンド技術仕様
 
-注文は作成から完了まで、以下の状態を遷移します。
+### フレームワーク・ライブラリ
 
-### 状態一覧
+- **Spring Boot 3.4.2**: Javaアプリケーションフレームワーク
+- **Java 21**: プログラミング言語
+- **Spring Data JPA**: データアクセス層
+- **Hibernate**: ORM
+- **SQLite**: 組み込みデータベース
+- **Lombok**: ボイラープレートコード削減
 
-| 状態 | 英語表記 | 説明 |
-|------|----------|------|
-| 作成済み | PENDING | 注文が作成された初期状態 |
-| 確認済み | CONFIRMED | 注文内容が確認され、処理が開始された状態 |
-| 発送済み | SHIPPED | 商品が発送された状態 |
-| 配達完了 | DELIVERED | 商品が配達完了した状態 |
-| キャンセル | CANCELLED | 注文がキャンセルされた状態 |
+### アーキテクチャパターン
 
-### 状態遷移図
+**レイヤードアーキテクチャ** を採用:
 
 ```
-[PENDING]
-   ↓ 確認
-[CONFIRMED]
-   ↓ 発送
-[SHIPPED]
-   ↓ 配達
-[DELIVERED]
-
-[PENDING] → [CANCELLED]（キャンセル可能）
-[CONFIRMED] → [CANCELLED]（キャンセル可能）
+Controller (REST API)
+    ↓
+Service (ビジネスロジック)
+    ↓
+Repository (データアクセス)
+    ↓
+Entity (データモデル)
 ```
 
-### 遷移ルール
+#### Controller層
+- `@RestController` による REST API の提供
+- リクエストのバリデーション
+- レスポンスの構築（`ApiResponse<T>`）
 
-1. **PENDING → CONFIRMED**
-   - 管理者が注文内容を確認
-   - 在庫の引き当てを実施
-   - 決済処理を実行
+#### Service層
+- ビジネスロジックの実装
+- トランザクション管理（`@Transactional`）
+- 例外のスロー（`ResourceNotFoundException`, `BusinessException`, `ConflictException`）
 
-2. **CONFIRMED → SHIPPED**
-   - 商品の梱包が完了
-   - 配送業者に引き渡し
-   - 追跡番号を発行
+#### Repository層
+- `JpaRepository` の継承
+- カスタムクエリメソッド（`@Query`）
+- データアクセスロジック
 
-3. **SHIPPED → DELIVERED**
-   - 配送業者が配達完了
-   - 顧客が商品を受け取り
+#### Entity層
+- JPA エンティティ（`@Entity`）
+- データベーステーブルとのマッピング
+- Lombok による簡潔な実装
 
-4. **PENDING/CONFIRMED → CANCELLED**
-   - 顧客または管理者がキャンセル
-   - 在庫を戻す
-   - 決済をキャンセル
+### データベース
 
-### 現在の実装状態
+**SQLite + Hibernate** による永続化:
 
-現在のフロントエンド実装では、注文作成時に `PENDING` 状態で作成されます。
-バックエンド実装時に、状態遷移のロジックを追加する予定です。
+- **方言**: `org.hibernate.community.dialect.SQLiteDialect`
+- **DBファイルパス**: `/app/data/ec.db`（Docker内）、`./data/ec.db`（ローカル）
+- **スキーマ管理**: Hibernate による自動生成（`spring.jpa.hibernate.ddl-auto=update`）
+
+**参照**: [data-model.md](./data-model.md) - テーブル定義の詳細
+
+### 例外処理
+
+**GlobalExceptionHandler**（`@RestControllerAdvice`）が例外を一元管理:
+
+| 例外クラス | HTTPステータス | 用途 |
+|-----------|---------------|------|
+| `ResourceNotFoundException` | 404 | リソースが見つからない |
+| `BusinessException` | 400 | ビジネスルール違反 |
+| `ConflictException` | 409 | データ競合・在庫不足 |
+
+**使用例**:
+```java
+// 商品が見つからない場合
+throw new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません");
+
+// 在庫不足の場合
+throw new ConflictException("OUT_OF_STOCK", "在庫が不足しています");
+```
+
+### APIレスポンス形式
+
+**すべてのエンドポイントが `ApiResponse<T>` を返す**:
+
+```java
+// 成功レスポンス
+return ApiResponse.success(data);
+
+// エラーレスポンス
+return ApiResponse.error("ERROR_CODE", "エラーメッセージ");
+```
+
+**型定義**:
+```java
+@Data
+public class ApiResponse<T> {
+    private boolean success;
+    private T data;
+    private ErrorDetail error;
+}
+```
+
+### CORS設定
+
+**WebConfig.java** で CORS を設定:
+
+- **許可オリジン**: `http://localhost:5173`（`application.yml` で設定）
+- **許可メソッド**: GET, POST, PUT, DELETE, OPTIONS
+- **許可ヘッダー**: `Content-Type`, `X-Session-Id`
+- **クレデンシャル**: 許可
 
 ---
 
-## データモデル
+## 主要機能の実装方針
 
-### Product（商品）
-```typescript
-interface Product {
-  id: number              // 商品ID
-  name: string            // 商品名
-  price: number           // 価格（円）
-  image: string           // 商品画像URL
-  description: string     // 商品説明
-  stock: number           // 在庫数
-  isPublished: boolean    // 公開状態
-}
+### 在庫引当システム（2段階方式）
+
+**仮引当・本引当** による在庫管理:
+
+1. **仮引当（TENTATIVE）**: カート追加時に作成。30分で自動失効。
+2. **本引当（COMMITTED）**: 注文確定時に仮引当から変換。`products.stock` を減少。
+3. **本引当解除**: 注文キャンセル時に削除。`products.stock` を戻す。
+
+**中核サービス**: `InventoryService`
+- 引当のライフサイクル管理
+- 有効在庫の計算
+- 定期クリーンアップ（5分ごと、`@Scheduled`）
+
+**参照**: [specs/inventory.md](./specs/inventory.md) - 在庫引当の詳細
+
+### 注文状態遷移
+
+**状態遷移**: PENDING → CONFIRMED → SHIPPED → DELIVERED
+- **中核サービス**: `OrderService`
+- **状態管理**: Enumによる型安全な状態定義
+- **キャンセル**: PENDING/CONFIRMED のみ可能
+
+**参照**: [specs/order.md](./specs/order.md) - 注文管理の詳細
+
+### セッション管理
+
+- **フロントエンド**: UUID v4 を生成し `localStorage` に保存
+- **バックエンド**: `X-Session-Id` ヘッダーでセッションを識別
+- **スコープ**: カート・注文データをセッションIDでフィルタ
+
+**制約**:
+- Phase 1: セッションIDに有効期限なし
+- Phase 2以降: セッション有効期限を実装予定
+
+---
+
+## 開発環境
+
+### 必要なツール
+
+- **Node.js**: v20 以上（フロントエンド）
+- **Java**: 21（バックエンド）
+- **Maven**: 3.9 以上（バックエンド）
+- **Docker**: 20 以上
+- **Docker Compose**: v2 以上
+
+### 起動方法
+
+#### Docker Compose（推奨）
+
+```bash
+# 全コンテナ起動
+docker compose up -d
+
+# ログ確認
+docker compose logs -f
+
+# コンテナ停止
+docker compose down
 ```
 
-### CartItem（カートアイテム）
-```typescript
-interface CartItem {
-  product: Product        // 商品情報
-  quantity: number        // 数量
-}
+#### ローカル開発
+
+**フロントエンド**:
+```bash
+cd frontend
+npm install
+npm run dev  # http://localhost:5173
 ```
 
-### Order（注文）
-```typescript
-interface Order {
-  orderId: number         // 注文ID
-  orderNumber: string     // 注文番号（ORD-YYYYMMDD-XXX形式）
-  items: OrderItem[]      // 注文アイテム配列
-  totalPrice: number      // 合計金額
-  status: OrderStatus     // 注文状態
-  createdAt: string       // 作成日時
-  updatedAt: string       // 更新日時
-}
+**バックエンド**:
+```bash
+cd backend
+./mvnw spring-boot:run  # http://localhost:8080
 ```
 
-### OrderItem（注文アイテム）
-```typescript
-interface OrderItem {
-  product: Product        // 商品情報
-  quantity: number        // 数量
-  subtotal: number        // 小計
-}
-```
+### ポート番号
+
+| サービス | ポート | URL |
+|---------|--------|-----|
+| フロントエンド | 5173 | http://localhost:5173 |
+| バックエンド | 8080 | http://localhost:8080 |
+
+---
+
+## コーディング規約
+
+### フロントエンド
+
+- **言語**: TypeScript のみ（JavaScript は使わない）
+- **API呼び出し**: 必ず `src/lib/api.ts` の関数を使用（`fetch` を直接使わない）
+- **型定義**: `src/types/api.ts` に集約
+- **コンポーネント**: 関数コンポーネントのみ
+- **フック**: カスタムフックの活用
+- **スタイリング**: Tailwind CSS のユーティリティクラスを使用
+
+### バックエンド
+
+- **言語**: Java 21
+- **DTO**: エンティティとは明確に分離。DTOには `fromEntity()` 静的メソッドで変換。
+- **例外**: `ResourceNotFoundException`, `BusinessException`, `ConflictException` をスローする。
+- **Lombok**: `@Data`, `@RequiredArgsConstructor` などを活用してボイラープレートを削減。
+- **トランザクション**: サービス層のメソッドに `@Transactional` を付与。
+
+### 共通
+
+- **コミットメッセージ**: 日本語で記述
+- **命名規則**: キャメルケース（Java）、キャメルケース（TypeScript）
+- **コメント**: 複雑なロジックのみコメントを記述。自明なコードにはコメント不要。
 
 ---
 
 ## 制約事項
 
-### 現在の実装（Phase 1 - フロントエンドのみ）
+### Phase 1（現在）の制約
 
-1. **データの永続化なし**
-   - 全データはメモリ上で管理
-   - ページリロードで状態がリセット
-   - ブラウザを閉じるとカート・注文情報が消失
+1. **データの永続化**: カート・注文はバックエンドDBで永続化。商品データも永続化。
+2. **認証・認可なし**: ユーザー登録・ログイン機能なし。管理画面へのアクセス制限なし。
+3. **決済機能なし**: 決済処理は未実装。注文確定のみ。
+4. **配送料・手数料**: ¥0 固定。
+5. **商品画像**: プレースホルダー画像を使用（placehold.co）。
 
-2. **認証・認可なし**
-   - ユーザー登録・ログイン機能なし
-   - 管理画面へのアクセス制限なし
-   - セッション管理なし
+### Phase 2 以降の実装予定
 
-3. **決済機能なし**
-   - 決済処理は未実装
-   - 注文確定のみ
+1. **認証・認可**: ユーザー登録・ログイン、管理画面のアクセス制限、JWT認証
+2. **決済機能**: 決済サービス連携、クレジットカード決済、決済履歴管理
+3. **配送料計算**: 配送料のロジック実装（送料無料ライン、地域別送料）
+4. **セッション管理**: セッション有効期限、更新機能
+5. **検索・フィルタリング**: 商品名検索、価格帯フィルタ、カテゴリ分類
+6. **AIレコメンデーション**: ユーザーの購買履歴・閲覧履歴に基づくおすすめ
 
-4. **在庫管理の簡易実装**
-   - 注文時の在庫引き当てなし
-   - 複数ユーザーの同時購入を考慮していない
-
-### 今後の実装予定（Phase 2 以降）
-
-1. **バックエンド API 実装（Spring Boot）**
-   - REST API の実装
-   - データベース連携（SQLite）
-   - セッション管理
-
-2. **データの永続化**
-   - 商品データの DB 保存
-   - 注文データの DB 保存
-   - カートデータの永続化
-
-3. **在庫管理の強化**
-   - 注文時の在庫引き当て
-   - トランザクション管理
-   - 在庫切れ時の処理
-
-4. **認証・認可**
-   - ユーザー登録・ログイン
-   - 管理画面のアクセス制限
-   - JWT 認証
-
-5. **決済機能**
-   - 決済サービス連携
-   - クレジットカード決済
-   - 決済履歴管理
+**参照**: [spec-implementation-gaps.md](./spec-implementation-gaps.md) - 詳細なギャップ一覧
 
 ---
 
-## 画面遷移図
+## セキュリティ
 
-```
-[TOP画面 /]
-  ↓ 商品カードクリック
-[商品詳細 /item/:id]
-  ↓ カートに追加
-[カート /order/cart]
-  ↓ レジに進む
-[注文確認 /order/reg]
-  ↓ 注文を確定する
-[注文完了 /order/complete]
+### 現在の実装
 
-[TOP画面 /] → [商品一覧 /item] → [商品詳細 /item/:id]
+- **CORS**: 特定オリジン（`http://localhost:5173`）のみ許可
+- **SQLインジェクション対策**: JPA による Prepared Statement の使用
+- **XSS対策**: React による自動エスケープ
 
-[フッター] → [管理画面 /bo/item]
-```
+### Phase 2 以降で対応予定
+
+- **認証**: JWT による認証
+- **認可**: ロールベースアクセス制御（RBAC）
+- **CSRF対策**: CSRF トークンの実装
+- **HTTPS**: 本番環境では HTTPS 必須
 
 ---
 
-## 技術的な設計方針
+## テスト方針
 
-### 状態管理
-- **カート**: CartContext（React Context API）
-- **商品**: ProductContext（React Context API）
-- ページリロードで状態がリセットされる
+### バックエンド
 
-### ルーティング
-- React Router を使用
-- クライアントサイドルーティング
+- **単体テスト**: JUnit 5 + Mockito
+- **統合テスト**: Spring Boot Test（`@SpringBootTest`）
+- **実行**: `./mvnw test`
 
-### スタイリング
-- Tailwind CSS を使用
-- ユーティリティファーストアプローチ
+### フロントエンド
 
-### コンポーネント設計
-- 関数コンポーネント
-- カスタムフックの活用
-- Props による型安全性
+- **Phase 1**: テストなし（プロトタイプのため）
+- **Phase 2以降**: Vitest + React Testing Library
 
 ---
 
-## 今後の拡張予定
+## デプロイ
 
-1. **検索・フィルタリング機能**
-   - 商品名での検索
-   - 価格帯でのフィルタリング
-   - カテゴリ分類
+### Phase 1（現在）
 
-2. **レビュー・評価機能**
-   - 商品レビューの投稿
-   - 星評価
-   - レビューの表示
+- **環境**: ローカル開発環境のみ
+- **方法**: Docker Compose
 
-3. **お気に入り機能**
-   - 商品のお気に入り登録
-   - お気に入り一覧
+### Phase 2 以降
 
-4. **注文履歴**
-   - 過去の注文一覧
-   - 注文詳細の確認
-   - 再注文機能
+- **環境**: AWS / GCP / Azure
+- **フロントエンド**: Vercel / Netlify
+- **バックエンド**: EC2 / Cloud Run / App Service
+- **データベース**: RDS / Cloud SQL / PostgreSQL
 
-5. **配送情報管理**
-   - 配送先住所の登録
-   - 配送状況の追跡
+---
 
-6. **AI レコメンデーション**
-   - ユーザーの購買履歴に基づくおすすめ
-   - 閲覧履歴に基づくおすすめ
-   - 関連商品の表示
+## 参考資料
+
+### 公式ドキュメント
+
+- [React 公式ドキュメント](https://react.dev/)
+- [Spring Boot 公式ドキュメント](https://spring.io/projects/spring-boot)
+- [Tailwind CSS 公式ドキュメント](https://tailwindcss.com/)
+
+### プロジェクト内ドキュメント
+
+- **[業務要件](./requirements.md)** - ビジネスルール、主要機能
+- **[データモデル](./data-model.md)** - エンティティ定義、DB スキーマ
+- **[顧客向け画面](./ui/customer-ui.md)** - 画面一覧、遷移図
+- **[管理画面](./ui/admin-ui.md)** - 商品管理・注文管理のUI仕様
+- **[API仕様](./ui/api-spec.md)** - エンドポイント、リクエスト/レスポンス
+- **[商品ドメイン](./specs/product.md)** - 商品マスタ、価格管理、公開制御
+- **[在庫ドメイン](./specs/inventory.md)** - 在庫引当の詳細
+- **[注文ドメイン](./specs/order.md)** - 注文フローの詳細
+- **[ギャップ一覧](./spec-implementation-gaps.md)** - 未実装機能、制約事項
+
+---
+
+**最終更新**: 2025-02-11
