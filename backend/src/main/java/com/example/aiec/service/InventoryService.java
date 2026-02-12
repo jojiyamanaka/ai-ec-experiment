@@ -2,12 +2,14 @@ package com.example.aiec.service;
 
 import com.example.aiec.dto.AvailabilityDto;
 import com.example.aiec.dto.ReservationDto;
+import com.example.aiec.dto.StockShortageDetail;
 import com.example.aiec.entity.Order;
 import com.example.aiec.entity.Product;
 import com.example.aiec.entity.StockReservation;
 import com.example.aiec.entity.StockReservation.ReservationType;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ConflictException;
+import com.example.aiec.exception.InsufficientStockException;
 import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.OrderRepository;
 import com.example.aiec.repository.ProductRepository;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -147,13 +150,37 @@ public class InventoryService {
             throw new BusinessException("NO_RESERVATIONS", "仮引当が存在しません");
         }
 
+        // 在庫不足商品を収集するリスト
+        List<StockShortageDetail> shortages = new ArrayList<>();
+
+        // まず全商品の在庫チェックを実施
         for (StockReservation reservation : tentativeReservations) {
             Product product = reservation.getProduct();
+            Integer availableStock = reservationRepository.calculateAvailableStock(product.getId(), now);
 
-            // 有効在庫の最終チェック（自分の仮引当分は差し引いて考える）
-            if (product.getStock() < reservation.getQuantity()) {
-                throw new ConflictException("OUT_OF_STOCK", "在庫が不足している商品があります");
+            if (availableStock == null) {
+                availableStock = product.getStock();
             }
+
+            // 有効在庫の最終チェック
+            if (reservation.getQuantity() > availableStock) {
+                shortages.add(new StockShortageDetail(
+                    product.getId(),
+                    product.getName(),
+                    reservation.getQuantity(),
+                    availableStock
+                ));
+            }
+        }
+
+        // 在庫不足商品がある場合は詳細情報付きで例外をスロー
+        if (!shortages.isEmpty()) {
+            throw new InsufficientStockException("OUT_OF_STOCK", "在庫が不足している商品があります", shortages);
+        }
+
+        // 在庫が十分な場合、本引当を実行
+        for (StockReservation reservation : tentativeReservations) {
+            Product product = reservation.getProduct();
 
             // stock を減少させる
             product.setStock(product.getStock() - reservation.getQuantity());
