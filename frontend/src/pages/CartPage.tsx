@@ -49,7 +49,8 @@ export default function CartPage() {
       if (newQuantity <= 0) {
         await removeFromCart(itemId)
       } else {
-        await updateQuantity(itemId, newQuantity)
+        const clamped = Math.min(newQuantity, 9)
+        await updateQuantity(itemId, clamped)
       }
     } catch (err) {
       console.error('数量変更エラー:', err)
@@ -154,12 +155,13 @@ export default function CartPage() {
                       </button>
                       <input
                         type="number"
-                        min="0"
+                        min="1"
+                        max="9"
                         value={item.quantity}
                         onChange={(e) =>
                           handleQuantityChange(
                             item.id,
-                            parseInt(e.target.value) || 0
+                            parseInt(e.target.value) || 1,
                           )
                         }
                         className="w-16 rounded border border-gray-300 px-3 py-1 text-center"
@@ -168,7 +170,8 @@ export default function CartPage() {
                         onClick={() =>
                           handleQuantityChange(item.id, item.quantity + 1)
                         }
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                        disabled={item.quantity >= 9}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="数量を増やす"
                       >
                         <svg

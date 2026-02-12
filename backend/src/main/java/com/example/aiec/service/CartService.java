@@ -25,6 +25,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CartService {
 
+    private static final int MAX_QUANTITY_PER_ITEM = 9;
+
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -71,12 +73,18 @@ public class CartService {
             throw new BusinessException("ITEM_NOT_AVAILABLE", "この商品は現在購入できません");
         }
 
+        Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
+        int currentQuantity = existingItem.map(CartItem::getQuantity).orElse(0);
+        int totalQuantity = currentQuantity + request.getQuantity();
+        if (totalQuantity > MAX_QUANTITY_PER_ITEM) {
+            throw new BusinessException("INVALID_QUANTITY",
+                    "1商品あたりの最大数量は" + MAX_QUANTITY_PER_ITEM + "個です（現在カートに" + currentQuantity + "個あります）");
+        }
+
         // 仮引当を作成（有効在庫チェック込み）
         inventoryService.createReservation(sessionId, request.getProductId(), request.getQuantity());
 
         // 既存のカートアイテムを検索
-        Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
-
         if (existingItem.isPresent()) {
             // 既存のアイテムがある場合は数量を追加
             CartItem item = existingItem.get();
