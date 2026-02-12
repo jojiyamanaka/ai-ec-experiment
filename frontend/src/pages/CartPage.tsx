@@ -10,15 +10,16 @@ export default function CartPage() {
   // カートが空の場合
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="mx-auto max-w-7xl px-6 py-24">
         <div className="text-center">
+          {/* SVG アイコン（色を変更） */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="mx-auto h-24 w-24 text-gray-400"
+            className="mx-auto h-24 w-24 text-zinc-400"
           >
             <path
               strokeLinecap="round"
@@ -26,15 +27,15 @@ export default function CartPage() {
               d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
             />
           </svg>
-          <h2 className="mt-6 text-2xl font-bold text-gray-900">
+          <h2 className="mt-6 font-serif text-2xl text-zinc-900">
             カートは空です
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-zinc-600">
             商品を追加して、お買い物を始めましょう
           </p>
           <Link
             to="/item"
-            className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+            className="mt-6 inline-block bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors"
           >
             商品一覧へ
           </Link>
@@ -63,8 +64,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">ショッピングカート</h1>
+    <div className="mx-auto max-w-7xl px-6 py-24">
+      <h1 className="mb-12 font-serif text-3xl text-zinc-900">ショッピングカート</h1>
 
       {error && (
         <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-3">
@@ -79,12 +80,12 @@ export default function CartPage() {
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex gap-4 rounded-lg bg-white p-4 shadow-sm"
+                className="flex gap-4 border border-stone-200 bg-white p-4"
               >
                 {/* 商品画像 */}
                 <Link
                   to={`/item/${item.product.id}`}
-                  className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200"
+                  className="h-24 w-24 flex-shrink-0 overflow-hidden bg-stone-200"
                 >
                   <img
                     src={item.product.image}
@@ -99,17 +100,17 @@ export default function CartPage() {
                     <div>
                       <Link
                         to={`/item/${item.product.id}`}
-                        className="font-medium text-gray-900 hover:text-blue-600"
+                        className="font-serif text-sm uppercase tracking-wider text-zinc-900 hover:text-zinc-600"
                       >
                         {item.product.name}
                       </Link>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-xs text-zinc-500">
                         {item.product.description}
                       </p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="text-gray-400 hover:text-red-600"
+                      className="text-zinc-400 hover:text-red-600"
                       aria-label="削除"
                     >
                       <svg
@@ -135,7 +136,7 @@ export default function CartPage() {
                         onClick={() =>
                           handleQuantityChange(item.id, item.quantity - 1)
                         }
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 hover:bg-stone-100"
                         aria-label="数量を減らす"
                       >
                         <svg
@@ -164,14 +165,14 @@ export default function CartPage() {
                             parseInt(e.target.value) || 1,
                           )
                         }
-                        className="w-16 rounded border border-gray-300 px-3 py-1 text-center"
+                        className="w-16 rounded border border-stone-300 px-3 py-1 text-center"
                       />
                       <button
                         onClick={() =>
                           handleQuantityChange(item.id, item.quantity + 1)
                         }
                         disabled={item.quantity >= 9}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="数量を増やす"
                       >
                         <svg
@@ -190,7 +191,7 @@ export default function CartPage() {
                         </svg>
                       </button>
                     </div>
-                    <p className="font-bold text-gray-900">
+                    <p className="text-sm text-zinc-900">
                       ¥{(item.product.price * item.quantity).toLocaleString()}
                     </p>
                   </div>
@@ -202,25 +203,25 @@ export default function CartPage() {
 
         {/* 合計金額サマリー */}
         <div className="lg:col-span-1">
-          <div className="sticky top-4 rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900">注文サマリー</h2>
+          <div className="sticky top-24 border border-stone-200 bg-white p-6">
+            <h2 className="font-serif text-lg text-zinc-900">注文サマリー</h2>
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">小計</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-zinc-600">小計</span>
+                <span className="text-zinc-900">
                   ¥{totalPrice.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">配送料</span>
-                <span className="font-medium text-gray-900">¥0</span>
+                <span className="text-zinc-600">配送料</span>
+                <span className="text-zinc-900">¥0</span>
               </div>
-              <div className="border-t border-gray-200 pt-2">
+              <div className="border-t border-stone-200 pt-2">
                 <div className="flex justify-between">
-                  <span className="text-base font-bold text-gray-900">
+                  <span className="text-base font-serif text-zinc-900">
                     合計
                   </span>
-                  <span className="text-xl font-bold text-blue-600">
+                  <span className="text-xl text-zinc-900">
                     ¥{totalPrice.toLocaleString()}
                   </span>
                 </div>
@@ -228,13 +229,13 @@ export default function CartPage() {
             </div>
             <button
               onClick={handleCheckout}
-              className="mt-6 w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+              className="mt-6 w-full bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors"
             >
               レジに進む
             </button>
             <Link
               to="/item"
-              className="mt-3 block text-center text-sm text-blue-600 hover:underline"
+              className="mt-3 block text-center text-xs uppercase tracking-widest text-zinc-600 hover:text-zinc-900 transition-colors"
             >
               買い物を続ける
             </Link>

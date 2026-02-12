@@ -14,17 +14,17 @@ export default function OrderConfirmPage() {
   // カートが空の場合はカート画面にリダイレクト
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="mx-auto max-w-7xl px-6 py-24">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="font-serif text-2xl text-zinc-900">
             カートが空です
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-zinc-600">
             注文する商品がありません
           </p>
           <Link
             to="/item"
-            className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+            className="mt-6 inline-block bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors"
           >
             商品一覧へ
           </Link>
@@ -79,20 +79,20 @@ export default function OrderConfirmPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">注文内容の確認</h1>
+    <div className="mx-auto max-w-4xl px-6 py-24">
+      <h1 className="mb-12 font-serif text-3xl text-zinc-900">注文内容の確認</h1>
 
       {/* 注文商品一覧 */}
-      <div className="mb-8 rounded-lg bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-gray-900">ご注文商品</h2>
+      <div className="mb-8 border border-stone-200 bg-white p-6">
+        <h2 className="mb-4 font-serif text-lg text-zinc-900">ご注文商品</h2>
         <div className="space-y-4">
           {items.map((item) => (
             <div
               key={item.product.id}
-              className="flex gap-4 border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+              className="flex gap-4 border-b border-stone-200 pb-4 last:border-b-0 last:pb-0"
             >
               {/* 商品画像 */}
-              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+              <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-stone-200">
                 <img
                   src={item.product.image}
                   alt={item.product.name}
@@ -103,18 +103,18 @@ export default function OrderConfirmPage() {
               {/* 商品情報 */}
               <div className="flex flex-1 flex-col justify-between">
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-serif text-sm uppercase tracking-wider text-zinc-900">
                     {item.product.name}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-xs text-zinc-500">
                     {item.product.description}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-zinc-600">
                     数量: {item.quantity}
                   </p>
-                  <p className="font-bold text-gray-900">
+                  <p className="text-sm text-zinc-900">
                     ¥{(item.product.price * item.quantity).toLocaleString()}
                   </p>
                 </div>
@@ -125,29 +125,29 @@ export default function OrderConfirmPage() {
       </div>
 
       {/* 合計金額 */}
-      <div className="mb-8 rounded-lg bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-gray-900">お支払い金額</h2>
+      <div className="mb-8 border border-stone-200 bg-white p-6">
+        <h2 className="mb-4 font-serif text-lg text-zinc-900">お支払い金額</h2>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">小計</span>
-            <span className="font-medium text-gray-900">
+            <span className="text-zinc-600">小計</span>
+            <span className="text-zinc-900">
               ¥{totalPrice.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">配送料</span>
-            <span className="font-medium text-gray-900">¥0</span>
+            <span className="text-zinc-600">配送料</span>
+            <span className="text-zinc-900">¥0</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">手数料</span>
-            <span className="font-medium text-gray-900">¥0</span>
+            <span className="text-zinc-600">手数料</span>
+            <span className="text-zinc-900">¥0</span>
           </div>
-          <div className="border-t border-gray-200 pt-2">
+          <div className="border-t border-stone-200 pt-2">
             <div className="flex justify-between">
-              <span className="text-lg font-bold text-gray-900">
+              <span className="text-base font-serif text-zinc-900">
                 合計金額
               </span>
-              <span className="text-2xl font-bold text-blue-600">
+              <span className="text-xl text-zinc-900">
                 ¥{totalPrice.toLocaleString()}
               </span>
             </div>
@@ -220,13 +220,13 @@ export default function OrderConfirmPage() {
         <button
           onClick={handleConfirmOrder}
           disabled={isSubmitting}
-          className="w-full rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="w-full bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors disabled:cursor-not-allowed disabled:bg-stone-400"
         >
           {isSubmitting ? '処理中...' : '注文を確定する'}
         </button>
         <Link
           to="/order/cart"
-          className="block text-center text-sm text-blue-600 hover:underline"
+          className="block text-center text-xs uppercase tracking-widest text-zinc-600 hover:text-zinc-900 transition-colors"
         >
           カートに戻る
         </Link>

@@ -10,17 +10,17 @@ function getStockStatus(stock: number) {
   if (stock === 0) {
     return {
       text: '売り切れ',
-      color: 'bg-gray-400 text-white',
+      color: 'bg-stone-400 text-white',
     }
   } else if (stock >= 1 && stock <= 5) {
     return {
       text: '残りわずか',
-      color: 'bg-orange-500 text-white',
+      color: 'bg-zinc-500 text-white',
     }
   } else {
     return {
       text: '在庫あり',
-      color: 'bg-green-500 text-white',
+      color: 'bg-zinc-700 text-white',
     }
   }
 }
@@ -31,20 +31,22 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       to={`/item/${product.id}`}
-      className="group block overflow-hidden rounded-lg bg-white shadow-sm transition hover:shadow-md"
+      className="group block cursor-pointer"
     >
-      <div className="aspect-[4/3] overflow-hidden bg-gray-200">
+      <div className="aspect-[3/4] overflow-hidden bg-stone-200 mb-4">
         <img
           src={product.image}
           alt={product.name}
-          className="h-full w-full object-cover transition group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       </div>
-      <div className="p-4">
-        <h3 className="font-medium text-gray-900">{product.name}</h3>
-        <p className="mt-1 text-sm text-gray-500">{product.description}</p>
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-lg font-bold text-blue-600">
+      <div>
+        <h3 className="font-serif text-sm mb-1 uppercase tracking-wider text-zinc-900">
+          {product.name}
+        </h3>
+        <p className="text-xs text-zinc-500 mb-2">{product.description}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-zinc-500">
             ¥{product.price.toLocaleString()}
           </p>
           <span

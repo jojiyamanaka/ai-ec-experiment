@@ -9,29 +9,32 @@ export default function HomePage() {
   return (
     <div>
       {/* バナーエリア */}
-      <section className="bg-gradient-to-r from-blue-500 to-purple-600">
-        <div className="mx-auto max-w-7xl px-4 py-24 text-center text-white">
-          <h1 className="text-4xl font-bold md:text-5xl">
+      <section className="bg-zinc-900">
+        <div className="mx-auto max-w-7xl px-6 py-32 text-center text-white">
+          <span className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+            2026 Spring Collection
+          </span>
+          <h1 className="mt-4 font-serif text-5xl md:text-7xl leading-tight">
             AI がおすすめする最高の商品
           </h1>
-          <p className="mt-4 text-lg md:text-xl">
+          <p className="mt-6 text-zinc-300 leading-relaxed font-light max-w-2xl mx-auto">
             あなたにぴったりの商品を見つけよう
           </p>
         </div>
       </section>
 
       {/* おすすめ商品セクション */}
-      <section className="mx-auto max-w-7xl px-4 py-12">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">おすすめ商品</h2>
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <div className="mb-12 flex items-end justify-between">
+          <h2 className="font-serif text-3xl text-zinc-900">おすすめ商品</h2>
           <Link
             to="/item"
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-xs uppercase tracking-widest border-b border-zinc-900 pb-1 hover:text-zinc-600 transition-colors"
           >
-            すべて見る →
+            View All
           </Link>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {recommendedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

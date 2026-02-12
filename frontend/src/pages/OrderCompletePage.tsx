@@ -20,17 +20,17 @@ export default function OrderCompletePage() {
   // 注文情報がない場合（直接URLアクセスなど）
   if (!state) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
+      <div className="mx-auto max-w-7xl px-6 py-24">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="font-serif text-2xl text-zinc-900">
             注文情報が見つかりません
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-zinc-600">
             正しい手順で注文を完了してください
           </p>
           <Link
             to="/"
-            className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+            className="mt-6 inline-block bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors"
           >
             TOPに戻る
           </Link>
@@ -65,17 +65,17 @@ export default function OrderCompletePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-4xl px-6 py-24">
       {/* 完了メッセージ */}
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+      <div className="mb-12 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2}
             stroke="currentColor"
-            className="h-8 w-8 text-green-600"
+            className="h-8 w-8 text-zinc-700"
           >
             <path
               strokeLinecap="round"
@@ -84,33 +84,33 @@ export default function OrderCompletePage() {
             />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="font-serif text-3xl text-zinc-900">
           ご注文ありがとうございます
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-zinc-600">
           ご注文を承りました。商品の発送までしばらくお待ちください。
         </p>
       </div>
 
       {/* 注文番号 */}
-      <div className="mb-8 rounded-lg bg-blue-50 p-6 text-center">
-        <p className="text-sm text-gray-600">注文番号</p>
-        <p className="mt-1 text-2xl font-bold text-blue-600">{orderNumber}</p>
+      <div className="mb-8 border border-stone-200 bg-stone-50 p-6 text-center">
+        <p className="text-xs uppercase tracking-widest text-zinc-500">注文番号</p>
+        <p className="mt-2 font-serif text-2xl text-zinc-900">{orderNumber}</p>
       </div>
 
       {/* 注文内容サマリー */}
-      <div className="mb-8 rounded-lg bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-bold text-gray-900">
+      <div className="mb-8 border border-stone-200 bg-white p-6">
+        <h2 className="mb-4 font-serif text-lg text-zinc-900">
           ご注文内容
         </h2>
         <div className="space-y-4">
           {items.map((item) => (
             <div
               key={item.product.id}
-              className="flex gap-4 border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+              className="flex gap-4 border-b border-stone-200 pb-4 last:border-b-0 last:pb-0"
             >
               {/* 商品画像 */}
-              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+              <div className="h-20 w-20 flex-shrink-0 overflow-hidden bg-stone-200">
                 <img
                   src={item.product.image}
                   alt={item.product.name}
@@ -121,14 +121,14 @@ export default function OrderCompletePage() {
               {/* 商品情報 */}
               <div className="flex flex-1 flex-col justify-between">
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-serif text-sm uppercase tracking-wider text-zinc-900">
                     {item.product.name}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-xs text-zinc-500">
                     単価: ¥{item.product.price.toLocaleString()} × {item.quantity}
                   </p>
                 </div>
-                <p className="font-bold text-gray-900">
+                <p className="text-sm text-zinc-900">
                   ¥{(item.product.price * item.quantity).toLocaleString()}
                 </p>
               </div>
@@ -137,12 +137,12 @@ export default function OrderCompletePage() {
         </div>
 
         {/* 合計金額 */}
-        <div className="mt-6 border-t border-gray-200 pt-4">
+        <div className="mt-6 border-t border-stone-200 pt-4">
           <div className="flex justify-between">
-            <span className="text-lg font-bold text-gray-900">
+            <span className="text-base font-serif text-zinc-900">
               合計金額
             </span>
-            <span className="text-2xl font-bold text-blue-600">
+            <span className="text-xl text-zinc-900">
               ¥{totalPrice.toLocaleString()}
             </span>
           </div>
@@ -150,9 +150,9 @@ export default function OrderCompletePage() {
       </div>
 
       {/* お知らせ */}
-      <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-6">
-        <h3 className="mb-2 font-bold text-gray-900">ご注文完了のお知らせ</h3>
-        <ul className="space-y-1 text-sm text-gray-600">
+      <div className="mb-8 border border-stone-200 bg-stone-50 p-6">
+        <h3 className="mb-2 font-serif text-base text-zinc-900">ご注文完了のお知らせ</h3>
+        <ul className="space-y-1 text-sm text-zinc-600">
           <li>• ご登録のメールアドレスに注文確認メールをお送りしました</li>
           <li>• 商品の発送が完了しましたら、発送通知メールをお送りします</li>
           <li>• ご不明な点がございましたら、お問い合わせください</li>
@@ -163,13 +163,13 @@ export default function OrderCompletePage() {
       <div className="text-center">
         <Link
           to="/"
-          className="inline-block rounded-lg bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700"
+          className="inline-block bg-zinc-900 px-12 py-4 text-xs tracking-[0.2em] uppercase text-white hover:bg-zinc-800 transition-colors"
         >
           TOPに戻る
         </Link>
         <Link
           to="/item"
-          className="ml-4 inline-block rounded-lg border border-gray-300 bg-white px-8 py-3 font-medium text-gray-700 hover:bg-gray-50"
+          className="ml-4 inline-block border border-stone-300 bg-white px-12 py-4 text-xs tracking-[0.2em] uppercase text-zinc-700 hover:bg-stone-50 transition-colors"
         >
           買い物を続ける
         </Link>
@@ -178,7 +178,7 @@ export default function OrderCompletePage() {
             <button
               onClick={handleCancelOrder}
               disabled={isCancelling}
-              className="text-sm text-red-600 hover:text-red-700 underline disabled:opacity-50"
+              className="text-xs uppercase tracking-widest text-red-600 hover:text-red-700 underline disabled:opacity-50"
             >
               {isCancelling ? 'キャンセル中...' : '注文をキャンセル'}
             </button>

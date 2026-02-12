@@ -5,51 +5,49 @@ export default function Layout() {
   const { totalQuantity } = useCart()
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link to="/" className="text-2xl font-bold text-gray-900">
+    <div className="flex min-h-screen flex-col bg-stone-50">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 h-20">
+          {/* 左側ナビゲーション */}
+          <nav className="hidden md:flex space-x-8 text-xs tracking-widest uppercase">
+            <Link to="/item" className="hover:text-zinc-600 transition-colors">
+              Collection
+            </Link>
+          </nav>
+
+          {/* 中央ロゴ */}
+          <Link to="/" className="font-serif text-2xl tracking-[0.2em] text-zinc-900">
             AI EC Shop
           </Link>
-          <Link
-            to="/order/cart"
-            className="relative flex items-center gap-2 rounded-lg px-4 py-2 hover:bg-gray-100"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
+
+          {/* 右側ナビゲーション */}
+          <div className="flex items-center space-x-6 text-xs uppercase tracking-widest">
+            <Link
+              to="/order/cart"
+              className="relative hover:text-zinc-600 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-              />
-            </svg>
-            <span className="text-sm font-medium">カート</span>
-            {totalQuantity > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                {totalQuantity}
-              </span>
-            )}
-          </Link>
+              Cart
+              {totalQuantity > 0 && (
+                <span className="absolute -right-3 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+                  {totalQuantity}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
-      <main className="flex-1">
+      <main className="flex-1 pt-20">
         <Outlet />
       </main>
-      <footer className="border-t border-gray-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6">
+      <footer className="border-t border-stone-200 bg-stone-50">
+        <div className="mx-auto max-w-7xl px-6 py-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-zinc-500">
               © 2025 AI EC Shop. All rights reserved.
             </p>
             <Link
               to="/bo/item"
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-xs text-zinc-400 hover:text-zinc-600"
             >
               管理画面
             </Link>

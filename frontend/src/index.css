@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  /* カラーパレット */
+  --color-brand-primary: #18181B;
+  --color-brand-secondary: #71717A;
+  --color-brand-accent: #E7E5E4;
+  --color-brand-base: #F5F5F4;
+  --color-brand-light: #A8A29E;
+
+  /* フォントファミリー */
+  --font-family-serif: 'Playfair Display', 'Noto Serif JP', serif;
+  --font-family-sans: 'Inter', sans-serif;
+}
+
+/* ベーススタイル */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-brand-base);
+  color: var(--color-brand-primary);
+}
