@@ -25,7 +25,26 @@
       "Bash(__NEW_LINE_96e322e023cea9b6__ echo \"=== テスト 3: 注文発送（CONFIRMED → SHIPPED） ===\")",
       "Bash(__NEW_LINE_d38f27761b00011a__ echo \"=== テスト 4: 配達完了（SHIPPED → DELIVERED） ===\")",
       "Bash(echo \"=== フロントエンド確認URL ===\n商品一覧: http://localhost:5173\n注文詳細: http://localhost:5173/order/5\n管理画面: http://localhost:5173/bo/order\n\n=== バックエンドAPI確認 ===\n全注文: curl http://localhost:8080/api/order\")",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(npm run build:*)",
+      "Bash(wc:*)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" status --short docs/)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff --name-status)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff --name-status --diff-filter=A)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" status --short)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff backend/src/main/java/com/example/aiec/exception/GlobalExceptionHandler.java)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff backend/src/main/java/com/example/aiec/service/CartService.java)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff backend/src/main/java/com/example/aiec/service/OrderService.java)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/types/api.ts)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/pages/ItemDetailPage.tsx)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/pages/OrderConfirmPage.tsx)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/contexts/CartContext.tsx)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/contexts/ProductContext.tsx)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/lib/api.ts)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" diff frontend/src/pages/AdminItemPage.tsx)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" log --oneline main..HEAD)",
+      "Bash(git -C \"C:\\\\workspace\\\\ai-ec-experiment\" add AGENTS.md CLAUDE.md PR_REQ-001.md backend/src/main/java/com/example/aiec/dto/UnavailableProductDetail.java backend/src/main/java/com/example/aiec/exception/ItemNotAvailableException.java backend/src/main/java/com/example/aiec/exception/GlobalExceptionHandler.java backend/src/main/java/com/example/aiec/service/CartService.java backend/src/main/java/com/example/aiec/service/OrderService.java docs/01_requirements/ docs/02_designs/ docs/03_tasks/ docs/spec-implementation-gaps.md docs/ui/api-spec.md frontend/src/contexts/CartContext.tsx frontend/src/contexts/ProductContext.tsx frontend/src/lib/api.ts frontend/src/pages/AdminItemPage.tsx frontend/src/pages/ItemDetailPage.tsx frontend/src/pages/OrderConfirmPage.tsx frontend/src/types/api.ts .claude/settings.local.json)"
     ]
   }
 }

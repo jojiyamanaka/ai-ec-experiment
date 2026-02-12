@@ -1,10 +1,12 @@
 package com.example.aiec.service;
 
 import com.example.aiec.dto.OrderDto;
+import com.example.aiec.dto.UnavailableProductDetail;
 import com.example.aiec.entity.Cart;
 import com.example.aiec.entity.Order;
 import com.example.aiec.entity.OrderItem;
 import com.example.aiec.exception.BusinessException;
+import com.example.aiec.exception.ItemNotAvailableException;
 import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.CartRepository;
 import com.example.aiec.repository.OrderRepository;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * 注文サービス
@@ -43,6 +46,21 @@ public class OrderService {
         // カートが空でないかチェック
         if (cart.getItems().isEmpty()) {
             throw new BusinessException("CART_EMPTY", "カートが空です");
+        }
+
+        // 非公開商品チェック
+        List<UnavailableProductDetail> unavailableProducts = cart.getItems().stream()
+                .filter(item -> !item.getProduct().getIsPublished())
+                .map(item -> new UnavailableProductDetail(
+                        item.getProduct().getId(),
+                        item.getProduct().getName()))
+                .toList();
+
+        if (!unavailableProducts.isEmpty()) {
+            throw new ItemNotAvailableException(
+                    "ITEM_NOT_AVAILABLE",
+                    "購入できない商品がカートに含まれています",
+                    unavailableProducts);
         }
 
         // 注文を作成
