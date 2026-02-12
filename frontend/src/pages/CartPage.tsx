@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 
 export default function CartPage() {
   const { items, totalPrice, updateQuantity, removeFromCart } = useCart()
   const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
 
   // カートが空の場合
   if (items.length === 0) {
@@ -42,15 +44,16 @@ export default function CartPage() {
   }
 
   const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+    setError(null)
     try {
       if (newQuantity <= 0) {
         await removeFromCart(itemId)
       } else {
         await updateQuantity(itemId, newQuantity)
       }
-    } catch (error) {
-      console.error('数量変更エラー:', error)
-      alert('数量の変更に失敗しました')
+    } catch (err) {
+      console.error('数量変更エラー:', err)
+      setError(err instanceof Error ? err.message : '数量の変更に失敗しました')
     }
   }
 
@@ -61,6 +64,12 @@ export default function CartPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
       <h1 className="mb-8 text-3xl font-bold text-gray-900">ショッピングカート</h1>
+
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-3">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* カート商品一覧 */}
