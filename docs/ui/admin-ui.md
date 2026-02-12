@@ -31,6 +31,38 @@
 
 ---
 
+## 認証・認可（CHG-006）
+
+### アクセス制限
+
+**管理画面へのアクセスには ADMIN ロールが必須**:
+- 商品管理（/bo/item）: ADMIN ロールのみ
+- 注文管理（/bo/order）: ADMIN ロールのみ
+
+### 認証フロー
+
+1. **未ログイン状態**: 管理画面にアクセスすると 403 Forbidden エラー
+2. **CUSTOMER ロール**: ログイン済みでも ADMIN でない場合は 403 Forbidden エラー
+3. **ADMIN ロール**: 管理画面へのアクセスが許可される
+
+### 操作履歴
+
+管理者の操作は全て記録される:
+- **商品編集**: `OperationHistory` に `ADMIN_ACTION` として記録
+- **注文ステータス変更**: `OperationHistory` に `ADMIN_ACTION` として記録
+- **記録内容**:
+  - `eventType`: ADMIN_ACTION
+  - `userId`: 管理者の会員ID
+  - `userEmail`: 管理者のメールアドレス
+  - `requestPath`: リクエストパス（例: "/api/item/1"）
+  - `details`: 操作詳細（例: "商品編集: プレミアムコーヒー豆"）
+
+**参照**:
+- 詳細仕様: [specs/authentication.md](../specs/authentication.md)
+- データモデル: [data-model.md](../data-model.md) - OperationHistory エンティティ
+
+---
+
 ## 管理画面のビジネスロジック
 
 以下のセクション (1-4) では、管理画面での操作がシステム全体に与える影響を説明します。

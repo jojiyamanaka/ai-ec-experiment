@@ -91,3 +91,35 @@ export interface ProductListResponse {
   page: number
   limit: number
 }
+
+// ============================================
+// 認証関連の型定義
+// ============================================
+
+// ユーザー情報
+export interface User {
+  id: number
+  email: string
+  displayName: string
+  createdAt: string
+}
+
+// 認証レスポンス
+export interface AuthResponse {
+  user: User
+  token: string
+  expiresAt: string
+}
+
+// 会員登録リクエスト
+export interface RegisterRequest {
+  email: string
+  displayName: string
+  password: string
+}
+
+// ログインリクエスト
+export interface LoginRequest {
+  email: string
+  password: string
+}

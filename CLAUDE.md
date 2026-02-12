@@ -110,6 +110,45 @@ cd backend
    - このファイル単体で実装可能な粒度にする
    - 検証コマンドを冒頭に記載
 
+### アーカイブルール
+
+実装が完了し、主要ドキュメントに反映されたCHG案件は、アーカイブディレクトリに移動する。
+
+**アーカイブ対象**:
+- 実装完了済みの CHG-XXX ドキュメント（要件定義、技術設計、実装タスク）
+- 主要ドキュメント（SPEC.md、requirements.md、data-model.md など）に内容が反映済み
+
+**アーカイブ先**:
+```
+docs/archive/
+├── 01_requirements/
+│   └── CHG-XXX_*.md
+├── 02_designs/
+│   └── CHG-XXX_*.md
+└── 03_tasks/
+    └── CHG-XXX_*.md
+```
+
+**アーカイブの目的**:
+- 主要ドキュメントを「Single Source of Truth」として維持
+- CHG案件は詳細な履歴・背景として参照可能（アーカイブ）
+- ドキュメントディレクトリの見通しを良くする
+
+**移動コマンド例**:
+```bash
+# CHG-007 の実装完了後
+mv docs/01_requirements/CHG-007*.md docs/archive/01_requirements/
+mv docs/02_designs/CHG-007*.md docs/archive/02_designs/
+mv docs/03_tasks/CHG-007*.md docs/archive/03_tasks/
+```
+
+**アーカイブ済み案件（参考）**:
+- CHG-002: 非公開商品カート整合性
+- CHG-003: カート数量上限（1-9個）
+- CHG-004: エラーメッセージ改善
+- CHG-005: エディトリアルデザイン
+- CHG-006: 会員機能追加（認証・認可）
+
 ## ドキュメント
 
 - `docs/SPEC.md` — 機能仕様書

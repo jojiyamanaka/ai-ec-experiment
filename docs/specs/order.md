@@ -101,6 +101,91 @@
 
 ---
 
+### 2-4. 会員とゲストの区別（CHG-006）
+
+注文は会員とゲストの両方が作成できる。注文エンティティの `userId` フィールドで区別する。
+
+#### 2-4-1. ゲストユーザーの注文
+
+**Given**: ユーザーがログインしていない（ゲスト）
+
+**When**: 注文を作成する
+
+**Then**:
+- `Order.userId` は `null` に設定される
+- `Order.sessionId` にセッションIDが設定される
+- セッションIDで注文を識別する
+
+**実装箇所**:
+- バックエンド: `Order.java` - `userId` フィールド（nullable）
+- バックエンド: `OrderService.java` - 注文作成時にuserIdを設定しない
+
+---
+
+#### 2-4-2. 会員ユーザーの注文
+
+**Given**: ユーザーがログインしている（会員）
+
+**When**: 注文を作成する
+
+**Then**:
+- `Order.userId` にログイン中の会員IDが設定される
+- `Order.sessionId` にも引き続きセッションIDが設定される（互換性のため）
+- 会員IDで注文を識別する
+
+**実装箇所**:
+- バックエンド: `AuthService.java` - 認証トークンからuserIdを取得
+- バックエンド: `OrderService.java` - 注文作成時にuserIdを設定
+
+---
+
+#### 2-4-3. 注文の所有権確認
+
+注文詳細の取得時、以下のルールで所有権を確認する:
+
+**会員の注文**:
+- `userId` が一致する場合のみアクセス可能
+- セッションIDは無視される
+
+**ゲストの注文**:
+- `userId` が `null` かつ `sessionId` が一致する場合のみアクセス可能
+
+**管理者（ADMIN）**:
+- すべての注文にアクセス可能
+
+**実装箇所**:
+- バックエンド: `OrderService.java` - 注文取得時の権限チェック
+- バックエンド: `AuthService.java` - ロール確認
+
+---
+
+### 2-5. 注文履歴取得（会員専用、CHG-006）
+
+会員ユーザーは自分の過去の注文履歴を取得できる。
+
+**Given**: ユーザーがログインしている（会員）
+
+**When**: GET /api/order/history を呼び出す
+
+**Then**:
+- 自分の注文のみが返される（`userId` でフィルタ）
+- 注文は作成日時降順でソートされる
+- すべてのステータスの注文が含まれる（PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED）
+- ゲストの注文（`userId = null`）は含まれない
+
+**実装箇所**:
+- バックエンド: `OrderController.java` - getOrderHistory()
+- バックエンド: `OrderService.java` - findOrdersByUserId()
+
+**エラーケース**:
+- 未ログイン（トークン未提供）: HTTPステータス 400 (Bad Request)、エラーコード UNAUTHORIZED
+
+**参照**:
+- API仕様: [api-spec.md](../ui/api-spec.md) - エンドポイント 19
+- 認証仕様: [authentication.md](./authentication.md) - トークン検証
+
+---
+
 ## 3. 注文番号の採番ルール
 
 ### 3-1. 注文番号の形式

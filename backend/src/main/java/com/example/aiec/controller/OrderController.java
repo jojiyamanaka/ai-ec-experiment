@@ -1,11 +1,16 @@
 package com.example.aiec.controller;
 
 import com.example.aiec.dto.*;
+import com.example.aiec.entity.User;
+import com.example.aiec.exception.BusinessException;
+import com.example.aiec.service.AuthService;
 import com.example.aiec.service.CartService;
 import com.example.aiec.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 注文・カートコントローラ
@@ -17,6 +22,7 @@ public class OrderController {
 
     private final CartService cartService;
     private final OrderService orderService;
+    private final AuthService authService;
 
     /**
      * カート取得
@@ -72,40 +78,92 @@ public class OrderController {
 
     /**
      * 注文作成
-     * POST /api/order
      */
     @PostMapping
     public ApiResponse<OrderDto> createOrder(
             @RequestHeader("X-Session-Id") String sessionId,
-            @Valid @RequestBody CreateOrderRequest request
-    ) {
-        OrderDto order = orderService.createOrder(sessionId, request.getCartId());
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Valid @RequestBody CreateOrderRequest request) {
+
+        // 認証済みの場合はuserIdを取得
+        Long userId = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = extractToken(authHeader);
+                User user = authService.verifyToken(token);
+                userId = user.getId();
+            } catch (Exception e) {
+                // 認証エラーの場合はゲスト注文として処理
+                // （トークンが無効でもゲスト注文は許可）
+            }
+        }
+
+        OrderDto order = orderService.createOrder(sessionId, request.getCartId(), userId);
         return ApiResponse.success(order);
     }
 
     /**
-     * 注文詳細取得
-     * GET /api/order/:id
+     * 注文詳細を取得
      */
     @GetMapping("/{id}")
-    public ApiResponse<OrderDto> getOrder(
-            @RequestHeader("X-Session-Id") String sessionId,
-            @PathVariable Long id
-    ) {
-        OrderDto order = orderService.getOrderById(id, sessionId);
+    public ApiResponse<OrderDto> getOrderById(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Session-Id", required = false) String sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        // 認証済みの場合はuserIdを取得
+        Long userId = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = extractToken(authHeader);
+                User user = authService.verifyToken(token);
+                userId = user.getId();
+            } catch (Exception e) {
+                // 認証エラーの場合はnullのまま
+            }
+        }
+
+        OrderDto order = orderService.getOrderById(id, sessionId, userId);
         return ApiResponse.success(order);
     }
 
     /**
-     * 注文キャンセル（顧客向け）
-     * POST /api/order/:id/cancel
+     * 会員の注文履歴を取得
+     */
+    @GetMapping("/history")
+    public ApiResponse<List<OrderDto>> getOrderHistory(
+            @RequestHeader("Authorization") String authHeader) {
+
+        // トークンからユーザーIDを取得
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+
+        List<OrderDto> orders = orderService.getOrderHistory(user.getId());
+        return ApiResponse.success(orders);
+    }
+
+    /**
+     * 注文をキャンセル
      */
     @PostMapping("/{id}/cancel")
     public ApiResponse<OrderDto> cancelOrder(
-            @RequestHeader("X-Session-Id") String sessionId,
-            @PathVariable Long id
-    ) {
-        OrderDto order = orderService.cancelOrder(id, sessionId);
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Session-Id", required = false) String sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        // 認証済みの場合はuserIdを取得
+        Long userId = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = extractToken(authHeader);
+                User user = authService.verifyToken(token);
+                userId = user.getId();
+            } catch (Exception e) {
+                // 認証エラーの場合はnullのまま
+            }
+        }
+
+        OrderDto order = orderService.cancelOrder(id, sessionId, userId);
         return ApiResponse.success(order);
     }
 
@@ -147,6 +205,16 @@ public class OrderController {
     public ApiResponse<java.util.List<OrderDto>> getAllOrders() {
         java.util.List<OrderDto> orders = orderService.getAllOrders();
         return ApiResponse.success(orders);
+    }
+
+    /**
+     * Authorizationヘッダーからトークンを抽出
+     */
+    private String extractToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BusinessException("UNAUTHORIZED", "認証が必要です");
+        }
+        return authHeader.substring(7);
     }
 
 }

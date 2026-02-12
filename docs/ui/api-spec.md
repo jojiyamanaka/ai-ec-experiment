@@ -792,6 +792,312 @@ GET /api/order
 
 ---
 
+## 認証 API
+
+### 15. 会員登録
+会員アカウントを新規作成します。登録と同時にログイン状態になります。
+
+**エンドポイント**
+```
+POST /api/auth/register
+```
+
+**リクエスト**
+```json
+{
+  "email": "user@example.com",
+  "displayName": "山田太郎",
+  "password": "SecurePass123"
+}
+```
+
+**パラメータ**
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| email | string | ○ | メールアドレス（ログインID） |
+| displayName | string | ○ | 表示名（最大100文字） |
+| password | string | ○ | パスワード（8文字以上推奨） |
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "displayName": "山田太郎",
+      "role": "CUSTOMER",
+      "createdAt": "2026-02-12T10:00:00Z"
+    },
+    "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "expiresAt": "2026-02-19T10:00:00Z"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+// メールアドレス重複（409 Conflict）
+{
+  "success": false,
+  "error": {
+    "code": "EMAIL_ALREADY_EXISTS",
+    "message": "このメールアドレスは既に登録されています"
+  }
+}
+
+// バリデーションエラー（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "メールアドレスの形式が正しくありません"
+  }
+}
+```
+
+---
+
+### 16. ログイン
+メールアドレスとパスワードで認証し、トークンを発行します。
+
+**エンドポイント**
+```
+POST /api/auth/login
+```
+
+**リクエスト**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePass123"
+}
+```
+
+**パラメータ**
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| email | string | ○ | メールアドレス |
+| password | string | ○ | パスワード |
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "displayName": "山田太郎",
+      "role": "CUSTOMER",
+      "createdAt": "2026-02-12T10:00:00Z"
+    },
+    "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "expiresAt": "2026-02-19T10:00:00Z"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+// 認証失敗（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "メールアドレスまたはパスワードが正しくありません"
+  }
+}
+```
+
+**セキュリティ**:
+- パスワード誤りとアカウント不存在で同じエラーメッセージを返す（アカウント存在判別防止）
+
+---
+
+### 17. ログアウト
+認証トークンを失効させます。
+
+**エンドポイント**
+```
+POST /api/auth/logout
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <token>
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "ログアウトしました"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+// 認証エラー（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "認証が必要です"
+  }
+}
+```
+
+---
+
+### 18. 会員情報取得
+ログイン中の会員情報を取得します。
+
+**エンドポイント**
+```
+GET /api/auth/me
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <token>
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "displayName": "山田太郎",
+    "role": "CUSTOMER",
+    "createdAt": "2026-02-12T10:00:00Z"
+  }
+}
+```
+
+**エラーレスポンス**
+```json
+// 認証エラー（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "認証が必要です"
+  }
+}
+
+// トークン有効期限切れ（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "トークンの有効期限が切れています"
+  }
+}
+
+// トークン失効済み（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "トークンが失効しています"
+  }
+}
+```
+
+---
+
+### 19. 会員注文履歴取得
+ログイン中の会員の注文履歴を取得します。
+
+**エンドポイント**
+```
+GET /api/order/history
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <token>
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "orderId": 3,
+      "orderNumber": "ORD-20260212-003",
+      "items": [
+        {
+          "product": {
+            "id": 1,
+            "name": "オーガニックマンゴー",
+            "price": 1000,
+            "image": "/images/mango.jpg"
+          },
+          "quantity": 2,
+          "subtotal": 2000
+        }
+      ],
+      "totalPrice": 2000,
+      "status": "DELIVERED",
+      "createdAt": "2026-02-10T10:00:00Z",
+      "updatedAt": "2026-02-11T15:00:00Z"
+    }
+  ]
+}
+```
+
+**仕様**:
+- 認証必須
+- 自分の注文のみ取得（`userId`で絞り込み）
+- 作成日時降順でソート
+- 全ステータスの注文を取得
+
+**エラーレスポンス**
+```json
+// 認証エラー（400 Bad Request）
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "認証が必要です"
+  }
+}
+```
+
+---
+
+## 型定義
+
+### User（会員）
+```typescript
+{
+  id: number              // 会員ID
+  email: string           // メールアドレス
+  displayName: string     // 表示名
+  role: string            // ロール（CUSTOMER, ADMIN）
+  createdAt: string       // 作成日時（ISO 8601形式）
+}
+```
+
+### AuthResponse（認証レスポンス）
+```typescript
+{
+  user: User              // 会員情報
+  token: string           // 認証トークン（UUID v4、36文字）
+  expiresAt: string       // トークン有効期限（ISO 8601形式）
+}
+```
+
+---
+
 ## エラーコード一覧
 
 ### バックエンドエラー（HTTPステータス: 400, 404, 409）
@@ -804,6 +1110,7 @@ GET /api/order
 | RESERVATION_NOT_FOUND | 404 | 在庫引当が見つかりません |
 | OUT_OF_STOCK | 409 | 在庫が不足している商品があります |
 | INSUFFICIENT_STOCK | 409 | 有効在庫が不足しています |
+| EMAIL_ALREADY_EXISTS | 409 | このメールアドレスは既に登録されています |
 | ITEM_NOT_AVAILABLE | 400 | 非公開商品へのカート追加・注文確定時 |
 | CART_EMPTY | 400 | カートが空です |
 | ORDER_NOT_CANCELLABLE | 400 | この注文はキャンセルできません |
@@ -811,6 +1118,8 @@ GET /api/order
 | INVALID_STATUS_TRANSITION | 400 | 不正な状態遷移です |
 | INVALID_QUANTITY | 400 | 無効な数量です |
 | INVALID_REQUEST | 400 | 無効なリクエストです |
+| INVALID_CREDENTIALS | 400 | メールアドレスまたはパスワードが正しくありません |
+| UNAUTHORIZED | 400 | 認証が必要です |
 | NO_RESERVATIONS | 400 | 仮引当が存在しません |
 | INTERNAL_ERROR | 500 | 内部エラーが発生しました |
 
@@ -826,6 +1135,7 @@ GET /api/order
 
 1. すべてのリクエストには `Content-Type: application/json` ヘッダーが必要です
 2. カート関連のAPIは `X-Session-Id` ヘッダーが必須です
-3. セッションIDはクライアント側で生成・管理します
-4. 商品の在庫数は注文時にチェックされます
-5. 注文番号は `ORD-YYYYMMDD-XXX` 形式で自動生成されます
+3. 認証が必要なAPIは `Authorization: Bearer <token>` ヘッダーが必須です
+4. セッションIDはクライアント側で生成・管理します
+5. 商品の在庫数は注文時にチェックされます
+6. 注文番号は `ORD-YYYYMMDD-XXX` 形式で自動生成されます

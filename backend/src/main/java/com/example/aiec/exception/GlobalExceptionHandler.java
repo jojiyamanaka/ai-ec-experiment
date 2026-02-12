@@ -52,8 +52,13 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+        // 認証エラーは 401 Unauthorized
+        if ("UNAUTHORIZED".equals(ex.getErrorCode()) || "INVALID_CREDENTIALS".equals(ex.getErrorCode())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
+        }
+        // その他のビジネス例外は 400 Bad Request
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
     }
 

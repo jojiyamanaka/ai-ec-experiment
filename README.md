@@ -71,3 +71,5 @@ docker-compose logs -f backend
 
 - [仕様書](./docs/SPEC.md)
 - [API仕様](./docs/api-spec.md)
+- [テスト実施ガイド](./docs/test/testing-operations.md)
+- [Playwright 利用ガイド](./docs/test/playwright-runbook.md)

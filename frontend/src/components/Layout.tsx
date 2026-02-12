@@ -1,8 +1,10 @@
 import { Link, Outlet } from 'react-router'
 import { useCart } from '../contexts/CartContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Layout() {
   const { totalQuantity } = useCart()
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
     <div className="flex min-h-screen flex-col bg-stone-50">
@@ -33,6 +35,31 @@ export default function Layout() {
                 </span>
               )}
             </Link>
+
+            {/* 認証状態 */}
+            {isAuthenticated ? (
+              <>
+                <Link to="/order/history" className="hover:text-zinc-600 transition-colors">
+                  Orders
+                </Link>
+                <span className="text-xs text-zinc-700">{user?.displayName}</span>
+                <button
+                  onClick={logout}
+                  className="hover:text-zinc-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth/login" className="hover:text-zinc-600 transition-colors">
+                  Login
+                </Link>
+                <Link to="/auth/register" className="hover:text-zinc-600 transition-colors">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

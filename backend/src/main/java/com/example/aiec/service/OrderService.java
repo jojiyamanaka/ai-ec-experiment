@@ -5,11 +5,13 @@ import com.example.aiec.dto.UnavailableProductDetail;
 import com.example.aiec.entity.Cart;
 import com.example.aiec.entity.Order;
 import com.example.aiec.entity.OrderItem;
+import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ItemNotAvailableException;
 import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.CartRepository;
 import com.example.aiec.repository.OrderRepository;
+import com.example.aiec.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,12 +31,18 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final CartService cartService;
     private final InventoryService inventoryService;
+    private final UserRepository userRepository;
 
     /**
      * 注文を作成
+     *
+     * @param sessionId セッションID
+     * @param cartId カートID
+     * @param userId 会員ID（オプション、ログイン時のみ）
+     * @return 作成された注文
      */
     @Transactional
-    public OrderDto createOrder(String sessionId, String cartId) {
+    public OrderDto createOrder(String sessionId, String cartId, Long userId) {
         // セッションIDとカートIDが一致するか確認
         if (!sessionId.equals(cartId)) {
             throw new BusinessException("INVALID_REQUEST", "無効なリクエストです");
@@ -70,6 +78,13 @@ public class OrderService {
         order.setTotalPrice(cart.getTotalPrice());
         order.setStatus(Order.OrderStatus.PENDING);
 
+        // 会員IDを設定（ログイン時のみ）
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "ユーザーが見つかりません"));
+            order.setUser(user);
+        }
+
         // カートアイテムを注文アイテムに変換
         cart.getItems().forEach(cartItem -> {
             OrderItem orderItem = new OrderItem();
@@ -95,15 +110,30 @@ public class OrderService {
     }
 
     /**
-     * 注文キャンセル
+     * 注文をキャンセル
+     *
+     * @param orderId 注文ID
+     * @param sessionId セッションID（ゲスト注文の場合）
+     * @param userId 会員ID（会員注文の場合）
+     * @return キャンセルされた注文
      */
     @Transactional
-    public OrderDto cancelOrder(Long orderId, String sessionId) {
+    public OrderDto cancelOrder(Long orderId, String sessionId, Long userId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
 
-        // セッションIDが一致するか確認
-        if (!order.getSessionId().equals(sessionId)) {
+        // 権限チェック
+        boolean canAccess = false;
+
+        if (order.getUser() != null) {
+            // 会員注文: userIdが一致すること
+            canAccess = userId != null && order.getUser().getId().equals(userId);
+        } else {
+            // ゲスト注文: sessionIdが一致すること
+            canAccess = sessionId != null && order.getSessionId().equals(sessionId);
+        }
+
+        if (!canAccess) {
             throw new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません");
         }
 
@@ -117,14 +147,29 @@ public class OrderService {
 
     /**
      * 注文詳細を取得
+     *
+     * @param id 注文ID
+     * @param sessionId セッションID（ゲスト注文の場合）
+     * @param userId 会員ID（会員注文の場合）
+     * @return 注文詳細
      */
     @Transactional(readOnly = true)
-    public OrderDto getOrderById(Long id, String sessionId) {
+    public OrderDto getOrderById(Long id, String sessionId, Long userId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
 
-        // セッションIDが一致するか確認
-        if (!order.getSessionId().equals(sessionId)) {
+        // 権限チェック
+        boolean canAccess = false;
+
+        if (order.getUser() != null) {
+            // 会員注文: userIdが一致すること
+            canAccess = userId != null && order.getUser().getId().equals(userId);
+        } else {
+            // ゲスト注文: sessionIdが一致すること
+            canAccess = sessionId != null && order.getSessionId().equals(sessionId);
+        }
+
+        if (!canAccess) {
             throw new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません");
         }
 
@@ -191,6 +236,19 @@ public class OrderService {
     @Transactional(readOnly = true)
     public java.util.List<OrderDto> getAllOrders() {
         return orderRepository.findAll().stream()
+                .map(OrderDto::fromEntity)
+                .toList();
+    }
+
+    /**
+     * 会員の注文履歴を取得
+     *
+     * @param userId 会員ID（認証済み）
+     * @return 注文履歴一覧（作成日時降順）
+     */
+    @Transactional(readOnly = true)
+    public List<OrderDto> getOrderHistory(Long userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(OrderDto::fromEntity)
                 .toList();
     }

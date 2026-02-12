@@ -1,15 +1,9 @@
 # AGENTS.md
 
-## 検証コマンド
+## テスト手順
 
-ローカルに JDK / Node がないため、Docker 経由で検証する。
-
-```bash
-docker compose exec backend ./mvnw compile       # バックエンドのコンパイル確認
-docker compose exec frontend npm run build        # フロントエンドの型チェック + ビルド
-```
-
-コンテナが起動していない場合は先に `docker compose up -d` を実行する。
+テスト実施手順・WSL (bash) 操作ルールは `docs/test/testing-operations.md` を参照する。  
+Playwright の利用方法は `docs/test/playwright-runbook.md` を参照する。
 
 ## プロジェクト構成
 
@@ -115,8 +109,7 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
    - **import順の変更禁止**: task.md に記載がない限り、既存のimport文の順序を変更しない（ただし新規追加は該当グループの末尾でOK）
 
 4. **検証**
-   - 全タスク完了後、task.md 冒頭の検証コマンドを実行する
-   - エラーが出た場合のみ修正し、再検証する
+   - 実施方法は `docs/test/testing-operations.md` に従う
 
 5. **レビュー**
 - task.md と git diff を突き合わせ、各タスク項目について以下を確認:
@@ -127,42 +120,19 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
   - 未実装のタスクがないか
 - 逸脱は `[逸脱] T-X: 内容` / `[欠落] T-X` / `[スコープ外] ファイルパス: 内容` で報告
 
+6. **テスト**
+   - task.md の「テスト手順」または「テスト内容」を実施する
+   - task.md の手動シナリオを含むテストは省略不可（共通検証コマンドのみで完了扱いにしない）
+   - 未実施項目がある場合、完了報告前に理由・代替案・残項目を提示し、ユーザー合意を得る
+   - 完了報告には「実施テスト一覧」を必ず含め、各項目を `[PASS]` / `[FAIL] - 理由` で記録する
+   - 記録方法は `docs/test/testing-operations.md` を参照する
+
 **スコープ外変更の典型例**:
 - Javadoc・インラインコメントの削除
 - SVGアイコンのテキスト化
 - エラーメッセージ・UI文言の変更
 - CSS classの追加・削除
 - import文の並び替え
-
-### テスト
-- `docs/01_requirements/CHG-XXX_*.md` の「受け入れ条件」を基準に検証する
-- 各条件を `[PASS]` / `[FAIL] — 理由` で記録する
-
----
-
-## Shell
-- Use PowerShell
-- Use encoding utf-8
-
-### API手動実行（PowerShell）
-- PowerShell の `curl` はエイリアス競合やクォート崩れが起きやすいため、`curl.exe` を明示的に使う
-- JSON ボディは `-d` 直書きではなく、一時ファイル + `--data-binary "@<tempfile>"` で送る
-- `Set-Content` で JSON を保存する際は `-Encoding UTF8 -NoNewline` を付ける
-- カート/注文系 API は `X-Session-Id` ヘッダーを必ず付与する
-
-例:
-
-```powershell
-$session = "manual-test-001"
-$tmp = New-TemporaryFile
-Set-Content -Path $tmp -Value '{"productId":4,"quantity":5}' -Encoding UTF8 -NoNewline
-curl.exe -s -X POST `
-  -H "X-Session-Id: $session" `
-  -H "Content-Type: application/json" `
-  --data-binary "@$tmp" `
-  "http://localhost:8080/api/order/cart/items"
-Remove-Item $tmp -Force
-```
 
 ---
 

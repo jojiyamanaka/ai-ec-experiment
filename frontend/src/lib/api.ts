@@ -8,6 +8,10 @@ import type {
   UpdateQuantityRequest,
   UpdateProductRequest,
   CreateOrderRequest,
+  User,
+  AuthResponse,
+  RegisterRequest,
+  LoginRequest,
 } from '../types/api'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -33,6 +37,12 @@ async function fetchApi<T>(
     headers.set('Content-Type', 'application/json')
   }
 
+  // 認証トークンの自動付与
+  const token = localStorage.getItem('authToken')
+  if (token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
   // カート・注文関連のエンドポイントにはセッションIDを付与
   if (endpoint.includes('/order')) {
     headers.set('X-Session-Id', getSessionId())
@@ -43,6 +53,13 @@ async function fetchApi<T>(
       ...options,
       headers,
     })
+
+    // 401エラーのハンドリング
+    if (!response.ok && response.status === 401) {
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('authUser')
+      window.dispatchEvent(new Event('auth:unauthorized'))
+    }
 
     const data = await response.json()
     return data
@@ -161,6 +178,13 @@ export async function getOrderById(id: number): Promise<ApiResponse<Order>> {
 }
 
 /**
+ * 会員の注文履歴を取得
+ */
+export async function getOrderHistory(): Promise<ApiResponse<Order[]>> {
+  return fetchApi<Order[]>('/api/order/history')
+}
+
+/**
  * 注文キャンセル
  */
 export async function cancelOrder(orderId: number): Promise<ApiResponse<Order>> {
@@ -201,6 +225,50 @@ export async function deliverOrder(orderId: number): Promise<ApiResponse<Order>>
  */
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
   return fetchApi<Order[]>('/api/order')
+}
+
+// ============================================
+// 認証 API
+// ============================================
+
+/**
+ * 会員登録
+ */
+export async function register(
+  request: RegisterRequest
+): Promise<ApiResponse<AuthResponse>> {
+  return fetchApi<AuthResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
+/**
+ * ログイン
+ */
+export async function login(
+  request: LoginRequest
+): Promise<ApiResponse<AuthResponse>> {
+  return fetchApi<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
+
+/**
+ * ログアウト
+ */
+export async function logout(): Promise<ApiResponse<{ message: string }>> {
+  return fetchApi<{ message: string }>('/api/auth/logout', {
+    method: 'POST',
+  })
+}
+
+/**
+ * 会員情報取得（トークン検証）
+ */
+export async function getCurrentUser(): Promise<ApiResponse<User>> {
+  return fetchApi<User>('/api/auth/me')
 }
 
 /**

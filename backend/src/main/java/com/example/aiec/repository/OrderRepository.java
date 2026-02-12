@@ -23,4 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     List<Order> findBySessionIdOrderByCreatedAtDesc(String sessionId);
 
+    /**
+     * 会員IDで注文一覧を取得（作成日時降順）
+     */
+    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
 }
