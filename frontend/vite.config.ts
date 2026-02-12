@@ -9,7 +9,7 @@ export default defineConfig({
     host: '0.0.0.0', // Docker コンテナ内で外部アクセスを許可
     port: 5173,
     watch: {
-      usePolling: true, // Windows ホストでのファイル監視に必要
+      usePolling: true, // Docker コンテナ内でのファイル監視に必要
     },
   },
 })

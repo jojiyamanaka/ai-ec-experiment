@@ -11,7 +11,7 @@
 3. 接続は `--network host` と `http://localhost:<port>` を使う
 
 ## 事前確認
-リポジトリルート（`/mnt/c/workspace/ai-ec-experiment`）で実行する。
+リポジトリルートで実行する。
 
 ```bash
 docker compose up -d
