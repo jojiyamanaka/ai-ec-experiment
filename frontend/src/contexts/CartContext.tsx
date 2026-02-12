@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { Product, CartItem as ApiCartItem } from '../types/api'
 import * as api from '../lib/api'
+import { getUserFriendlyMessage } from '../lib/errorMessages'
 
 // カート内の商品アイテム（APIの型を再エクスポート）
 export type CartItem = ApiCartItem
@@ -39,7 +40,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setTotalQuantity(response.data.totalQuantity)
         setTotalPrice(response.data.totalPrice)
       } else {
-        setError(response.error?.message || 'カートの取得に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : 'カートの取得に失敗しました'
+        setError(message)
       }
     } catch (err) {
       setError('カートの取得中にエラーが発生しました')
@@ -68,7 +72,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setTotalQuantity(response.data.totalQuantity)
         setTotalPrice(response.data.totalPrice)
       } else {
-        throw new Error(response.error?.message || 'カートへの追加に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : 'カートへの追加に失敗しました'
+        throw new Error(message)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -90,7 +97,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setTotalQuantity(response.data.totalQuantity)
         setTotalPrice(response.data.totalPrice)
       } else {
-        throw new Error(response.error?.message || 'カートからの削除に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : 'カートからの削除に失敗しました'
+        throw new Error(message)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -107,6 +117,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await removeFromCart(itemId)
       return
     }
+    if (quantity > 9) {
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -117,7 +130,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setTotalQuantity(response.data.totalQuantity)
         setTotalPrice(response.data.totalPrice)
       } else {
-        throw new Error(response.error?.message || '数量の変更に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : '数量の変更に失敗しました'
+        throw new Error(message)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
@@ -156,6 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 }
 
 // カスタムフック
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const context = useContext(CartContext)
   if (context === undefined) {

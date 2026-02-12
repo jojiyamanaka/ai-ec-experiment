@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { Product, UpdateProductRequest } from '../types/api'
 import * as api from '../lib/api'
+import { getUserFriendlyMessage } from '../lib/errorMessages'
 
 interface ProductContextType {
   products: Product[]
@@ -28,7 +29,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data) {
         setProducts(response.data.items)
       } else {
-        setError(response.error?.message || '商品の取得に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : '商品の取得に失敗しました'
+        setError(message)
       }
     } catch (err) {
       setError('商品の取得中にエラーが発生しました')
@@ -60,7 +64,10 @@ export function ProductProvider({ children }: { children: ReactNode }) {
           )
         )
       } else {
-        throw new Error(response.error?.message || '商品の更新に失敗しました')
+        const message = response.error?.code
+          ? getUserFriendlyMessage(response.error.code)
+          : '商品の更新に失敗しました'
+        throw new Error(message)
       }
     } catch (err) {
       console.error('商品更新エラー:', err)
@@ -85,6 +92,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 }
 
 // カスタムフック
+// eslint-disable-next-line react-refresh/only-export-components
 export function useProducts() {
   const context = useContext(ProductContext)
   if (context === undefined) {

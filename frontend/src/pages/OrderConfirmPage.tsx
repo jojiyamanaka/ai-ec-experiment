@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 import * as api from '../lib/api'
 import type { ApiError, StockShortageDetail, UnavailableProductDetail } from '../types/api'
+import { getUserFriendlyMessage } from '../lib/errorMessages'
 
 export default function OrderConfirmPage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -173,7 +174,9 @@ export default function OrderConfirmPage() {
               />
             </svg>
             <div className="ml-3 flex-1">
-              <h3 className="font-medium text-red-800">{error.message}</h3>
+              <h3 className="font-medium text-red-800">
+                {getUserFriendlyMessage(error.code)}
+              </h3>
               {error.code === 'OUT_OF_STOCK' && error.details && error.details.length > 0 && (
                 <div className="mt-2">
                   <p className="text-sm text-red-700">以下の商品の在庫が不足しています：</p>
