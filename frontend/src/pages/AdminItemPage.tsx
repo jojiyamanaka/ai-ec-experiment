@@ -55,6 +55,22 @@ export default function AdminItemPage() {
     return editedProducts[productId]?.[field] ?? defaultValue
   }
 
+  const getNumberValue = (
+    productId: number,
+    field: 'price' | 'stock',
+    defaultValue: number
+  ) => {
+    return getValue(productId, field, defaultValue) as number
+  }
+
+  const getBooleanValue = (
+    productId: number,
+    field: 'isPublished',
+    defaultValue: boolean
+  ) => {
+    return getValue(productId, field, defaultValue) as boolean
+  }
+
   // 変更があるかチェック
   const hasChanges = Object.keys(editedProducts).length > 0
 
@@ -122,7 +138,7 @@ export default function AdminItemPage() {
                 <td className="whitespace-nowrap px-6 py-4">
                   <input
                     type="number"
-                    value={getValue(product.id, 'price', product.price)}
+                    value={getNumberValue(product.id, 'price', product.price)}
                     onChange={(e) =>
                       handleEdit(
                         product.id,
@@ -136,7 +152,7 @@ export default function AdminItemPage() {
                 <td className="whitespace-nowrap px-6 py-4">
                   <input
                     type="number"
-                    value={getValue(product.id, 'stock', product.stock)}
+                    value={getNumberValue(product.id, 'stock', product.stock)}
                     onChange={(e) =>
                       handleEdit(
                         product.id,
@@ -153,25 +169,25 @@ export default function AdminItemPage() {
                       handleEdit(
                         product.id,
                         'isPublished',
-                        !getValue(product.id, 'isPublished', product.isPublished)
+                        !getBooleanValue(product.id, 'isPublished', product.isPublished)
                       )
                     }
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      getValue(product.id, 'isPublished', product.isPublished)
+                      getBooleanValue(product.id, 'isPublished', product.isPublished)
                         ? 'bg-blue-600'
                         : 'bg-gray-200'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        getValue(product.id, 'isPublished', product.isPublished)
+                        getBooleanValue(product.id, 'isPublished', product.isPublished)
                           ? 'translate-x-6'
                           : 'translate-x-1'
                       }`}
                     />
                   </button>
                   <span className="ml-3 text-sm text-gray-700">
-                    {getValue(product.id, 'isPublished', product.isPublished)
+                    {getBooleanValue(product.id, 'isPublished', product.isPublished)
                       ? '公開'
                       : '非公開'}
                   </span>

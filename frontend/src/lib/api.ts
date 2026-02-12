@@ -28,14 +28,14 @@ async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+  const headers = new Headers(options.headers)
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
   }
 
   // カート・注文関連のエンドポイントにはセッションIDを付与
   if (endpoint.includes('/order')) {
-    headers['X-Session-Id'] = getSessionId()
+    headers.set('X-Session-Id', getSessionId())
   }
 
   try {

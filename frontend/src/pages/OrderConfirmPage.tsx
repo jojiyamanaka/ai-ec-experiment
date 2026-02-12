@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useCart } from '../contexts/CartContext'
 import * as api from '../lib/api'
-import type { ApiError } from '../types/api'
+import type { ApiError, StockShortageDetail, UnavailableProductDetail } from '../types/api'
 
 export default function OrderConfirmPage() {
   const { items, totalPrice, clearCart } = useCart()
@@ -178,7 +178,7 @@ export default function OrderConfirmPage() {
                 <div className="mt-2">
                   <p className="text-sm text-red-700">以下の商品の在庫が不足しています：</p>
                   <ul className="mt-2 space-y-1 text-sm text-red-700">
-                    {error.details.map((detail) => (
+                    {(error.details as StockShortageDetail[]).map((detail) => (
                       <li key={detail.productId} className="flex items-center">
                         <span className="font-medium">{detail.productName}</span>
                         <span className="ml-2">
@@ -189,6 +189,21 @@ export default function OrderConfirmPage() {
                   </ul>
                   <p className="mt-2 text-sm text-red-700">
                     カートに戻って数量を調整してください。
+                  </p>
+                </div>
+              )}
+              {error.code === 'ITEM_NOT_AVAILABLE' && error.details && error.details.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-red-700">以下の商品は現在購入できません：</p>
+                  <ul className="mt-2 space-y-1 text-sm text-red-700">
+                    {(error.details as UnavailableProductDetail[]).map((detail) => (
+                      <li key={detail.productId} className="flex items-center">
+                        <span className="font-medium">{detail.productName}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-sm text-red-700">
+                    カートに戻って該当商品を削除してください。
                   </p>
                 </div>
               )}

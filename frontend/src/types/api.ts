@@ -46,11 +46,16 @@ export interface StockShortageDetail {
   availableStock: number
 }
 
+export interface UnavailableProductDetail {
+  productId: number
+  productName: string
+}
+
 // APIエラー情報
 export interface ApiError {
   code: string
   message: string
-  details?: StockShortageDetail[]
+  details?: StockShortageDetail[] | UnavailableProductDetail[]
 }
 
 // API レスポンス共通型

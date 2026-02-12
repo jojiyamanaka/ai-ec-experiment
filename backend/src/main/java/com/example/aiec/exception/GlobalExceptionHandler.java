@@ -28,13 +28,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * ビジネスロジック例外
+     * 非公開商品例外（詳細情報付き）
      */
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
+    @ExceptionHandler(ItemNotAvailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleItemNotAvailableException(ItemNotAvailableException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
+                .body(ApiResponse.errorWithDetails(ex.getErrorCode(), ex.getErrorMessage(), ex.getDetails()));
     }
 
     /**
@@ -45,6 +45,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.errorWithDetails(ex.getErrorCode(), ex.getErrorMessage(), ex.getDetails()));
+    }
+
+    /**
+     * ビジネスロジック例外
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
     }
 
     /**

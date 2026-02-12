@@ -5,6 +5,7 @@ import com.example.aiec.dto.CartDto;
 import com.example.aiec.entity.Cart;
 import com.example.aiec.entity.CartItem;
 import com.example.aiec.entity.Product;
+import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.CartItemRepository;
 import com.example.aiec.repository.CartRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,6 +38,21 @@ public class CartService {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseGet(() -> createCart(sessionId));
 
+        // 非公開商品をカートから除外
+        List<CartItem> unpublishedItems = cart.getItems().stream()
+                .filter(item -> !item.getProduct().getIsPublished())
+                .toList();
+
+        if (!unpublishedItems.isEmpty()) {
+            for (CartItem item : unpublishedItems) {
+                inventoryService.releaseReservation(sessionId, item.getProduct().getId());
+                cart.removeItem(item);
+                cartItemRepository.delete(item);
+            }
+            cart.setUpdatedAt(LocalDateTime.now());
+            cartRepository.save(cart);
+        }
+
         return CartDto.fromEntity(cart);
     }
 
@@ -49,6 +66,10 @@ public class CartService {
 
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
+
+        if (!product.getIsPublished()) {
+            throw new BusinessException("ITEM_NOT_AVAILABLE", "この商品は現在購入できません");
+        }
 
         // 仮引当を作成（有効在庫チェック込み）
         inventoryService.createReservation(sessionId, request.getProductId(), request.getQuantity());

@@ -30,6 +30,7 @@ export default function ItemDetailPage() {
   const { products } = useProducts()
   const product = products.find((p) => p.id === Number(id))
   const [isAdding, setIsAdding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (!product) {
     return (
@@ -44,12 +45,14 @@ export default function ItemDetailPage() {
 
   const handleAddToCart = async () => {
     setIsAdding(true)
+    setError(null)
     try {
       await addToCart(product)
       navigate('/order/cart')
-    } catch (error) {
-      console.error('カート追加エラー:', error)
-      alert('カートへの追加に失敗しました')
+    } catch (err) {
+      console.error('カート追加エラー:', err)
+      setError(err instanceof Error ? err.message : 'カートへの追加に失敗しました')
+    } finally {
       setIsAdding(false)
     }
   }
@@ -79,6 +82,11 @@ export default function ItemDetailPage() {
           <p className="mt-6 leading-relaxed text-gray-600">
             {product.description}
           </p>
+          {error && (
+            <div className="mt-6 rounded-lg border border-red-300 bg-red-50 p-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
           <button
             onClick={handleAddToCart}
             disabled={isSoldOut || isAdding}

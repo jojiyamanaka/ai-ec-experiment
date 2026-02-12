@@ -804,6 +804,7 @@ GET /api/order
 | RESERVATION_NOT_FOUND | 404 | 在庫引当が見つかりません |
 | OUT_OF_STOCK | 409 | 在庫が不足している商品があります |
 | INSUFFICIENT_STOCK | 409 | 有効在庫が不足しています |
+| ITEM_NOT_AVAILABLE | 400 | 非公開商品へのカート追加・注文確定時 |
 | CART_EMPTY | 400 | カートが空です |
 | ORDER_NOT_CANCELLABLE | 400 | この注文はキャンセルできません |
 | ALREADY_CANCELLED | 400 | この注文は既にキャンセルされています |
