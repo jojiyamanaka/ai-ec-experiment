@@ -1,10 +1,14 @@
 package com.example.aiec.repository;
 
+import com.example.aiec.entity.ActorType;
 import com.example.aiec.entity.AuthToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +31,10 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
     /**
      * 失効済みかつ期限切れのトークンを削除（定期クリーンアップ用）
      */
-    void deleteByUserIdAndExpiresAtBeforeAndIsRevoked(Long userId, LocalDateTime expiresAt, Boolean isRevoked);
+    void deleteByUserIdAndExpiresAtBeforeAndIsRevoked(Long userId, Instant expiresAt, Boolean isRevoked);
+
+    @Modifying
+    @Query("UPDATE AuthToken t SET t.isDeleted = TRUE, t.deletedAt = CURRENT_TIMESTAMP, t.deletedByType = :deletedByType, t.deletedById = :deletedById WHERE t.id = :id")
+    void softDelete(@Param("id") Long id, @Param("deletedByType") ActorType deletedByType, @Param("deletedById") Long deletedById);
 
 }

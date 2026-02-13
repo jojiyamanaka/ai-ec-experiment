@@ -69,7 +69,7 @@ INSERT INTO orders (
     created_by_type
 )
 SELECT
-    'ORD-SEED-0001',
+    'ORD-0000000001',
     u.id,
     'seed-session-001',
     p.price,
@@ -78,14 +78,14 @@ SELECT
 FROM target_user u
 CROSS JOIN target_product p
 WHERE NOT EXISTS (
-    SELECT 1 FROM orders WHERE order_number = 'ORD-SEED-0001'
+    SELECT 1 FROM orders WHERE order_number = 'ORD-0000000001'
 );
 
 -- 4) 注文明細を1件作成
 WITH target_order AS (
     SELECT id
     FROM orders
-    WHERE order_number = 'ORD-SEED-0001'
+    WHERE order_number = 'ORD-0000000001'
 ),
 target_product AS (
     SELECT id, name, price
@@ -135,7 +135,7 @@ target_product AS (
     OFFSET 1
     LIMIT 1
 )
-INSERT INTO reservations (
+INSERT INTO stock_reservations (
     product_id,
     quantity,
     session_id,
@@ -156,7 +156,7 @@ FROM target_user u
 CROSS JOIN target_product p
 WHERE NOT EXISTS (
     SELECT 1
-    FROM reservations r
+    FROM stock_reservations r
     WHERE r.session_id = 'seed-session-001'
       AND r.product_id = p.id
       AND r.reservation_type = 'TENTATIVE'

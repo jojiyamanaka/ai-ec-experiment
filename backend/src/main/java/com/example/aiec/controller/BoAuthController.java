@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 @RestController
@@ -45,7 +45,7 @@ public class BoAuthController {
             BoAuthService.TokenPair tokenPair = boAuthService.createToken(boUser);
 
             // 4. 最終ログイン日時を更新
-            boUser.setLastLoginAt(LocalDateTime.now());
+            boUser.setLastLoginAt(Instant.now());
 
             // 5. ログイン成功を記録
             operationHistoryService.logLoginSuccess(boUser);

@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
@@ -29,7 +30,7 @@ public class AuthService {
      * トークン生成
      * @return AuthToken と生のトークン文字列のペア
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TokenPair createToken(User user) {
         // 1. 生のトークン（UUID）を生成
         String rawToken = UUID.randomUUID().toString();
@@ -40,7 +41,7 @@ public class AuthService {
         AuthToken authToken = new AuthToken();
         authToken.setUser(user);
         authToken.setTokenHash(tokenHash);
-        authToken.setExpiresAt(LocalDateTime.now().plusDays(TOKEN_EXPIRATION_DAYS));
+        authToken.setExpiresAt(Instant.now().plus(TOKEN_EXPIRATION_DAYS, ChronoUnit.DAYS));
         authTokenRepository.save(authToken);
 
         // 3. 生のトークンをクライアントに返すため、ペアで返す
@@ -73,7 +74,7 @@ public class AuthService {
      * トークン失効（ログアウト）
      * @param rawToken クライアントから受け取った生のトークン
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void revokeToken(String rawToken) {
         String tokenHash = hashToken(rawToken);
         AuthToken authToken = authTokenRepository.findByTokenHash(tokenHash)

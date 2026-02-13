@@ -123,6 +123,8 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 
 **React Router v7** によるクライアントサイドルーティング:
 
+#### 顧客向け画面（フロントオフィス）
+
 | パス | コンポーネント | 説明 |
 |------|---------------|------|
 | `/` | `Home` | TOP画面 |
@@ -132,8 +134,19 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 | `/order/reg` | `OrderRegistration` | 注文確認 |
 | `/order/complete` | `OrderComplete` | 注文完了 |
 | `/order/:id` | `OrderDetail` | 注文詳細 |
-| `/bo/item` | `AdminItemManagement` | 管理画面 - 商品管理 |
-| `/bo/order` | `AdminOrderManagement` | 管理画面 - 注文管理 |
+| `/auth/login` | `Login` | 会員ログイン |
+| `/auth/register` | `Register` | 会員登録 |
+| `/order/history` | `OrderHistory` | 注文履歴（会員のみ） |
+
+#### 管理画面（バックオフィス）
+
+| パス | コンポーネント | 説明 |
+|------|---------------|------|
+| `/bo/login` | `BoLogin` | 管理者ログイン |
+| `/bo/item` | `AdminItemManagement` | 商品管理 |
+| `/bo/order` | `AdminOrderManagement` | 注文管理 |
+| `/bo/inventory` | `AdminInventory` | 在庫管理 |
+| `/bo/members` | `AdminMembers` | 会員管理 |
 
 ### API通信
 
@@ -149,9 +162,13 @@ const products = await getProducts()
 ```
 
 **api.ts の役割**:
-- `X-Session-Id` ヘッダーの自動付与
+- `X-Session-Id` ヘッダーの自動付与（カート・注文関連）
+- 認証トークンの自動付与（`Authorization: Bearer <token>`）
+  - 顧客向けAPI: `authToken` を使用
+  - 管理者向けAPI: `bo_token` を使用
 - エラーレスポンスの正規化
 - 型安全なAPI呼び出し
+- 401エラー時の自動トークン削除とイベント発火
 
 ### セッション管理
 
@@ -164,7 +181,28 @@ const products = await getProducts()
 
 **認証方式**: トークンベース認証（UUID v4）
 
-#### 会員登録・ログイン
+#### ドメイン分離（CHG-008）
+
+顧客（Customer）と管理者（BackOffice User）は完全に分離されたドメインで管理されています。
+
+**顧客向けドメイン（フロントオフィス）**:
+- URL: `/` （ルートパス）
+- データベーステーブル: `users`, `auth_tokens`
+- 認証コンテキスト: `AuthContext`
+- 用途: 一般ユーザー向けのECサイト機能（商品閲覧、購入、注文履歴）
+
+**管理者向けドメイン（バックオフィス）**:
+- URL: `/bo/**`
+- データベーステーブル: `bo_users`, `bo_auth_tokens`
+- 認証コンテキスト: `BoAuthContext`
+- 用途: 管理者向けの業務管理機能（商品管理、注文管理、在庫管理、会員管理）
+
+**セキュリティ**:
+- 顧客トークンで `/api/bo/**` にアクセス → **401/403**（誤アクセス防止）
+- BoUserトークンで `/api/**` にアクセス → 許可（管理者は顧客向けAPIも閲覧可能）
+- 管理API（`/api/bo/**`）は `Cache-Control: no-store` でキャッシュ無効化
+
+#### 会員登録・ログイン（顧客）
 - **会員登録**: メールアドレス、表示名、パスワードで登録
 - **パスワードハッシュ**: BCrypt（強度10）でハッシュ化して保存
 - **ログイン**: メールアドレスとパスワードで認証
@@ -172,21 +210,23 @@ const products = await getProducts()
   - トークンはSHA-256でハッシュ化して `auth_tokens` テーブルに保存
   - 有効期限: 7日間
   - クライアントには平文トークン（UUID）を返却
+- **認証ヘッダー**: `Authorization: Bearer <token>`
+- **ストレージ**: `localStorage`（キー: `authToken`）
 
-#### 認証ヘッダー
-```
-Authorization: Bearer <token>
-```
+#### 管理者ログイン（BoUser）
+- **ログイン**: メールアドレスとパスワードで認証（`/api/bo-auth/login`）
+- **パスワードハッシュ**: BCrypt（強度10）でハッシュ化して保存
+- **トークン発行**: ログイン成功時にUUID v4トークンを生成
+  - トークンはSHA-256でハッシュ化して `bo_auth_tokens` テーブルに保存
+  - 有効期限: 7日間
+  - クライアントには平文トークン（UUID）を返却
+- **認証ヘッダー**: `Authorization: Bearer <token>`
+- **ストレージ**: `localStorage`（キー: `bo_token`）
 
-#### ロールベースアクセス制御（RBAC）
-- **CUSTOMER**: 通常会員（デフォルト）
-  - 自分の注文履歴の閲覧
-  - カート操作
-  - 注文作成
-- **ADMIN**: 管理者
-  - 商品管理（編集、公開/非公開切り替え）
-  - 全注文の閲覧・操作
-  - 注文ステータス変更
+#### 権限レベル（BoUser）
+- **SUPER_ADMIN**: スーパー管理者（全権限、BoUser管理を含む）
+- **ADMIN**: 管理者（BoUser管理以外の全権限）
+- **OPERATOR**: オペレーター（参照権限のみ、一部編集権限）
 
 #### 操作履歴（OperationHistory）
 - **目的**: セキュリティ監査、不正アクセス検知
@@ -482,7 +522,10 @@ cd backend
 - **XSS対策**: React による自動エスケープ
 - **認証**: トークンベース認証（UUID v4、SHA-256ハッシュ）
 - **パスワードハッシュ**: BCrypt（強度10）
-- **認可**: ロールベースアクセス制御（RBAC: CUSTOMER / ADMIN）
+- **ドメイン分離**: 顧客（User）と管理者（BoUser）のデータ・認証を完全分離
+- **誤アクセス防止**: 顧客トークンで管理APIにアクセス → 401/403
+- **キャッシュ制御**: 管理API（`/api/bo/**`）は `Cache-Control: no-store` でキャッシュ無効化
+- **権限レベル**: BoUserは3段階の権限レベル（SUPER_ADMIN, ADMIN, OPERATOR）
 - **操作履歴**: セキュリティ監査用の操作ログ（OperationHistory）
 
 ### Phase 2 以降で対応予定

@@ -34,7 +34,7 @@
 **When**: 注文作成処理が成功する
 **Then**:
 - 注文のステータスは `PENDING` になる
-- 注文番号（ORD-YYYYMMDD-XXX形式）が生成される
+- 注文番号（ORD-xxxxxxxxxx形式）が生成される
 - 作成日時（createdAt）と更新日時（updatedAt）が自動的に設定される
 
 **実装箇所**:
@@ -193,11 +193,9 @@
 **Given**: 注文を作成する
 **When**: 注文番号が生成される
 **Then**:
-- 形式: `ORD-YYYYMMDD-XXX`
-- YYYYMMDD: 作成日（例: 20260210）
-- XXX: 同日の注文連番（001から始まる3桁、上限999件/日）
-- 例: `ORD-20260210-001`, `ORD-20260210-002`
-- 1日あたりの注文上限は999件。超過時は4桁以上になるが、Phase 1 では対策不要（プロトタイプ規模のため）
+- 形式: `ORD-xxxxxxxxxx`
+- xxxxxxxxxx: 0埋め10桁の連番
+- 例: `ORD-0000000001`, `ORD-0000000002`
 
 **実装箇所**:
 - バックエンド: `OrderService.java:97-108`
@@ -207,26 +205,21 @@
 ### 3-2. 注文番号の連番ロジック
 
 **Given**:
-- 本日（2026-02-10）の注文が既に3件ある
-- 最新の注文番号は `ORD-20260210-003`
+- 既存注文が3件ある
+- 最新の注文番号は `ORD-0000000003`
 
 **When**: 新しい注文を作成する
 **Then**:
-- 新しい注文番号は `ORD-20260210-004` になる
-- 連番は同日内で継続する
-- 翌日になると連番は `001` からリセットされる
+- 新しい注文番号は `ORD-0000000004` になる
+- 連番はグローバルに単調増加する
 
 **実装箇所**:
 - バックエンド: `OrderService.java:101-107`
 
 **実装の詳細**:
 ```java
-// 今日の注文数を取得
-long todayOrderCount = orderRepository.findAll().stream()
-    .filter(o -> o.getOrderNumber().startsWith(prefix))
-    .count();
-int sequence = (int) (todayOrderCount + 1);
-return prefix + String.format("%03d", sequence);
+Long sequence = orderRepository.getNextOrderNumberSequence();
+return "ORD-" + String.format("%010d", sequence);
 ```
 
 ---

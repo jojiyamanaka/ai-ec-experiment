@@ -2,7 +2,7 @@ package com.example.aiec.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "inventory_adjustments")
@@ -32,5 +32,5 @@ public class InventoryAdjustment {
     private String adjustedBy; // メールアドレス
 
     @Column(nullable = false)
-    private LocalDateTime adjustedAt;
+    private Instant adjustedAt;
 }

@@ -28,7 +28,7 @@ public class ProductService {
     /**
      * 商品一覧を取得（公開されている商品のみ）
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ProductListResponse getPublishedProducts(int page, int limit) {
         Pageable pageable = PageRequest.of(page - 1, limit);
         Page<Product> productPage = productRepository.findByIsPublishedTrue(pageable);
@@ -48,7 +48,7 @@ public class ProductService {
     /**
      * 商品詳細を取得（公開されている商品のみ）
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
@@ -64,7 +64,7 @@ public class ProductService {
     /**
      * 商品を更新（管理用）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ProductDto updateProduct(Long id, UpdateProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));

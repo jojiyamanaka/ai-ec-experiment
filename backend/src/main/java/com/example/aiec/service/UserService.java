@@ -1,6 +1,5 @@
 package com.example.aiec.service;
 
-import com.example.aiec.entity.Role;
 import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ConflictException;
@@ -24,7 +23,7 @@ public class UserService {
     /**
      * ユーザー作成
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public User createUser(String email, String displayName, String password) {
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("EMAIL_ALREADY_EXISTS", "このメールアドレスは既に登録されています");
@@ -55,24 +54,12 @@ public class UserService {
     /**
      * 会員状態変更
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public User updateStatus(Long userId, Boolean isActive) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "会員が見つかりません"));
 
         user.setIsActive(isActive);
-        return userRepository.save(user);
-    }
-
-    /**
-     * 会員ロール変更
-     */
-    @Transactional
-    public User updateRole(Long userId, Role role) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "会員が見つかりません"));
-
-        user.setRole(role);
         return userRepository.save(user);
     }
 

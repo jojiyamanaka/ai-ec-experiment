@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +35,7 @@ public class CartService {
     /**
      * カートを取得（存在しない場合は作成）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CartDto getOrCreateCart(String sessionId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseGet(() -> createCart(sessionId));
@@ -51,7 +51,7 @@ public class CartService {
                 cart.removeItem(item);
                 cartItemRepository.delete(item);
             }
-            cart.setUpdatedAt(LocalDateTime.now());
+            cart.setUpdatedAt(Instant.now());
             cartRepository.save(cart);
         }
 
@@ -61,7 +61,7 @@ public class CartService {
     /**
      * カートに商品を追加
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CartDto addToCart(String sessionId, AddToCartRequest request) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseGet(() -> createCart(sessionId));
@@ -101,7 +101,7 @@ public class CartService {
             cartItemRepository.save(newItem);
         }
 
-        cart.setUpdatedAt(LocalDateTime.now());
+        cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
 
         return CartDto.fromEntity(cart);
@@ -110,7 +110,7 @@ public class CartService {
     /**
      * カート内商品の数量を変更
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CartDto updateCartItemQuantity(String sessionId, Long productId, Integer quantity) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("CART_NOT_FOUND", "カートが見つかりません"));
@@ -127,7 +127,7 @@ public class CartService {
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
 
-        cart.setUpdatedAt(LocalDateTime.now());
+        cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
 
         return CartDto.fromEntity(cart);
@@ -136,7 +136,7 @@ public class CartService {
     /**
      * カートから商品を削除
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CartDto removeFromCart(String sessionId, Long productId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("CART_NOT_FOUND", "カートが見つかりません"));
@@ -153,7 +153,7 @@ public class CartService {
         cart.removeItem(cartItem);
         cartItemRepository.delete(cartItem);
 
-        cart.setUpdatedAt(LocalDateTime.now());
+        cart.setUpdatedAt(Instant.now());
         cartRepository.save(cart);
 
         return CartDto.fromEntity(cart);
@@ -162,7 +162,7 @@ public class CartService {
     /**
      * カートをクリア
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void clearCart(String sessionId) {
         // 全仮引当を解除
         inventoryService.releaseAllReservations(sessionId);
@@ -180,8 +180,8 @@ public class CartService {
     private Cart createCart(String sessionId) {
         Cart cart = new Cart();
         cart.setSessionId(sessionId);
-        cart.setCreatedAt(LocalDateTime.now());
-        cart.setUpdatedAt(LocalDateTime.now());
+        cart.setCreatedAt(Instant.now());
+        cart.setUpdatedAt(Instant.now());
         return cartRepository.save(cart);
     }
 

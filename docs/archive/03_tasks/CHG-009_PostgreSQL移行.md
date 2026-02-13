@@ -34,8 +34,8 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ### CHG-008で既に実装済みの内容
 
-- ✅ `bo_users` テーブル（SQLite版）
-- ✅ `bo_auth_tokens` テーブル（SQLite版）
+- ✅ `bo_users` テーブル
+- ✅ `bo_auth_tokens` テーブル
 - ✅ `BoUser`, `BoAuthToken` エンティティ（LocalDateTime使用）
 - ✅ `Role` enum（後でActorTypeに置き換え）
 - ✅ BoAuth API（`/api/bo-auth/**`）
@@ -44,9 +44,9 @@ curl -X POST http://localhost:8080/api/auth/register \
 ### CHG-009で実施する内容
 
 1. **Phase 1**: PostgreSQL環境整備 + スキーマ作成（全テーブル + 監査カラム）
-2. **Phase 2**: アプリケーション設定変更（SQLite → PostgreSQL）
+2. **Phase 2**: アプリケーション設定変更（PostgreSQL + Flyway）
 3. **Phase 3**: エンティティ修正（LocalDateTime→Instant、監査カラム、論理削除）
-4. **Phase 4**: データ移行 + テスト
+4. **Phase 4**: Flyway適用確認 + テスト
 
 ### 主要な変更点
 
@@ -81,7 +81,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ec_app_user -d ec_app"]
       interval: 10s
@@ -109,18 +108,19 @@ volumes:
 
 **検証**:
 ```bash
-docker compose up -d postgres
-docker compose ps
-# → postgres が healthy になることを確認
+docker compose up -d postgres backend
+docker compose logs backend | rg "Flyway|Successfully applied"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+# → Flywayマイグレーションが適用され、success=true で登録されることを確認
 ```
 
 ---
 
 ### Task 1-2: PostgreSQLスキーマ定義ファイル作成
 
-**ディレクトリ**: `backend/src/main/resources/db/init/`（新規作成）
+**ディレクトリ**: `backend/src/main/resources/db/flyway/`
 
-**ファイル**: `01_create_schema.sql`（新規作成）
+**ファイル**: `V1__create_schema.sql`
 
 **参考**: `docs/02_designs/CHG-009_PostgreSQL移行.md` のスキーマ定義
 
@@ -238,8 +238,8 @@ CREATE TRIGGER update_products_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- reservations テーブル
-CREATE TABLE reservations (
+-- stock_reservations テーブル
+CREATE TABLE stock_reservations (
     id BIGSERIAL PRIMARY KEY,
     product_id BIGINT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
@@ -261,24 +261,69 @@ CREATE TABLE reservations (
     deleted_by_type VARCHAR(50),
     deleted_by_id BIGINT,
 
-    CONSTRAINT fk_reservations_product FOREIGN KEY (product_id)
+    CONSTRAINT fk_stock_reservations_product FOREIGN KEY (product_id)
         REFERENCES products(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reservations_user FOREIGN KEY (user_id)
+    CONSTRAINT fk_stock_reservations_user FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_reservations_product_id ON reservations(product_id);
-CREATE INDEX idx_reservations_session_id ON reservations(session_id);
-CREATE INDEX idx_reservations_user_id ON reservations(user_id);
-CREATE INDEX idx_reservations_order_id ON reservations(order_id);
-CREATE INDEX idx_reservations_type ON reservations(reservation_type);
-CREATE INDEX idx_reservations_expires_at ON reservations(expires_at);
-CREATE INDEX idx_reservations_is_deleted ON reservations(is_deleted);
-CREATE INDEX idx_reservations_created_by ON reservations(created_by_type, created_by_id);
-CREATE INDEX idx_reservations_updated_by ON reservations(updated_by_type, updated_by_id);
+CREATE INDEX idx_stock_reservations_product_id ON stock_reservations(product_id);
+CREATE INDEX idx_stock_reservations_session_id ON stock_reservations(session_id);
+CREATE INDEX idx_stock_reservations_user_id ON stock_reservations(user_id);
+CREATE INDEX idx_stock_reservations_order_id ON stock_reservations(order_id);
+CREATE INDEX idx_stock_reservations_type ON stock_reservations(reservation_type);
+CREATE INDEX idx_stock_reservations_expires_at ON stock_reservations(expires_at);
+CREATE INDEX idx_stock_reservations_is_deleted ON stock_reservations(is_deleted);
+CREATE INDEX idx_stock_reservations_created_by ON stock_reservations(created_by_type, created_by_id);
+CREATE INDEX idx_stock_reservations_updated_by ON stock_reservations(updated_by_type, updated_by_id);
 
-CREATE TRIGGER update_reservations_updated_at
-    BEFORE UPDATE ON reservations
+CREATE TRIGGER update_stock_reservations_updated_at
+    BEFORE UPDATE ON stock_reservations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- carts テーブル
+CREATE TABLE carts (
+    id BIGSERIAL PRIMARY KEY,
+    session_id VARCHAR(255) NOT NULL UNIQUE,
+    user_id BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_carts_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_carts_session_id ON carts(session_id);
+CREATE INDEX idx_carts_user_id ON carts(user_id);
+CREATE INDEX idx_carts_updated_at ON carts(updated_at);
+
+CREATE TRIGGER update_carts_updated_at
+    BEFORE UPDATE ON carts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- cart_items テーブル
+CREATE TABLE cart_items (
+    id BIGSERIAL PRIMARY KEY,
+    cart_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_cart_items_cart FOREIGN KEY (cart_id)
+        REFERENCES carts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cart_items_product FOREIGN KEY (product_id)
+        REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT uk_cart_items_cart_product UNIQUE (cart_id, product_id)
+);
+
+CREATE INDEX idx_cart_items_cart_id ON cart_items(cart_id);
+CREATE INDEX idx_cart_items_product_id ON cart_items(product_id);
+
+CREATE TRIGGER update_cart_items_updated_at
+    BEFORE UPDATE ON cart_items
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -360,8 +405,8 @@ CREATE TRIGGER update_order_items_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- operation_history テーブル
-CREATE TABLE operation_history (
+-- operation_histories テーブル
+CREATE TABLE operation_histories (
     id BIGSERIAL PRIMARY KEY,
     operation_type VARCHAR(100) NOT NULL,
     performed_by VARCHAR(255),
@@ -381,15 +426,15 @@ CREATE TABLE operation_history (
     deleted_by_id BIGINT
 );
 
-CREATE INDEX idx_operation_history_operation_type ON operation_history(operation_type);
-CREATE INDEX idx_operation_history_performed_by ON operation_history(performed_by);
-CREATE INDEX idx_operation_history_created_at ON operation_history(created_at);
-CREATE INDEX idx_operation_history_is_deleted ON operation_history(is_deleted);
-CREATE INDEX idx_operation_history_created_by ON operation_history(created_by_type, created_by_id);
-CREATE INDEX idx_operation_history_updated_by ON operation_history(updated_by_type, updated_by_id);
+CREATE INDEX idx_operation_histories_operation_type ON operation_histories(operation_type);
+CREATE INDEX idx_operation_histories_performed_by ON operation_histories(performed_by);
+CREATE INDEX idx_operation_histories_created_at ON operation_histories(created_at);
+CREATE INDEX idx_operation_histories_is_deleted ON operation_histories(is_deleted);
+CREATE INDEX idx_operation_histories_created_by ON operation_histories(created_by_type, created_by_id);
+CREATE INDEX idx_operation_histories_updated_by ON operation_histories(updated_by_type, updated_by_id);
 
-CREATE TRIGGER update_operation_history_updated_at
-    BEFORE UPDATE ON operation_history
+CREATE TRIGGER update_operation_histories_updated_at
+    BEFORE UPDATE ON operation_histories
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -504,16 +549,17 @@ CREATE TRIGGER update_inventory_adjustments_updated_at
 
 **検証**:
 ```bash
-docker compose restart postgres
-docker compose logs postgres
+docker compose restart backend
+docker compose logs backend | rg "Flyway|Successfully applied"
 psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "\dt"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
 ```
 
 ---
 
 ### Task 1-3: サンプルデータ投入スクリプト作成
 
-**ファイル**: `backend/src/main/resources/db/init/02_insert_sample_data.sql`（新規作成）
+**ファイル**: `backend/src/main/resources/db/flyway/V2__insert_sample_data.sql`
 
 ```sql
 -- サンプル商品（created_by_type = 'SYSTEM'）
@@ -524,6 +570,9 @@ INSERT INTO products (name, description, price, stock, image, is_published, crea
 ('レザーウォレット', '職人手作りの本革財布', 18000.00, 25, '/images/wallet-1.jpg', true, 'SYSTEM'),
 ('デザイナーサングラス', 'UV400保護レンズ搭載', 32000.00, 10, '/images/sunglasses-1.jpg', true, 'SYSTEM');
 ```
+
+**補足**:
+- 注文・在庫・管理画面会員（`admin@example.com` / `password`）の投入は `V3__seed_admin_member_order_inventory.sql` で管理する
 
 ---
 
@@ -728,7 +777,7 @@ public class User {
 **同様の修正を以下のエンティティにも適用**:
 - `Product.java`
 - `AuthToken.java`
-- `Reservation.java`
+- `StockReservation.java`
 - `Order.java`
 - `OrderItem.java`
 - `OperationHistory.java`
@@ -757,7 +806,7 @@ void softDelete(@Param("id") Long id, @Param("deletedByType") ActorType deletedB
 **同様のメソッドを以下のリポジトリにも追加**:
 - `ProductRepository.java`
 - `AuthTokenRepository.java`
-- `ReservationRepository.java`
+- `StockReservationRepository.java`
 - `OrderRepository.java`
 - `OrderItemRepository.java`
 
@@ -812,18 +861,18 @@ public void reserveTentative(Long productId, int quantity, String sessionId, Lon
         .orElseThrow(() -> new ResourceNotFoundException("PRODUCT_NOT_FOUND", "商品が見つかりません"));
 
     // 在庫チェック
-    int available = calculateAvailableStock(productId);
+    int available = reservationRepository.calculateAvailableStock(productId, Instant.now());
     if (available < quantity) {
         throw new BusinessException("INSUFFICIENT_STOCK", "在庫が不足しています");
     }
 
     // 仮引当作成
-    Reservation reservation = new Reservation();
-    reservation.setProductId(productId);
+    StockReservation reservation = new StockReservation();
+    reservation.setProduct(product);
     reservation.setQuantity(quantity);
     reservation.setSessionId(sessionId);
     reservation.setUserId(userId);
-    reservation.setReservationType(ReservationType.TENTATIVE);
+    reservation.setType(ReservationType.TENTATIVE);
     reservation.setExpiresAt(Instant.now().plus(30, ChronoUnit.MINUTES));
     reservationRepository.save(reservation);
 }
@@ -831,110 +880,40 @@ public void reserveTentative(Long productId, int quantity, String sessionId, Lon
 
 ---
 
-## Phase 4: データ移行 + テスト
+## Phase 4: Flyway適用確認 + テスト
 
-### Task 4-1: SQLiteからデータエクスポート（既存データがある場合）
+### Task 4-1: SQLiteデータ移行は実施しない（ec.db非使用）
 
-**スクリプト**: `scripts/export_sqlite_to_csv.sh`（新規作成）
+**方針**:
+- 本プロジェクトでは `backend/data/ec.db` を運用対象にしない
+- `scripts/export_sqlite_to_csv.sh` / `scripts/import_csv_to_postgres.sh` は作成しない
+- 初期データは Flyway マイグレーション（`V2__insert_sample_data.sql`, `V3__seed_admin_member_order_inventory.sql`）で投入する
 
+**検証**:
 ```bash
-#!/bin/bash
-
-SQLITE_DB="backend/data/ec.db"
-OUTPUT_DIR="migration/csv"
-
-# 既存データがない場合はスキップ
-if [ ! -f "$SQLITE_DB" ]; then
-    echo "SQLite database not found. Skipping export."
-    exit 0
-fi
-
-mkdir -p "$OUTPUT_DIR"
-
-TABLES=(
-  "users"
-  "auth_tokens"
-  "products"
-  "reservations"
-  "orders"
-  "order_items"
-  "operation_history"
-)
-
-for table in "${TABLES[@]}"; do
-  echo "Exporting $table..."
-  sqlite3 "$SQLITE_DB" <<EOF
-.headers on
-.mode csv
-.output $OUTPUT_DIR/$table.csv
-SELECT * FROM $table;
-.quit
-EOF
-done
-
-echo "Export completed to $OUTPUT_DIR"
-```
-
-**実行**:
-```bash
-chmod +x scripts/export_sqlite_to_csv.sh
-./scripts/export_sqlite_to_csv.sh
+docker compose logs backend | rg "Flyway|Successfully applied"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
 ```
 
 ---
 
-### Task 4-2: PostgreSQLへデータインポート（既存データがある場合）
+### Task 4-2: Flyway投入データの確認
 
-**スクリプト**: `scripts/import_csv_to_postgres.sh`（新規作成）
-
+**確認コマンド**:
 ```bash
-#!/bin/bash
-
-PGHOST="localhost"
-PGPORT="5432"
-PGDATABASE="ec_app"
-PGUSER="ec_app_user"
-PGPASSWORD="changeme"
-CSV_DIR="migration/csv"
-
-export PGPASSWORD
-
-# CSVディレクトリが存在しない場合はスキップ
-if [ ! -d "$CSV_DIR" ]; then
-    echo "CSV directory not found. Skipping import."
-    exit 0
-fi
-
-TABLES=(
-  "users"
-  "auth_tokens"
-  "products"
-  "reservations"
-  "orders"
-  "order_items"
-  "operation_history"
-)
-
-for table in "${TABLES[@]}"; do
-  if [ -f "$CSV_DIR/$table.csv" ]; then
-    echo "Importing $table..."
-    psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -c \
-      "\COPY $table FROM '$CSV_DIR/$table.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', QUOTE '\"', ESCAPE '\"');"
-  fi
-done
-
-echo "Import completed"
-```
-
-**実行**:
-```bash
-chmod +x scripts/import_csv_to_postgres.sh
-./scripts/import_csv_to_postgres.sh
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT email, display_name FROM bo_users WHERE email = 'admin@example.com';"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT email, display_name FROM users WHERE email = 'member01@example.com';"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT COUNT(*) FROM products WHERE is_deleted = FALSE;"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT COUNT(*) FROM orders;"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT COUNT(*) FROM order_items;"
+psql -h localhost -p 5432 -U ec_app_user -d ec_app -c "SELECT COUNT(*) FROM inventory_adjustments;"
 ```
 
 ---
 
 ### Task 4-3: シーケンス調整
+
+**注記**: SQLite からのCSVインポートを行わない通常運用では不要。既存データを手動投入した場合のみ実施する。
 
 **スクリプト**: `scripts/adjust_sequences.sql`（新規作成）
 
@@ -942,10 +921,10 @@ chmod +x scripts/import_csv_to_postgres.sh
 SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM users), false);
 SELECT setval('auth_tokens_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM auth_tokens), false);
 SELECT setval('products_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM products), false);
-SELECT setval('reservations_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM reservations), false);
+SELECT setval('stock_reservations_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM stock_reservations), false);
 SELECT setval('orders_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM orders), false);
 SELECT setval('order_items_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM order_items), false);
-SELECT setval('operation_history_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM operation_history), false);
+SELECT setval('operation_histories_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM operation_histories), false);
 ```
 
 **実行**:
@@ -980,18 +959,18 @@ curl http://localhost:8080/api/item
 
 4. **カート追加テスト**
 ```bash
-curl -X POST http://localhost:8080/api/order/cart \
+curl -X POST http://localhost:8080/api/order/cart/items \
   -H "Content-Type: application/json" \
   -H "X-Session-Id: test-session-123" \
   -d '{"productId":1,"quantity":2}'
 ```
 
-5. **注文確定テスト**
+5. **注文作成テスト**
 ```bash
-curl -X POST http://localhost:8080/api/order/reg \
+curl -X POST http://localhost:8080/api/order \
   -H "Content-Type: application/json" \
   -H "X-Session-Id: test-session-123" \
-  -d '{}'
+  -d '{"cartId":"test-session-123"}'
 ```
 
 6. **論理削除テスト（データベース確認）**
@@ -1017,9 +996,9 @@ SELECT * FROM products;
 - [ ] Phase 1: PostgreSQL環境整備 + スキーマ作成（Task 1-1 〜 1-3）
 - [ ] Phase 2: アプリケーション設定変更（Task 2-1 〜 2-2）
 - [ ] Phase 3: エンティティ修正（Task 3-1 〜 3-5）
-- [ ] Phase 4: データ移行 + テスト（Task 4-1 〜 4-4）
+- [ ] Phase 4: Flyway適用確認 + テスト（Task 4-1 〜 4-4）
 
 ### 次のステップ
 
-CHG-009完了後、CHG-008（ドメイン分離とBoUser管理）を実施します。
-CHG-008では、CHG-009で整備した監査カラム（ActorType等）を活用してBoUserテーブルを追加します。
+CHG-009は、CHG-008（ドメイン分離とBoUser管理）完了後に実施する前提タスクです。
+次のステップは別途 task.md（例: CHG-010 系）を参照してください。

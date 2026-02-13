@@ -4,12 +4,12 @@ import com.example.aiec.dto.AvailabilityDto;
 import com.example.aiec.dto.InventoryStatusDto;
 import com.example.aiec.dto.ReservationDto;
 import com.example.aiec.dto.StockShortageDetail;
+import com.example.aiec.entity.BoUser;
 import com.example.aiec.entity.InventoryAdjustment;
 import com.example.aiec.entity.Order;
 import com.example.aiec.entity.Product;
 import com.example.aiec.entity.StockReservation;
 import com.example.aiec.entity.StockReservation.ReservationType;
-import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ConflictException;
 import com.example.aiec.exception.InsufficientStockException;
@@ -22,9 +22,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,12 +49,12 @@ public class InventoryService {
     /**
      * 仮引当を作成する
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.REPEATABLE_READ)
     public ReservationDto createReservation(String sessionId, Long productId, Integer quantity) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // 既存の仮引当を検索
         var existingReservation = reservationRepository.findActiveTentative(sessionId, productId, now);
@@ -78,20 +80,46 @@ public class InventoryService {
         reservation.setSessionId(sessionId);
         reservation.setQuantity(quantity);
         reservation.setType(ReservationType.TENTATIVE);
-        reservation.setExpiresAt(now.plusMinutes(RESERVATION_EXPIRY_MINUTES));
+        reservation.setExpiresAt(now.plus(RESERVATION_EXPIRY_MINUTES, ChronoUnit.MINUTES));
 
         reservation = reservationRepository.save(reservation);
 
-        Integer newAvailableStock = reservationRepository.calculateAvailableStock(productId, LocalDateTime.now());
+        Integer newAvailableStock = reservationRepository.calculateAvailableStock(productId, Instant.now());
         return ReservationDto.fromEntity(reservation, newAvailableStock);
+    }
+
+    @Transactional(
+            rollbackFor = Exception.class,
+            isolation = Isolation.REPEATABLE_READ
+    )
+    public void reserveTentative(Long productId, int quantity, String sessionId, Long userId) {
+        Product product = productRepository.findByIdForUpdate(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("PRODUCT_NOT_FOUND", "商品が見つかりません"));
+
+        Integer available = reservationRepository.calculateAvailableStock(productId, Instant.now());
+        if (available == null) {
+            available = product.getStock();
+        }
+        if (available < quantity) {
+            throw new BusinessException("INSUFFICIENT_STOCK", "在庫が不足しています");
+        }
+
+        StockReservation reservation = new StockReservation();
+        reservation.setProduct(product);
+        reservation.setQuantity(quantity);
+        reservation.setSessionId(sessionId);
+        reservation.setUserId(userId);
+        reservation.setType(ReservationType.TENTATIVE);
+        reservation.setExpiresAt(Instant.now().plus(RESERVATION_EXPIRY_MINUTES, ChronoUnit.MINUTES));
+        reservationRepository.save(reservation);
     }
 
     /**
      * 仮引当を更新する（カート数量変更時）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ReservationDto updateReservation(String sessionId, Long productId, Integer newQuantity) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         StockReservation reservation = reservationRepository.findActiveTentative(sessionId, productId, now)
                 .orElseThrow(() -> new ResourceNotFoundException("RESERVATION_NOT_FOUND", "引当が見つかりません"));
@@ -110,19 +138,19 @@ public class InventoryService {
         }
 
         reservation.setQuantity(newQuantity);
-        reservation.setExpiresAt(now.plusMinutes(RESERVATION_EXPIRY_MINUTES));
+        reservation.setExpiresAt(now.plus(RESERVATION_EXPIRY_MINUTES, ChronoUnit.MINUTES));
         reservation = reservationRepository.save(reservation);
 
-        Integer newAvailableStock = reservationRepository.calculateAvailableStock(productId, LocalDateTime.now());
+        Integer newAvailableStock = reservationRepository.calculateAvailableStock(productId, Instant.now());
         return ReservationDto.fromEntity(reservation, newAvailableStock);
     }
 
     /**
      * 仮引当を解除する（カートから商品削除時）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void releaseReservation(String sessionId, Long productId) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         StockReservation reservation = reservationRepository.findActiveTentative(sessionId, productId, now)
                 .orElse(null);
@@ -135,9 +163,9 @@ public class InventoryService {
     /**
      * セッションの全仮引当を解除する（カートクリア時）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void releaseAllReservations(String sessionId) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         List<StockReservation> reservations = reservationRepository.findAllActiveTentativeBySession(sessionId, now);
         reservationRepository.deleteAll(reservations);
     }
@@ -146,9 +174,9 @@ public class InventoryService {
      * 仮引当を本引当に変換する（注文確定時）
      * products.stock を減少させる
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void commitReservations(String sessionId, Order order) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         List<StockReservation> tentativeReservations =
                 reservationRepository.findAllActiveTentativeBySession(sessionId, now);
 
@@ -204,7 +232,7 @@ public class InventoryService {
      * 本引当を解除する（注文キャンセル時）
      * products.stock を戻す
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void releaseCommittedReservations(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -240,12 +268,12 @@ public class InventoryService {
     /**
      * 有効在庫を取得する
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public AvailabilityDto getAvailableStock(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         Integer tentativeReserved = reservationRepository.sumTentativeReserved(productId, now);
         Integer committedReserved = reservationRepository.sumCommittedReserved(productId);
@@ -265,9 +293,9 @@ public class InventoryService {
      * 期限切れの仮引当を定期的に削除する（5分ごと）
      */
     @Scheduled(fixedRate = 300_000)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cleanupExpiredReservations() {
-        reservationRepository.deleteByTypeAndExpiresAtBefore(ReservationType.TENTATIVE, LocalDateTime.now());
+        reservationRepository.deleteByTypeAndExpiresAtBefore(ReservationType.TENTATIVE, Instant.now());
         log.debug("期限切れの仮引当をクリーンアップしました");
     }
 
@@ -277,7 +305,7 @@ public class InventoryService {
      */
     public List<InventoryStatusDto> getAllInventoryStatus() {
         List<Product> products = productRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         return products.stream().map(product -> {
             // 仮引当数（有効期限内のみ）
@@ -308,8 +336,8 @@ public class InventoryService {
      * @param admin 実施管理者
      * @return 調整履歴
      */
-    @Transactional
-    public InventoryAdjustment adjustStock(Long productId, Integer quantityDelta, String reason, User admin) {
+    @Transactional(rollbackFor = Exception.class)
+    public InventoryAdjustment adjustStock(Long productId, Integer quantityDelta, String reason, BoUser admin) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("PRODUCT_NOT_FOUND", "商品が見つかりません"));
 
@@ -334,7 +362,7 @@ public class InventoryService {
         adjustment.setQuantityDelta(quantityDelta);
         adjustment.setReason(reason);
         adjustment.setAdjustedBy(admin.getEmail());
-        adjustment.setAdjustedAt(LocalDateTime.now());
+        adjustment.setAdjustedAt(Instant.now());
 
         return inventoryAdjustmentRepository.save(adjustment);
     }

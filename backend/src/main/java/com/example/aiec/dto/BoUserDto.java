@@ -3,7 +3,7 @@ package com.example.aiec.dto;
 import com.example.aiec.entity.BoUser;
 import com.example.aiec.entity.PermissionLevel;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 public class BoUserDto {
@@ -11,10 +11,10 @@ public class BoUserDto {
     private String email;
     private String displayName;
     private PermissionLevel permissionLevel;
-    private LocalDateTime lastLoginAt;
+    private Instant lastLoginAt;
     private Boolean isActive;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     public static BoUserDto fromEntity(BoUser boUser) {
         BoUserDto dto = new BoUserDto();

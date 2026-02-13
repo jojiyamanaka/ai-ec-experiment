@@ -13,8 +13,8 @@ import java.time.Instant;
  * 在庫引当エンティティ
  */
 @Entity
-@Table(name = "reservations")
-@SQLDelete(sql = "UPDATE reservations SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@Table(name = "stock_reservations")
+@SQLDelete(sql = "UPDATE stock_reservations SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @Where(clause = "is_deleted = FALSE")
 @Data
 @NoArgsConstructor

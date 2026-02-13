@@ -4,14 +4,18 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * 操作履歴エンティティ
  */
 @Entity
 @Table(name = "operation_histories")
+@SQLDelete(sql = "UPDATE operation_histories SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@Where(clause = "is_deleted = FALSE")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,50 +25,64 @@ public class OperationHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * イベント種別（LOGIN_SUCCESS, LOGIN_FAILURE, AUTHORIZATION_ERROR, ADMIN_ACTION）
-     */
-    @Column(nullable = false, length = 50)
-    private String eventType;
+    @Column(name = "operation_type", nullable = false, length = 100)
+    private String operationType;
 
-    /**
-     * イベント詳細（JSONまたは自由形式テキスト）
-     */
-    @Column(nullable = false, length = 500)
-    private String details;
+    @Column(name = "performed_by", length = 255)
+    private String performedBy;
 
-    /**
-     * 対象ユーザーID（ログイン失敗時はnullの場合あり）
-     */
-    @Column(name = "user_id")
-    private Long userId;
-
-    /**
-     * 対象ユーザーのメールアドレス（ログイン失敗時の記録用）
-     */
-    @Column(length = 255)
-    private String userEmail;
-
-    /**
-     * IPアドレス（将来拡張用、現在はnull）
-     */
-    @Column(length = 45)
-    private String ipAddress;
-
-    /**
-     * リクエストパス（例: /api/order/123/ship）
-     */
-    @Column(length = 255)
+    @Column(name = "request_path", length = 500)
     private String requestPath;
 
-    /**
-     * 発生日時
-     */
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(length = 2000)
+    private String details;
+
+    // 監査カラム
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "created_by_type", length = 50)
+    private ActorType createdByType;
+
+    @Column(name = "created_by_id")
+    private Long createdById;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "updated_by_type", length = 50)
+    private ActorType updatedByType;
+
+    @Column(name = "updated_by_id")
+    private Long updatedById;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by_type", length = 50)
+    private ActorType deletedByType;
+
+    @Column(name = "deleted_by_id")
+    private Long deletedById;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+        isDeleted = false;
+        if (createdByType == null) {
+            createdByType = ActorType.SYSTEM;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
     }
 }

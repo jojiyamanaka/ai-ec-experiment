@@ -182,7 +182,7 @@ type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLE
 
 interface Order {
   id: number              // 注文ID（主キー）
-  orderNumber: string     // 注文番号（ORD-YYYYMMDD-XXX形式）
+  orderNumber: string     // 注文番号（ORD-xxxxxxxxxx形式）
   sessionId: string       // セッションID
   userId: number | null   // 会員ID（外部キー、会員注文の場合のみ）
   totalPrice: number      // 合計金額（円）
@@ -213,7 +213,7 @@ CREATE INDEX idx_orders_status ON orders(status);
 ```
 
 **制約**:
-- `order_number`: 必須、ユニーク制約、`ORD-YYYYMMDD-XXX` 形式
+- `order_number`: 必須、ユニーク制約、`ORD-xxxxxxxxxx` 形式
 - `user_id`: オプション（ゲスト注文の場合は null、会員注文の場合のみ設定）
 - `status`: 必須、列挙型（PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED）
 - `total_price`: 必須、0以上の整数
@@ -225,7 +225,7 @@ CREATE INDEX idx_orders_status ON orders(status);
   - 会員注文: `user_id` が一致する会員のみアクセス可能
   - ゲスト注文: `session_id` が一致するセッションのみアクセス可能
 - **退会時の匿名化**: 会員退会時は `user_id = null` に更新（注文履歴は保持）
-- 注文番号は自動生成（日付 + 連番）
+- 注文番号は自動生成（0埋め10桁連番）
 - 注文確定時は PENDING 状態で作成
 - 状態遷移は定義されたルールに従う（後述）
 
@@ -763,7 +763,7 @@ function isValidSessionId(sessionId: string): boolean {
 ```
 1. 注文作成（PENDING）
    - カート内容から注文アイテム作成
-   - 注文番号生成（ORD-YYYYMMDD-XXX）
+   - 注文番号生成（ORD-xxxxxxxxxx）
    ↓
 2. 注文確認（CONFIRMED）
    - 管理者が確認

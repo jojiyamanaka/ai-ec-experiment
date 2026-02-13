@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ public class BoAuthService {
         String tokenHash = hashToken(rawToken);
 
         // 3. 有効期限を設定（7日間）
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
+        Instant expiresAt = Instant.now().plus(7, ChronoUnit.DAYS);
 
         // 4. bo_auth_tokens テーブルに保存
         BoAuthToken authToken = new BoAuthToken();
@@ -67,7 +68,7 @@ public class BoAuthService {
         }
 
         // 4. 有効期限チェック
-        if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (authToken.getExpiresAt().isBefore(Instant.now())) {
             throw new BusinessException("TOKEN_EXPIRED", "トークンの有効期限が切れています");
         }
 

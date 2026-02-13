@@ -412,7 +412,7 @@ POST /api/order
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [
       {
         "product": {
@@ -490,7 +490,7 @@ GET /api/order/:id
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [
       {
         "product": {
@@ -551,7 +551,7 @@ POST /api/order/:id/cancel
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [...],
     "totalPrice": 17960,
     "status": "CANCELLED",
@@ -613,7 +613,7 @@ POST /api/order/:id/confirm
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [...],
     "totalPrice": 17960,
     "status": "CONFIRMED",
@@ -655,7 +655,7 @@ POST /api/order/:id/ship
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [...],
     "totalPrice": 17960,
     "status": "SHIPPED",
@@ -686,7 +686,7 @@ POST /api/order/:id/deliver
   "success": true,
   "data": {
     "orderId": 1,
-    "orderNumber": "ORD-20250210-001",
+    "orderNumber": "ORD-0000000001",
     "items": [...],
     "totalPrice": 17960,
     "status": "DELIVERED",
@@ -713,7 +713,7 @@ GET /api/order
   "data": [
     {
       "orderId": 1,
-      "orderNumber": "ORD-20250210-001",
+      "orderNumber": "ORD-0000000001",
       "items": [...],
       "totalPrice": 17960,
       "status": "PENDING",
@@ -722,7 +722,7 @@ GET /api/order
     },
     {
       "orderId": 2,
-      "orderNumber": "ORD-20250210-002",
+      "orderNumber": "ORD-0000000002",
       "items": [...],
       "totalPrice": 25000,
       "status": "CONFIRMED",
@@ -781,7 +781,7 @@ GET /api/order
 ```typescript
 {
   orderId: number         // 注文ID
-  orderNumber: string     // 注文番号（ORD-YYYYMMDD-XXX形式）
+  orderNumber: string     // 注文番号（ORD-xxxxxxxxxx形式）
   items: OrderItem[]      // 注文アイテム配列
   totalPrice: number      // 合計金額
   status: string          // 注文状態（PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED）
@@ -1032,7 +1032,7 @@ Authorization: Bearer <token>
   "data": [
     {
       "orderId": 3,
-      "orderNumber": "ORD-20260212-003",
+      "orderNumber": "ORD-0000000003",
       "items": [
         {
           "product": {
@@ -1096,6 +1096,369 @@ Authorization: Bearer <token>
 }
 ```
 
+### BoUser（管理者ユーザー）
+```typescript
+{
+  id: number              // BoUser ID
+  email: string           // メールアドレス
+  displayName: string     // 表示名
+  permissionLevel: string // 権限レベル（SUPER_ADMIN, ADMIN, OPERATOR）
+  lastLoginAt: string     // 最終ログイン日時（ISO 8601形式）
+  isActive: boolean       // 有効/無効フラグ
+  createdAt: string       // 作成日時（ISO 8601形式）
+  updatedAt: string       // 更新日時（ISO 8601形式）
+}
+```
+
+### BoAuthResponse（管理者認証レスポンス）
+```typescript
+{
+  user: BoUser            // 管理者情報
+  token: string           // 認証トークン（UUID v4、36文字）
+  expiresAt: string       // トークン有効期限（ISO 8601形式）
+}
+```
+
+---
+
+## BoAuth API（管理者認証）
+
+### 20. BoUser ログイン
+管理者アカウントでログインします。
+
+**エンドポイント**
+```
+POST /api/bo-auth/login
+```
+
+**リクエスト**
+```json
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "admin@example.com",
+      "displayName": "管理者太郎",
+      "permissionLevel": "ADMIN",
+      "lastLoginAt": "2026-02-13T10:00:00",
+      "isActive": true,
+      "createdAt": "2026-01-01T00:00:00",
+      "updatedAt": "2026-02-13T10:00:00"
+    },
+    "token": "550e8400-e29b-41d4-a716-446655440000",
+    "expiresAt": "2026-02-20T10:00:00"
+  }
+}
+```
+
+**レスポンス（失敗）**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "メールアドレスまたはパスワードが正しくありません"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BO_USER_INACTIVE",
+    "message": "このアカウントは無効化されています"
+  }
+}
+```
+
+---
+
+### 21. BoUser ログアウト
+管理者アカウントからログアウトします（トークンを失効）。
+
+**エンドポイント**
+```
+POST /api/bo-auth/logout
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <token>
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "ログアウトしました"
+  }
+}
+```
+
+---
+
+### 22. BoUser 情報取得
+現在ログイン中の管理者情報を取得します。
+
+**エンドポイント**
+```
+GET /api/bo-auth/me
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <token>
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "admin@example.com",
+    "displayName": "管理者太郎",
+    "permissionLevel": "ADMIN",
+    "lastLoginAt": "2026-02-13T10:00:00",
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00",
+    "updatedAt": "2026-02-13T10:00:00"
+  }
+}
+```
+
+**レスポンス（エラー）**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_TOKEN",
+    "message": "無効なトークンです"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TOKEN_EXPIRED",
+    "message": "トークンの有効期限が切れています"
+  }
+}
+```
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "TOKEN_REVOKED",
+    "message": "このトークンは失効しています"
+  }
+}
+```
+
+---
+
+## 管理 API（/api/bo/**）
+
+**重要**: すべての管理APIは BoUser 認証が必須です。認証ヘッダー `Authorization: Bearer <bo_token>` が必要です。
+
+### 23. 会員一覧取得（管理者用）
+全会員の一覧を取得します。
+
+**エンドポイント**
+```
+GET /api/bo/admin/members
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <bo_token>
+```
+
+**権限**: ADMIN または SUPER_ADMIN
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "email": "customer@example.com",
+      "displayName": "顧客太郎",
+      "isActive": true,
+      "createdAt": "2026-01-01T00:00:00",
+      "updatedAt": "2026-01-01T00:00:00"
+    }
+  ]
+}
+```
+
+---
+
+### 24. 会員詳細取得（管理者用）
+特定会員の詳細情報と注文サマリーを取得します。
+
+**エンドポイント**
+```
+GET /api/bo/admin/members/:id
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <bo_token>
+```
+
+**権限**: ADMIN または SUPER_ADMIN
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "customer@example.com",
+    "displayName": "顧客太郎",
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00",
+    "updatedAt": "2026-01-01T00:00:00",
+    "orderSummary": {
+      "totalOrders": 5,
+      "totalAmount": 150000
+    }
+  }
+}
+```
+
+---
+
+### 25. 会員状態変更（管理者用）
+会員アカウントの有効/無効を切り替えます。
+
+**エンドポイント**
+```
+PUT /api/bo/admin/members/:id/status
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <bo_token>
+```
+
+**権限**: ADMIN または SUPER_ADMIN
+
+**リクエスト**
+```json
+{
+  "isActive": false
+}
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "customer@example.com",
+    "displayName": "顧客太郎",
+    "isActive": false,
+    "createdAt": "2026-01-01T00:00:00",
+    "updatedAt": "2026-02-13T10:00:00"
+  }
+}
+```
+
+---
+
+### 26. 在庫一覧取得（管理者用）
+全商品の在庫情報を取得します。
+
+**エンドポイント**
+```
+GET /api/bo/admin/inventory
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <bo_token>
+```
+
+**権限**: ADMIN または SUPER_ADMIN
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "productId": 1,
+      "productName": "ワイヤレスイヤホン",
+      "physicalStock": 12,
+      "availableStock": 10,
+      "reservedStock": 2,
+      "isPublished": true
+    }
+  ]
+}
+```
+
+---
+
+### 27. 在庫調整（管理者用）
+商品の実在庫を調整します。
+
+**エンドポイント**
+```
+POST /api/bo/admin/inventory/adjust
+```
+
+**ヘッダー**
+```
+Authorization: Bearer <bo_token>
+```
+
+**権限**: ADMIN または SUPER_ADMIN
+
+**リクエスト**
+```json
+{
+  "productId": 1,
+  "adjustment": 10,
+  "reason": "入荷"
+}
+```
+
+**レスポンス（成功）**
+```json
+{
+  "success": true,
+  "data": {
+    "productId": 1,
+    "productName": "ワイヤレスイヤホン",
+    "previousStock": 12,
+    "newStock": 22,
+    "adjustment": 10,
+    "adjustedBy": "admin@example.com",
+    "reason": "入荷",
+    "adjustedAt": "2026-02-13T10:00:00"
+  }
+}
+```
+
 ---
 
 ## エラーコード一覧
@@ -1121,6 +1484,13 @@ Authorization: Bearer <token>
 | INVALID_CREDENTIALS | 400 | メールアドレスまたはパスワードが正しくありません |
 | UNAUTHORIZED | 400 | 認証が必要です |
 | NO_RESERVATIONS | 400 | 仮引当が存在しません |
+| BO_USER_NOT_FOUND | 404 | BoUserが見つかりません |
+| BO_USER_INACTIVE | 403 | BoUserが無効化されています |
+| INVALID_TOKEN | 401 | 無効なトークンです |
+| TOKEN_EXPIRED | 401 | トークンの有効期限が切れています |
+| TOKEN_REVOKED | 401 | トークンが失効しています |
+| FORBIDDEN | 403 | 権限が不足しています |
+| CUSTOMER_TOKEN_NOT_ALLOWED | 403 | 顧客トークンでは管理APIにアクセスできません |
 | INTERNAL_ERROR | 500 | 内部エラーが発生しました |
 
 ### フロントエンドエラー（クライアント側）
@@ -1136,6 +1506,10 @@ Authorization: Bearer <token>
 1. すべてのリクエストには `Content-Type: application/json` ヘッダーが必要です
 2. カート関連のAPIは `X-Session-Id` ヘッダーが必須です
 3. 認証が必要なAPIは `Authorization: Bearer <token>` ヘッダーが必須です
+   - 顧客向けAPI（`/api/**`）: `authToken` を使用
+   - 管理者向けAPI（`/api/bo/**`）: `bo_token` を使用
 4. セッションIDはクライアント側で生成・管理します
 5. 商品の在庫数は注文時にチェックされます
-6. 注文番号は `ORD-YYYYMMDD-XXX` 形式で自動生成されます
+6. 注文番号は `ORD-xxxxxxxxxx` 形式で自動生成されます
+7. 管理API（`/api/bo/**`）は BoUser 認証が必須です。顧客トークンでアクセスすると 401/403 エラーが返されます
+8. 管理APIのレスポンスには `Cache-Control: no-store` ヘッダーが付与されます（キャッシュ無効化）

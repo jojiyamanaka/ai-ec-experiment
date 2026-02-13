@@ -16,8 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public class OrderService {
      * @param userId 会員ID（オプション、ログイン時のみ）
      * @return 作成された注文
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderDto createOrder(String sessionId, String cartId, Long userId) {
         // セッションIDとカートIDが一致するか確認
         if (!sessionId.equals(cartId)) {
@@ -89,8 +88,12 @@ public class OrderService {
         cart.getItems().forEach(cartItem -> {
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(cartItem.getProduct());
+            orderItem.setProductName(cartItem.getProduct().getName());
+            orderItem.setProductPrice(cartItem.getProduct().getPrice());
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setSubtotal(cartItem.getProduct().getPrice() * cartItem.getQuantity());
+            orderItem.setSubtotal(
+                    cartItem.getProduct().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity().longValue()))
+            );
             order.addItem(orderItem);
         });
 
@@ -117,7 +120,7 @@ public class OrderService {
      * @param userId 会員ID（会員注文の場合）
      * @return キャンセルされた注文
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderDto cancelOrder(Long orderId, String sessionId, Long userId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -153,7 +156,7 @@ public class OrderService {
      * @param userId 会員ID（会員注文の場合）
      * @return 注文詳細
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public OrderDto getOrderById(Long id, String sessionId, Long userId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -179,7 +182,7 @@ public class OrderService {
     /**
      * 注文を確認（PENDING → CONFIRMED）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderDto confirmOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -197,7 +200,7 @@ public class OrderService {
     /**
      * 注文を発送（CONFIRMED → SHIPPED）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderDto shipOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -215,7 +218,7 @@ public class OrderService {
     /**
      * 注文を配達完了（SHIPPED → DELIVERED）
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrderDto deliverOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
@@ -233,7 +236,7 @@ public class OrderService {
     /**
      * 全注文を取得（管理者用）
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public java.util.List<OrderDto> getAllOrders() {
         return orderRepository.findAll().stream()
                 .map(OrderDto::fromEntity)
@@ -246,7 +249,7 @@ public class OrderService {
      * @param userId 会員ID（認証済み）
      * @return 注文履歴一覧（作成日時降順）
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<OrderDto> getOrderHistory(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(OrderDto::fromEntity)
@@ -254,19 +257,11 @@ public class OrderService {
     }
 
     /**
-     * 注文番号を生成（ORD-YYYYMMDD-XXX形式）
+     * 注文番号を生成（ORD-xxxxxxxxxx形式）
      */
     private String generateOrderNumber() {
-        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String prefix = "ORD-" + dateStr + "-";
-
-        // 今日の注文数を取得して、連番を生成
-        long todayOrderCount = orderRepository.findAll().stream()
-                .filter(o -> o.getOrderNumber().startsWith(prefix))
-                .count();
-
-        int sequence = (int) (todayOrderCount + 1);
-        return prefix + String.format("%03d", sequence);
+        Long sequence = orderRepository.getNextOrderNumberSequence();
+        return "ORD-" + String.format("%010d", sequence);
     }
 
 }
