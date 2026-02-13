@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:customer": "vite --mode customer",
+    "dev:admin": "vite --mode admin",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

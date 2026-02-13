@@ -15,6 +15,8 @@ import type {
 } from '../types/api'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const APP_MODE = import.meta.env.VITE_APP_MODE === 'admin' ? 'admin' : 'customer'
+type AuthContext = 'auto' | 'customer' | 'bo'
 
 // セッションIDの生成・取得
 const getSessionId = (): string => {
@@ -29,7 +31,8 @@ const getSessionId = (): string => {
 // 共通fetch関数
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  authContext: AuthContext = 'auto'
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`
   const headers = new Headers(options.headers)
@@ -39,17 +42,15 @@ async function fetchApi<T>(
 
   // 認証トークンの自動付与
   const boToken = localStorage.getItem('bo_token')
-  const isBoRequest = endpoint.startsWith('/api/bo')
-  const isBoAuthRequest = endpoint.startsWith('/api/bo-auth')
-  const isBoRoute =
-    typeof window !== 'undefined' && window.location.pathname.startsWith('/bo')
-  const shouldUseBoAuthContext = isBoRequest || isBoAuthRequest || isBoRoute
+  const isBoEndpoint = endpoint.startsWith('/api/bo') || endpoint.startsWith('/api/bo-auth')
+  const shouldUseBoAuthContext =
+    authContext === 'bo' || (authContext === 'auto' && APP_MODE === 'admin')
 
   if (shouldUseBoAuthContext) {
     if (boToken && !endpoint.endsWith('/bo-auth/login')) {
       headers.set('Authorization', `Bearer ${boToken}`)
     }
-  } else {
+  } else if (!isBoEndpoint) {
     const token = localStorage.getItem('authToken')
     if (token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
       headers.set('Authorization', `Bearer ${token}`)
@@ -69,7 +70,7 @@ async function fetchApi<T>(
 
     // 401エラーのハンドリング
     if (!response.ok && response.status === 401) {
-      if (shouldUseBoAuthContext) {
+      if (shouldUseBoAuthContext || isBoEndpoint) {
         localStorage.removeItem('bo_token')
         window.dispatchEvent(new Event('bo-auth:unauthorized'))
       } else {
@@ -97,28 +98,41 @@ function normalizeEndpoint(endpoint: string): string {
   return endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`
 }
 
-export async function get<T>(endpoint: string): Promise<ApiResponse<T>> {
-  return fetchApi<T>(normalizeEndpoint(endpoint))
+export async function get<T>(
+  endpoint: string,
+  authContext: AuthContext = 'auto'
+): Promise<ApiResponse<T>> {
+  return fetchApi<T>(normalizeEndpoint(endpoint), {}, authContext)
 }
 
 export async function post<T>(
   endpoint: string,
-  body?: unknown
+  body?: unknown,
+  authContext: AuthContext = 'auto'
 ): Promise<ApiResponse<T>> {
-  return fetchApi<T>(normalizeEndpoint(endpoint), {
-    method: 'POST',
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  return fetchApi<T>(
+    normalizeEndpoint(endpoint),
+    {
+      method: 'POST',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    },
+    authContext
+  )
 }
 
 export async function put<T>(
   endpoint: string,
-  body?: unknown
+  body?: unknown,
+  authContext: AuthContext = 'auto'
 ): Promise<ApiResponse<T>> {
-  return fetchApi<T>(normalizeEndpoint(endpoint), {
-    method: 'PUT',
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  return fetchApi<T>(
+    normalizeEndpoint(endpoint),
+    {
+      method: 'PUT',
+      body: body === undefined ? undefined : JSON.stringify(body),
+    },
+    authContext
+  )
 }
 
 // ============================================
@@ -152,7 +166,7 @@ export async function updateItem(
   return fetchApi<Product>(`/api/item/${id}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
-  })
+  }, 'bo')
 }
 
 // ============================================
@@ -245,7 +259,7 @@ export async function cancelOrder(orderId: number): Promise<ApiResponse<Order>> 
 export async function confirmOrder(orderId: number): Promise<ApiResponse<Order>> {
   return fetchApi<Order>(`/api/order/${orderId}/confirm`, {
     method: 'POST',
-  })
+  }, 'bo')
 }
 
 /**
@@ -254,7 +268,7 @@ export async function confirmOrder(orderId: number): Promise<ApiResponse<Order>>
 export async function shipOrder(orderId: number): Promise<ApiResponse<Order>> {
   return fetchApi<Order>(`/api/order/${orderId}/ship`, {
     method: 'POST',
-  })
+  }, 'bo')
 }
 
 /**
@@ -263,14 +277,14 @@ export async function shipOrder(orderId: number): Promise<ApiResponse<Order>> {
 export async function deliverOrder(orderId: number): Promise<ApiResponse<Order>> {
   return fetchApi<Order>(`/api/order/${orderId}/deliver`, {
     method: 'POST',
-  })
+  }, 'bo')
 }
 
 /**
  * 全注文取得（管理者用）
  */
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
-  return fetchApi<Order[]>('/api/order')
+  return fetchApi<Order[]>('/api/order', {}, 'bo')
 }
 
 // ============================================

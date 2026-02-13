@@ -74,12 +74,6 @@ export default function Layout() {
             <p className="text-sm text-zinc-500">
               © 2025 AI EC Shop. All rights reserved.
             </p>
-            <Link
-              to="/bo/item"
-              className="text-xs text-zinc-400 hover:text-zinc-600"
-            >
-              管理画面
-            </Link>
           </div>
         </div>
       </footer>

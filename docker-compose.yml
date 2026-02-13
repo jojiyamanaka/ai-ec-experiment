@@ -20,19 +20,39 @@ services:
     networks:
       - app-network
 
-  frontend:
+  frontend-customer:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: ai-ec-frontend
+    container_name: ai-ec-frontend-customer
     ports:
-      - "5173:5173"  # Vite デフォルトポート
+      - "5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules  # node_modules はコンテナ内のものを使用
     environment:
       - VITE_API_URL=http://localhost:8080
-    command: npm run dev
+      - VITE_APP_MODE=customer
+    command: npm run dev:customer
+    stdin_open: true
+    tty: true
+    networks:
+      - app-network
+
+  frontend-admin:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ai-ec-frontend-admin
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # node_modules はコンテナ内のものを使用
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - VITE_APP_MODE=admin
+    command: npm run dev:admin
     stdin_open: true
     tty: true
     networks:
