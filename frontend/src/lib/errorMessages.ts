@@ -22,6 +22,13 @@ const ERROR_MESSAGES: Record<string, ErrorMessageConfig> = {
     message: '無効なリクエストです',
     action: '入力内容を確認してください',
   },
+  UNAUTHORIZED: {
+    message: 'ログインが必要です',
+    action: 'ログインしてから再度お試しください',
+  },
+  FORBIDDEN: {
+    message: 'この操作を実行する権限がありません',
+  },
 
   // カート関連
   CART_NOT_FOUND: {

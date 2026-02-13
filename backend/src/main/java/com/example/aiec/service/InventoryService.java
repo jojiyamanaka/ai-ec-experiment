@@ -1,16 +1,20 @@
 package com.example.aiec.service;
 
 import com.example.aiec.dto.AvailabilityDto;
+import com.example.aiec.dto.InventoryStatusDto;
 import com.example.aiec.dto.ReservationDto;
 import com.example.aiec.dto.StockShortageDetail;
+import com.example.aiec.entity.InventoryAdjustment;
 import com.example.aiec.entity.Order;
 import com.example.aiec.entity.Product;
 import com.example.aiec.entity.StockReservation;
 import com.example.aiec.entity.StockReservation.ReservationType;
+import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ConflictException;
 import com.example.aiec.exception.InsufficientStockException;
 import com.example.aiec.exception.ResourceNotFoundException;
+import com.example.aiec.repository.InventoryAdjustmentRepository;
 import com.example.aiec.repository.OrderRepository;
 import com.example.aiec.repository.ProductRepository;
 import com.example.aiec.repository.StockReservationRepository;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 在庫引当サービス
@@ -37,6 +42,7 @@ public class InventoryService {
     private final StockReservationRepository reservationRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final InventoryAdjustmentRepository inventoryAdjustmentRepository;
 
     /**
      * 仮引当を作成する
@@ -263,6 +269,74 @@ public class InventoryService {
     public void cleanupExpiredReservations() {
         reservationRepository.deleteByTypeAndExpiresAtBefore(ReservationType.TENTATIVE, LocalDateTime.now());
         log.debug("期限切れの仮引当をクリーンアップしました");
+    }
+
+    /**
+     * 全商品の在庫状況を一括取得（バッチ処理版）
+     * JOIN + GROUP BY で効率的に取得
+     */
+    public List<InventoryStatusDto> getAllInventoryStatus() {
+        List<Product> products = productRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        return products.stream().map(product -> {
+            // 仮引当数（有効期限内のみ）
+            Integer tentative = reservationRepository.sumTentativeReserved(product.getId(), now);
+
+            // 本引当数
+            Integer committed = reservationRepository.sumCommittedReserved(product.getId());
+
+            // 有効在庫計算
+            Integer available = product.getStock() - tentative - committed;
+
+            return InventoryStatusDto.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .physicalStock(product.getStock())
+                    .tentativeReserved(tentative)
+                    .committedReserved(committed)
+                    .availableStock(available)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 在庫調整（差分方式）
+     * @param productId 商品ID
+     * @param quantityDelta 増減量（正: 増加、負: 減少）
+     * @param reason 調整理由
+     * @param admin 実施管理者
+     * @return 調整履歴
+     */
+    @Transactional
+    public InventoryAdjustment adjustStock(Long productId, Integer quantityDelta, String reason, User admin) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("PRODUCT_NOT_FOUND", "商品が見つかりません"));
+
+        Integer quantityBefore = product.getStock();
+        Integer quantityAfter = quantityBefore + quantityDelta;
+
+        // 在庫が負にならないようバリデーション
+        if (quantityAfter < 0) {
+            throw new BusinessException("INVALID_STOCK_ADJUSTMENT",
+                    "在庫調整後の数量が負になります（現在: " + quantityBefore + ", 調整: " + quantityDelta + "）");
+        }
+
+        // 在庫更新
+        product.setStock(quantityAfter);
+        productRepository.save(product);
+
+        // 調整履歴記録
+        InventoryAdjustment adjustment = new InventoryAdjustment();
+        adjustment.setProduct(product);
+        adjustment.setQuantityBefore(quantityBefore);
+        adjustment.setQuantityAfter(quantityAfter);
+        adjustment.setQuantityDelta(quantityDelta);
+        adjustment.setReason(reason);
+        adjustment.setAdjustedBy(admin.getEmail());
+        adjustment.setAdjustedAt(LocalDateTime.now());
+
+        return inventoryAdjustmentRepository.save(adjustment);
     }
 
 }

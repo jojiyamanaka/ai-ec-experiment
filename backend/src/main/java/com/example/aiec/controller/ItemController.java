@@ -4,6 +4,12 @@ import com.example.aiec.dto.ApiResponse;
 import com.example.aiec.dto.ProductDto;
 import com.example.aiec.dto.ProductListResponse;
 import com.example.aiec.dto.UpdateProductRequest;
+import com.example.aiec.entity.Role;
+import com.example.aiec.entity.User;
+import com.example.aiec.exception.BusinessException;
+import com.example.aiec.exception.ForbiddenException;
+import com.example.aiec.service.AuthService;
+import com.example.aiec.service.OperationHistoryService;
 import com.example.aiec.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 public class ItemController {
 
     private final ProductService productService;
+    private final AuthService authService;
+    private final OperationHistoryService operationHistoryService;
 
     /**
      * 商品一覧取得
@@ -49,10 +57,42 @@ public class ItemController {
     @PutMapping("/{id}")
     public ApiResponse<ProductDto> updateProduct(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateProductRequest request
-    ) {
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody UpdateProductRequest request) {
+
+        // 認証・認可チェック
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+        requireAdmin(user, "/api/item/" + id);
+
+        // 管理操作実行
         ProductDto product = productService.updateProduct(id, request);
+
+        // 操作履歴記録
+        operationHistoryService.logAdminAction(user, "/api/item/" + id,
+            "Updated product: " + product.getName());
+
         return ApiResponse.success(product);
+    }
+
+    /**
+     * Authorizationヘッダーからトークンを抽出
+     */
+    private String extractToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BusinessException("UNAUTHORIZED", "認証が必要です");
+        }
+        return authHeader.substring(7);
+    }
+
+    /**
+     * 管理者権限チェック
+     */
+    private void requireAdmin(User user, String requestPath) {
+        if (user.getRole() != Role.ADMIN) {
+            operationHistoryService.logAuthorizationError(user, requestPath);
+            throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
+        }
     }
 
 }

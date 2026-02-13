@@ -5,7 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
@@ -63,6 +65,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 認可エラー（403 Forbidden）
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<Void> handleForbiddenException(ForbiddenException ex) {
+        return ApiResponse.error(ex.getCode(), ex.getMessage());
+    }
+
+    /**
      * 競合例外（409 Conflict）
      */
     @ExceptionHandler(ConflictException.class)
@@ -91,6 +102,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("INVALID_REQUEST", message));
+    }
+
+    /**
+     * 必須ヘッダー不足
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
+        if ("Authorization".equals(ex.getHeaderName())) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "認証が必要です"));
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("INVALID_REQUEST", "必須ヘッダーが不足しています: " + ex.getHeaderName()));
     }
 
     /**

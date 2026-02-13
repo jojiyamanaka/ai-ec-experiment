@@ -31,6 +31,9 @@ export interface OrderItem {
 export interface Order {
   orderId: number
   orderNumber: string
+  userId?: number
+  userEmail?: string
+  userDisplayName?: string
   items: OrderItem[]
   totalPrice: number
   status: string
@@ -101,7 +104,10 @@ export interface User {
   id: number
   email: string
   displayName: string
+  role: 'CUSTOMER' | 'ADMIN'
+  isActive?: boolean
   createdAt: string
+  updatedAt?: string
 }
 
 // 認証レスポンス

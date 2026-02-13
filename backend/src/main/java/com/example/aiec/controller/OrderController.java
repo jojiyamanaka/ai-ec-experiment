@@ -1,11 +1,14 @@
 package com.example.aiec.controller;
 
 import com.example.aiec.dto.*;
+import com.example.aiec.entity.Role;
 import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
+import com.example.aiec.exception.ForbiddenException;
 import com.example.aiec.service.AuthService;
 import com.example.aiec.service.CartService;
 import com.example.aiec.service.OrderService;
+import com.example.aiec.service.OperationHistoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +26,7 @@ public class OrderController {
     private final CartService cartService;
     private final OrderService orderService;
     private final AuthService authService;
+    private final OperationHistoryService operationHistoryService;
 
     /**
      * カート取得
@@ -172,8 +176,22 @@ public class OrderController {
      * POST /api/order/:id/confirm
      */
     @PostMapping("/{id}/confirm")
-    public ApiResponse<OrderDto> confirmOrder(@PathVariable Long id) {
+    public ApiResponse<OrderDto> confirmOrder(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 認証・認可チェック
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+        requireAdmin(user, "/api/order/" + id + "/confirm");
+
+        // 管理操作実行
         OrderDto order = orderService.confirmOrder(id);
+
+        // 操作履歴記録
+        operationHistoryService.logAdminAction(user, "/api/order/" + id + "/confirm",
+            "Confirmed order: " + order.getOrderNumber());
+
         return ApiResponse.success(order);
     }
 
@@ -182,8 +200,22 @@ public class OrderController {
      * POST /api/order/:id/ship
      */
     @PostMapping("/{id}/ship")
-    public ApiResponse<OrderDto> shipOrder(@PathVariable Long id) {
+    public ApiResponse<OrderDto> shipOrder(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 認証・認可チェック
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+        requireAdmin(user, "/api/order/" + id + "/ship");
+
+        // 管理操作実行
         OrderDto order = orderService.shipOrder(id);
+
+        // 操作履歴記録
+        operationHistoryService.logAdminAction(user, "/api/order/" + id + "/ship",
+            "Shipped order: " + order.getOrderNumber());
+
         return ApiResponse.success(order);
     }
 
@@ -192,8 +224,22 @@ public class OrderController {
      * POST /api/order/:id/deliver
      */
     @PostMapping("/{id}/deliver")
-    public ApiResponse<OrderDto> deliverOrder(@PathVariable Long id) {
+    public ApiResponse<OrderDto> deliverOrder(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 認証・認可チェック
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+        requireAdmin(user, "/api/order/" + id + "/deliver");
+
+        // 管理操作実行
         OrderDto order = orderService.deliverOrder(id);
+
+        // 操作履歴記録
+        operationHistoryService.logAdminAction(user, "/api/order/" + id + "/deliver",
+            "Delivered order: " + order.getOrderNumber());
+
         return ApiResponse.success(order);
     }
 
@@ -202,8 +248,21 @@ public class OrderController {
      * GET /api/order
      */
     @GetMapping
-    public ApiResponse<java.util.List<OrderDto>> getAllOrders() {
+    public ApiResponse<java.util.List<OrderDto>> getAllOrders(
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 認証・認可チェック
+        String token = extractToken(authHeader);
+        User user = authService.verifyToken(token);
+        requireAdmin(user, "/api/order");
+
+        // 管理操作実行
         java.util.List<OrderDto> orders = orderService.getAllOrders();
+
+        // 操作履歴記録
+        operationHistoryService.logAdminAction(user, "/api/order",
+            "Retrieved all orders (count: " + orders.size() + ")");
+
         return ApiResponse.success(orders);
     }
 
@@ -215,6 +274,16 @@ public class OrderController {
             throw new BusinessException("UNAUTHORIZED", "認証が必要です");
         }
         return authHeader.substring(7);
+    }
+
+    /**
+     * 管理者権限チェック
+     */
+    private void requireAdmin(User user, String requestPath) {
+        if (user.getRole() != Role.ADMIN) {
+            operationHistoryService.logAuthorizationError(user, requestPath);
+            throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
+        }
     }
 
 }

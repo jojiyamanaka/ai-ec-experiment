@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { ProductProvider } from './contexts/ProductContext'
+import AdminLayout from './components/AdminLayout'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import ItemListPage from './pages/ItemListPage'
@@ -12,6 +13,8 @@ import OrderCompletePage from './pages/OrderCompletePage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import OrderHistoryPage from './pages/OrderHistoryPage'
 import AdminItemPage from './pages/AdminItemPage'
+import AdminInventoryPage from './pages/AdminInventoryPage'
+import AdminMembersPage from './pages/AdminMembersPage'
 import AdminOrderPage from './pages/AdminOrderPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -23,6 +26,7 @@ export default function App() {
         <CartProvider>
           <BrowserRouter>
             <Routes>
+              {/* 一般ユーザー画面 */}
               <Route element={<Layout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/item" element={<ItemListPage />} />
@@ -32,12 +36,18 @@ export default function App() {
                 <Route path="/order/complete" element={<OrderCompletePage />} />
                 <Route path="/order/:id" element={<OrderDetailPage />} />
                 <Route path="/order/history" element={<OrderHistoryPage />} />
-                <Route path="/bo/item" element={<AdminItemPage />} />
-                <Route path="/bo/order" element={<AdminOrderPage />} />
 
                 {/* 認証画面 */}
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
+              </Route>
+
+              {/* 管理画面（別レイアウト） */}
+              <Route path="/bo" element={<AdminLayout />}>
+                <Route path="item" element={<AdminItemPage />} />
+                <Route path="order" element={<AdminOrderPage />} />
+                <Route path="inventory" element={<AdminInventoryPage />} />
+                <Route path="members" element={<AdminMembersPage />} />
               </Route>
             </Routes>
           </BrowserRouter>

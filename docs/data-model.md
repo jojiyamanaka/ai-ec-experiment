@@ -385,6 +385,17 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 ```
 
+**PostgreSQL + Flyway 移行メモ（`is_active` カラム）**:
+- 現行の SQLite 運用では `users.is_active` が後付け追加のため、環境によっては `NULL` が残る可能性がある。
+- PostgreSQL 移行時に Flyway で `is_active` の補正を必ず実施する（`NULL` 埋め + `DEFAULT true` + `NOT NULL`）。
+- 例（Flyway SQL のイメージ）:
+  ```sql
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN;
+  UPDATE users SET is_active = TRUE WHERE is_active IS NULL;
+  ALTER TABLE users ALTER COLUMN is_active SET DEFAULT TRUE;
+  ALTER TABLE users ALTER COLUMN is_active SET NOT NULL;
+  ```
+
 **制約**:
 - `email`: 必須、ユニーク制約、最大255文字、メール形式
 - `display_name`: 必須、最大100文字

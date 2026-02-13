@@ -42,7 +42,14 @@ export default function Layout() {
                 <Link to="/order/history" className="hover:text-zinc-600 transition-colors">
                   Orders
                 </Link>
-                <span className="text-xs text-zinc-700">{user?.displayName}</span>
+                <span className="text-xs text-zinc-700">
+                  {user?.displayName}
+                  {user?.role === 'ADMIN' && (
+                    <span className="ml-2 rounded bg-red-600 px-2 py-0.5 text-white text-xs">
+                      ADMIN
+                    </span>
+                  )}
+                </span>
                 <button
                   onClick={logout}
                   className="hover:text-zinc-600 transition-colors"

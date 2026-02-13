@@ -1,6 +1,8 @@
 package com.example.aiec.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +31,13 @@ public class User {
 
     @Column(nullable = false, length = 255)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.CUSTOMER;
+
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -75,6 +75,34 @@ async function fetchApi<T>(
   }
 }
 
+function normalizeEndpoint(endpoint: string): string {
+  return endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`
+}
+
+export async function get<T>(endpoint: string): Promise<ApiResponse<T>> {
+  return fetchApi<T>(normalizeEndpoint(endpoint))
+}
+
+export async function post<T>(
+  endpoint: string,
+  body?: unknown
+): Promise<ApiResponse<T>> {
+  return fetchApi<T>(normalizeEndpoint(endpoint), {
+    method: 'POST',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+}
+
+export async function put<T>(
+  endpoint: string,
+  body?: unknown
+): Promise<ApiResponse<T>> {
+  return fetchApi<T>(normalizeEndpoint(endpoint), {
+    method: 'PUT',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+}
+
 // ============================================
 // 商品 API
 // ============================================

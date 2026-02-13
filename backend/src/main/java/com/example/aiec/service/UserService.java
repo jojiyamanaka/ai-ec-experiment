@@ -1,8 +1,10 @@
 package com.example.aiec.service;
 
+import com.example.aiec.entity.Role;
 import com.example.aiec.entity.User;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ConflictException;
+import com.example.aiec.exception.ResourceNotFoundException;
 import com.example.aiec.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,6 +50,30 @@ public class UserService {
      */
     public boolean verifyPassword(User user, String password) {
         return passwordEncoder.matches(password, user.getPasswordHash());
+    }
+
+    /**
+     * 会員状態変更
+     */
+    @Transactional
+    public User updateStatus(Long userId, Boolean isActive) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "会員が見つかりません"));
+
+        user.setIsActive(isActive);
+        return userRepository.save(user);
+    }
+
+    /**
+     * 会員ロール変更
+     */
+    @Transactional
+    public User updateRole(Long userId, Role role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "会員が見つかりません"));
+
+        user.setRole(role);
+        return userRepository.save(user);
     }
 
 }
