@@ -43,7 +43,7 @@ export default function AdminInventoryPage() {
 
   const fetchInventories = async () => {
     try {
-      const response = await api.get<InventoryItem[]>('/admin/inventory')
+      const response = await api.get<InventoryItem[]>('/bo/admin/inventory')
       if (response.success && response.data) {
         setInventories(response.data)
       }
@@ -54,7 +54,7 @@ export default function AdminInventoryPage() {
 
   const fetchAdjustments = async () => {
     try {
-      const response = await api.get<InventoryAdjustment[]>('/admin/inventory/adjustments')
+      const response = await api.get<InventoryAdjustment[]>('/bo/admin/inventory/adjustments')
       if (response.success && response.data) {
         const normalized = response.data.map((adjustment) => ({
           ...adjustment,
@@ -83,7 +83,7 @@ export default function AdminInventoryPage() {
     }
 
     try {
-      const response = await api.post('/admin/inventory/adjust', {
+      const response = await api.post('/bo/admin/inventory/adjust', {
         productId: selectedProductId,
         quantityDelta: adjustForm.quantityDelta,
         reason: adjustForm.reason,

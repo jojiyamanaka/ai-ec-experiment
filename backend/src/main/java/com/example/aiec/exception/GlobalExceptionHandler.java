@@ -55,7 +55,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
         // 認証エラーは 401 Unauthorized
-        if ("UNAUTHORIZED".equals(ex.getErrorCode()) || "INVALID_CREDENTIALS".equals(ex.getErrorCode())) {
+        if ("UNAUTHORIZED".equals(ex.getErrorCode())
+                || "INVALID_CREDENTIALS".equals(ex.getErrorCode())
+                || "INVALID_TOKEN".equals(ex.getErrorCode())
+                || "TOKEN_REVOKED".equals(ex.getErrorCode())
+                || "TOKEN_EXPIRED".equals(ex.getErrorCode())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(ex.getErrorCode(), ex.getErrorMessage()));
         }

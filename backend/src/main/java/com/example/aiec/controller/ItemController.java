@@ -4,11 +4,11 @@ import com.example.aiec.dto.ApiResponse;
 import com.example.aiec.dto.ProductDto;
 import com.example.aiec.dto.ProductListResponse;
 import com.example.aiec.dto.UpdateProductRequest;
-import com.example.aiec.entity.Role;
-import com.example.aiec.entity.User;
+import com.example.aiec.entity.BoUser;
+import com.example.aiec.entity.PermissionLevel;
 import com.example.aiec.exception.BusinessException;
 import com.example.aiec.exception.ForbiddenException;
-import com.example.aiec.service.AuthService;
+import com.example.aiec.service.BoAuthService;
 import com.example.aiec.service.OperationHistoryService;
 import com.example.aiec.service.ProductService;
 import jakarta.validation.Valid;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class ItemController {
 
     private final ProductService productService;
-    private final AuthService authService;
+    private final BoAuthService boAuthService;
     private final OperationHistoryService operationHistoryService;
 
     /**
@@ -57,19 +57,19 @@ public class ItemController {
     @PutMapping("/{id}")
     public ApiResponse<ProductDto> updateProduct(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String authHeader,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody UpdateProductRequest request) {
 
         // 認証・認可チェック
         String token = extractToken(authHeader);
-        User user = authService.verifyToken(token);
-        requireAdmin(user, "/api/item/" + id);
+        BoUser boUser = boAuthService.verifyToken(token);
+        requireAdmin(boUser, "/api/item/" + id);
 
         // 管理操作実行
         ProductDto product = productService.updateProduct(id, request);
 
         // 操作履歴記録
-        operationHistoryService.logAdminAction(user, "/api/item/" + id,
+        operationHistoryService.logAdminAction(boUser, "/api/item/" + id,
             "Updated product: " + product.getName());
 
         return ApiResponse.success(product);
@@ -88,9 +88,10 @@ public class ItemController {
     /**
      * 管理者権限チェック
      */
-    private void requireAdmin(User user, String requestPath) {
-        if (user.getRole() != Role.ADMIN) {
-            operationHistoryService.logAuthorizationError(user, requestPath);
+    private void requireAdmin(BoUser boUser, String requestPath) {
+        if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
+                && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
+            operationHistoryService.logAuthorizationError(boUser, requestPath);
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }

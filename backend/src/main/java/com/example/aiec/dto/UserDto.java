@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * ユーザーDTO
@@ -18,9 +18,8 @@ public class UserDto {
     private Long id;
     private String email;
     private String displayName;
-    private String role;
     private Boolean isActive;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     /**
      * エンティティから DTO を生成
@@ -30,7 +29,6 @@ public class UserDto {
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
         dto.setDisplayName(user.getDisplayName());
-        dto.setRole(user.getRole().name());
         dto.setIsActive(user.getIsActive());
         dto.setCreatedAt(user.getCreatedAt());
         return dto;

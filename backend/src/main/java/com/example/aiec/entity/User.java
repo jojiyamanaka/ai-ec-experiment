@@ -1,24 +1,18 @@
 package com.example.aiec.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-/**
- * 会員エンティティ
- */
 @Entity
 @Table(name = "users")
+@SQLDelete(sql = "UPDATE users SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@Where(clause = "is_deleted = FALSE")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,34 +20,61 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false, length = 100)
-    private String displayName;
-
-    @Column(nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role = Role.CUSTOMER;
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    // 監査カラム
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "created_by_type", length = 50)
+    private ActorType createdByType;
+
+    @Column(name = "created_by_id")
+    private Long createdById;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "updated_by_type", length = 50)
+    private ActorType updatedByType;
+
+    @Column(name = "updated_by_id")
+    private Long updatedById;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deleted_by_type", length = 50)
+    private ActorType deletedByType;
+
+    @Column(name = "deleted_by_id")
+    private Long deletedById;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+        isDeleted = false;
+        if (createdByType == null) {
+            createdByType = ActorType.SYSTEM;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = Instant.now();
     }
-
 }

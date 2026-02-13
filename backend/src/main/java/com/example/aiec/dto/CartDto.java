@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +19,7 @@ public class CartDto {
 
     private List<CartItemDto> items;
     private Integer totalQuantity;
-    private Integer totalPrice;
+    private BigDecimal totalPrice;
 
     /**
      * エンティティから DTO を生成

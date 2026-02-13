@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * 注文アイテムDTO
  */
@@ -15,7 +17,7 @@ public class OrderItemDto {
 
     private ProductDto product;
     private Integer quantity;
-    private Integer subtotal;
+    private BigDecimal subtotal;
 
     /**
      * エンティティから DTO を生成

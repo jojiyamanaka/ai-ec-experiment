@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * 引当レスポンスDTO
@@ -19,7 +19,7 @@ public class ReservationDto {
     private Long productId;
     private Integer quantity;
     private String type;
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
     private Integer availableStock;
 
     public static ReservationDto fromEntity(StockReservation reservation, Integer availableStock) {

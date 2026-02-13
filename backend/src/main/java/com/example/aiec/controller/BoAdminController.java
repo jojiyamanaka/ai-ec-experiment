@@ -17,6 +17,7 @@ import com.example.aiec.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,7 +80,7 @@ public class BoAdminController {
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "会員が見つかりません"));
 
         Long totalOrders = orderRepository.countByUserId(id);
-        Long totalAmount = orderRepository.sumTotalPriceByUserId(id).orElse(0L);
+        BigDecimal totalAmount = orderRepository.sumTotalPriceByUserId(id).orElse(BigDecimal.ZERO);
 
         MemberDetailDto dto = new MemberDetailDto();
         dto.setId(member.getId());

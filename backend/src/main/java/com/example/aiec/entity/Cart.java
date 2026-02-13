@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,10 +76,10 @@ public class Cart {
     /**
      * 合計金額を計算
      */
-    public int getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return items.stream()
-                .mapToInt(item -> item.getProduct().getPrice() * item.getQuantity())
-                .sum();
+                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 }

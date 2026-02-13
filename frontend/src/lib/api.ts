@@ -38,9 +38,22 @@ async function fetchApi<T>(
   }
 
   // 認証トークンの自動付与
-  const token = localStorage.getItem('authToken')
-  if (token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
-    headers.set('Authorization', `Bearer ${token}`)
+  const boToken = localStorage.getItem('bo_token')
+  const isBoRequest = endpoint.startsWith('/api/bo')
+  const isBoAuthRequest = endpoint.startsWith('/api/bo-auth')
+  const isBoRoute =
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/bo')
+  const shouldUseBoAuthContext = isBoRequest || isBoAuthRequest || isBoRoute
+
+  if (shouldUseBoAuthContext) {
+    if (boToken && !endpoint.endsWith('/bo-auth/login')) {
+      headers.set('Authorization', `Bearer ${boToken}`)
+    }
+  } else {
+    const token = localStorage.getItem('authToken')
+    if (token && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
   }
 
   // カート・注文関連のエンドポイントにはセッションIDを付与
@@ -56,9 +69,14 @@ async function fetchApi<T>(
 
     // 401エラーのハンドリング
     if (!response.ok && response.status === 401) {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('authUser')
-      window.dispatchEvent(new Event('auth:unauthorized'))
+      if (shouldUseBoAuthContext) {
+        localStorage.removeItem('bo_token')
+        window.dispatchEvent(new Event('bo-auth:unauthorized'))
+      } else {
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('authUser')
+        window.dispatchEvent(new Event('auth:unauthorized'))
+      }
     }
 
     const data = await response.json()
@@ -281,6 +299,56 @@ export async function login(
     method: 'POST',
     body: JSON.stringify(request),
   })
+}
+
+// ============================================
+// BoAuth API (管理者認証)
+// ============================================
+
+export interface BoLoginRequest {
+  email: string
+  password: string
+}
+
+export interface BoUser {
+  id: number
+  email: string
+  displayName: string
+  permissionLevel: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR'
+  lastLoginAt?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BoAuthResponse {
+  user: BoUser
+  token: string
+  expiresAt: string
+}
+
+/**
+ * BoUser ログイン
+ */
+export async function boLogin(
+  email: string,
+  password: string
+): Promise<ApiResponse<BoAuthResponse>> {
+  return post<BoAuthResponse>('/bo-auth/login', { email, password })
+}
+
+/**
+ * BoUser ログアウト
+ */
+export async function boLogout(): Promise<ApiResponse<{ message: string }>> {
+  return post<{ message: string }>('/bo-auth/logout', {})
+}
+
+/**
+ * BoUser 情報取得
+ */
+export async function getBoUser(): Promise<ApiResponse<BoUser>> {
+  return get<BoUser>('/bo-auth/me')
 }
 
 /**

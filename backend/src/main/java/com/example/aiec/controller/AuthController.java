@@ -85,7 +85,7 @@ public class AuthController {
      * ログアウト
      */
     @PostMapping("/logout")
-    public ApiResponse<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader) {
+    public ApiResponse<Map<String, String>> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         String token = extractToken(authHeader);
         authService.revokeToken(token); // 失効処理（物理削除ではない）
         return ApiResponse.success(Map.of("message", "ログアウトしました"));
@@ -95,7 +95,7 @@ public class AuthController {
      * 会員情報取得
      */
     @GetMapping("/me")
-    public ApiResponse<UserDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+    public ApiResponse<UserDto> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         String token = extractToken(authHeader);
         User user = authService.verifyToken(token);
         return ApiResponse.success(UserDto.fromEntity(user));

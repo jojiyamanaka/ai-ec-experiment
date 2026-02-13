@@ -1,13 +1,15 @@
 package com.example.aiec.repository;
 
+import com.example.aiec.entity.ActorType;
 import com.example.aiec.entity.StockReservation;
 import com.example.aiec.entity.StockReservation.ReservationType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,15 +27,16 @@ public interface StockReservationRepository extends JpaRepository<StockReservati
             "- COALESCE(SUM(CASE WHEN r.type = 'TENTATIVE' AND r.expiresAt > :now THEN r.quantity ELSE 0 END), 0) " +
             "- COALESCE(SUM(CASE WHEN r.type = 'COMMITTED' THEN r.quantity ELSE 0 END), 0) " +
             "FROM Product p LEFT JOIN StockReservation r ON p.id = r.product.id " +
-            "WHERE p.id = :productId")
-    Integer calculateAvailableStock(@Param("productId") Long productId, @Param("now") LocalDateTime now);
+            "WHERE p.id = :productId " +
+            "GROUP BY p.stock")
+    Integer calculateAvailableStock(@Param("productId") Long productId, @Param("now") Instant now);
 
     /**
      * 仮引当の合計数量を取得
      */
     @Query("SELECT COALESCE(SUM(r.quantity), 0) FROM StockReservation r " +
             "WHERE r.product.id = :productId AND r.type = 'TENTATIVE' AND r.expiresAt > :now")
-    Integer sumTentativeReserved(@Param("productId") Long productId, @Param("now") LocalDateTime now);
+    Integer sumTentativeReserved(@Param("productId") Long productId, @Param("now") Instant now);
 
     /**
      * 本引当の合計数量を取得
@@ -51,7 +54,7 @@ public interface StockReservationRepository extends JpaRepository<StockReservati
     Optional<StockReservation> findActiveTentative(
             @Param("sessionId") String sessionId,
             @Param("productId") Long productId,
-            @Param("now") LocalDateTime now);
+            @Param("now") Instant now);
 
     /**
      * セッションの全有効仮引当を取得
@@ -60,7 +63,7 @@ public interface StockReservationRepository extends JpaRepository<StockReservati
             "WHERE r.sessionId = :sessionId AND r.type = 'TENTATIVE' AND r.expiresAt > :now")
     List<StockReservation> findAllActiveTentativeBySession(
             @Param("sessionId") String sessionId,
-            @Param("now") LocalDateTime now);
+            @Param("now") Instant now);
 
     /**
      * 注文IDに紐づく本引当を取得
@@ -70,6 +73,10 @@ public interface StockReservationRepository extends JpaRepository<StockReservati
     /**
      * 期限切れの仮引当を削除
      */
-    void deleteByTypeAndExpiresAtBefore(ReservationType type, LocalDateTime now);
+    void deleteByTypeAndExpiresAtBefore(ReservationType type, Instant now);
+
+    @Modifying
+    @Query("UPDATE StockReservation r SET r.isDeleted = TRUE, r.deletedAt = CURRENT_TIMESTAMP, r.deletedByType = :deletedByType, r.deletedById = :deletedById WHERE r.id = :id")
+    void softDelete(@Param("id") Long id, @Param("deletedByType") ActorType deletedByType, @Param("deletedById") Long deletedById);
 
 }

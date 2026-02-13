@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = () => setError(null)
   const isAuthenticated = !!user && !!token
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = false
 
   return (
     <AuthContext.Provider

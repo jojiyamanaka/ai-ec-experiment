@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,7 +25,7 @@ public class OrderDto {
     private String userEmail;
     private String userDisplayName;
     private List<OrderItemDto> items;
-    private Integer totalPrice;
+    private BigDecimal totalPrice;
     private String status;
     private String createdAt;
     private String updatedAt;

@@ -104,7 +104,6 @@ export interface User {
   id: number
   email: string
   displayName: string
-  role: 'CUSTOMER' | 'ADMIN'
   isActive?: boolean
   createdAt: string
   updatedAt?: string
