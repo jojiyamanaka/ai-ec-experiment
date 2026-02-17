@@ -1,8 +1,7 @@
 ---
-name: design
-description: 要件定義書から技術設計書を作成する。CHG番号を引数に取り、関連ドキュメントとコードを調査して設計書を生成する。
+name: designing
+description: 要件定義書から技術設計書を作成する。CHG番号指定で関連ドキュメントとコードを調査し設計書を生成する。
 argument-hint: "[CHG番号 例: CHG-011]"
-disable-model-invocation: true
 ---
 
 # 技術設計書の作成
@@ -18,21 +17,7 @@ CHG番号: $ARGUMENTS
 
 ### 2. 関連ドキュメントの調査
 
-要件定義書の内容を分析し、影響するドメインに応じて以下を参照する:
-
-| 作業内容 | 参照ドキュメント |
-|---------|-------------|
-| フロントエンド（顧客画面） | `docs/ui/customer-ui.md`, `docs/ui/api-spec.md` |
-| フロントエンド（管理画面） | `docs/ui/admin-ui.md`, `docs/ui/api-spec.md` |
-| バックエンドAPI | `docs/ui/api-spec.md`, `docs/data-model.md` |
-| 在庫・引当 | `docs/specs/inventory.md` |
-| 注文フロー | `docs/specs/order.md` |
-| 認証・認可 | `docs/specs/authentication.md` |
-| 商品・価格 | `docs/specs/product.md` |
-| BFF | `docs/specs/bff-architecture.md` |
-| DBスキーマ | `docs/data-model.md` |
-| UIスタイリング | `docs/design-system.md` |
-
+要件定義書の内容を分析し、`docs/SPEC.md` のタスク別参照ガイドに従って関連ドキュメントを読み込む。
 常に参照: `docs/SPEC.md`, `docs/requirements.md`
 
 ### 3. 既存コードパターンの調査

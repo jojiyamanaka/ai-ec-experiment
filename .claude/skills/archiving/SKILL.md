@@ -1,8 +1,7 @@
 ---
-name: archive
-description: 実装完了したCHG案件のドキュメントをアーカイブし、主要ドキュメントを更新する。
+name: archiving
+description: 実装完了したCHG案件のドキュメントをarchiveに移動し、主要仕様書を更新する。
 argument-hint: "[CHG番号 例: CHG-011]"
-disable-model-invocation: true
 ---
 
 # 完了案件のアーカイブ

@@ -1,8 +1,7 @@
 ---
-name: tasks
-description: 技術設計書から実装タスクを作成する。CHG番号を引数に取り、設計書と実コードを突合して具体的な実装手順書を生成する。
+name: task-planning
+description: 技術設計書から実装タスクファイルを生成する。設計書と実コードを突合し、コピペ可能な粒度の手順書を作成する。
 argument-hint: "[CHG番号 例: CHG-011]"
-disable-model-invocation: true
 ---
 
 # 実装タスクの作成

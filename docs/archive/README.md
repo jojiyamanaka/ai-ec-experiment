@@ -73,6 +73,13 @@ archive/
   - data-model.md: BoUser、BoAuthToken エンティティ追加（予定）
   - api-spec.md: BoAuth API、管理API（/api/bo/**）の仕様追加（予定）
 
+### CHG-011: 商品一覧ページネーション
+- **実装完了日**: 2026-02-18
+- **内容**: 商品一覧画面にページネーションUI追加（1ページ12件、URL連動）
+- **主要ドキュメント反映先**:
+  - ui/customer-ui.md: 商品一覧画面にページネーション仕様追記
+  - spec-implementation-gaps.md: L-1を実装完了に更新
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

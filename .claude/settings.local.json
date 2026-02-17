@@ -51,7 +51,8 @@
       "Bash(ssh:*)",
       "Bash(git -C /Users/george/workspace/ai-ec-experiment diff)",
       "Bash(git -C /Users/george/workspace/ai-ec-experiment log --oneline -5)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment ls-files frontend/tsconfig.json)"
+      "Bash(git -C /Users/george/workspace/ai-ec-experiment ls-files frontend/tsconfig.json)",
+      "WebFetch(domain:qiita.com)"
     ]
   }
 }

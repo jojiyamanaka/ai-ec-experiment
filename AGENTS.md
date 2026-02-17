@@ -2,7 +2,7 @@
 
 ## テスト手順
 
-テスト実施手順・macOS (zsh/bash) 操作ルールは `docs/test/testing-operations.md` を参照する。  
+テスト実施手順・macOS (zsh/bash) 操作ルールは `docs/test/testing-operations.md` を参照する。
 Playwright の利用方法は `docs/test/playwright-runbook.md` を参照する。
 
 ## プロジェクト構成
@@ -13,80 +13,7 @@ Playwright の利用方法は `docs/test/playwright-runbook.md` を参照する�
 - `bff/shared/` — 共有DTO・型定義（workspaceパッケージ）
 - `frontend/` — React 19 / TypeScript / Vite / Tailwind CSS 4
 
-## バックエンドの規約
-
-### レイヤー構成
-
-```
-controller/  → リクエスト受付、レスポンス返却
-service/     → ビジネスロジック
-repository/  → DBアクセス（Spring Data JPA）
-entity/      → DBテーブル対応
-dto/         → リクエスト・レスポンス用の型。エンティティとは分離する
-exception/   → カスタム例外
-```
-
-パッケージ: `com.example.aiec`
-
-### Lombok
-
-全クラスで使用。以下が頻出:
-- エンティティ・DTO: `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`
-- サービス: `@RequiredArgsConstructor`
-- 例外の追加フィールド: `@Getter`
-
-### 例外処理
-
-カスタム例外をスローすると `GlobalExceptionHandler` が HTTP レスポンスに変換する:
-
-| 例外クラス | HTTPステータス | 用途 |
-|-----------|---------------|------|
-| `BusinessException` | 400 | ビジネスルール違反 |
-| `ResourceNotFoundException` | 404 | リソース不在 |
-| `ConflictException` | 409 | 競合 |
-| `InsufficientStockException` (extends `ConflictException`) | 409 | 在庫不足（details付き） |
-
-サブクラス例外を追加する場合は `GlobalExceptionHandler` に専用ハンドラーを追加し、親クラスのハンドラーより上に配置する。
-
-### APIレスポンス形式
-
-全エンドポイントが `ApiResponse<T>` を返す:
-
-```java
-ApiResponse.success(data)                          // 成功
-ApiResponse.error(code, message)                   // エラー
-ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
-```
-
-### DTO変換
-
-エンティティ → DTO は `fromEntity()` 静的メソッドで行う。
-
-## フロントエンドの規約
-
-### API呼び出し
-
-`src/lib/api.ts` の関数を使う。`fetch` を直接使わない。
-
-### 型定義
-
-`src/types/api.ts` に集約。レスポンス型は `ApiResponse<T>` で統一。
-
-### 状態管理
-
-- `ProductContext` — 商品データ
-- `CartContext` — カート状態（Customer BFF と同期）
-
-### API接続先（BFF構成）
-
-- 顧客画面: `frontend (5173) -> customer-bff (3001) -> backend (8080/internal)`
-- 管理画面: `frontend (5174) -> backoffice-bff (3002) -> backend (8080/internal)`
-- ブラウザから Core API (`localhost:8080`) への直接アクセスは行わない
-
-### コーディング
-
-- TypeScript のみ（JS 禁止）
-- スタイリングは Tailwind CSS のユーティリティクラス
+各ディレクトリ固有の規約は `backend/AGENTS.md`・`frontend/AGENTS.md` を参照する。
 
 ## コミットメッセージ
 
@@ -121,13 +48,13 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
    - 実施方法は `docs/test/testing-operations.md` に従う
 
 5. **レビュー**
-- task.md と git diff を突き合わせ、各タスク項目について以下を確認:
-  - 変更ファイルがタスク指定のパスと一致するか
-  - コード断片と実装が一致するか（import 順・空白は許容）
-  - 指定の挿入位置に配置されているか
-  - **タスク外の変更が含まれていないか**（コメント削除・UI変更・テキスト改変など）
-  - 未実装のタスクがないか
-- 逸脱は `[逸脱] T-X: 内容` / `[欠落] T-X` / `[スコープ外] ファイルパス: 内容` で報告
+   - task.md と git diff を突き合わせ、各タスク項目について以下を確認:
+     - 変更ファイルがタスク指定のパスと一致するか
+     - コード断片と実装が一致するか（import 順・空白は許容）
+     - 指定の挿入位置に配置されているか
+     - **タスク外の変更が含まれていないか**（コメント削除・UI変更・テキスト改変など）
+     - 未実装のタスクがないか
+   - 逸脱は `[逸脱] T-X: 内容` / `[欠落] T-X` / `[スコープ外] ファイルパス: 内容` で報告
 
 6. **テスト**
    - task.md の「テスト手順」または「テスト内容」を実施する
@@ -144,3 +71,28 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
 - import文の並び替え
 
 **原則**: task.md に書かれていることだけをする。書かれていないことは既存コードを維持する。
+
+### Review Packet
+
+実装完了後、各タスクファイルの末尾に以下の `## Review Packet` セクションを追記する:
+
+```markdown
+## Review Packet
+### 変更サマリ（10行以内）
+- 何をどう変えたか（箇条書き）
+### 変更ファイル一覧
+- パスの列挙
+### リスクと未解決
+- 懸念点、TODO（箇条書き、なければ「なし」）
+### テスト結果
+- 検証コマンド冒頭記載のコマンドを実行し、PASS / FAIL を記載（失敗時は先頭/末尾+核心の合計30行以内）
+```
+
+## Codex 実行ルール
+
+Codex（`--full-auto` モード）で実行する場合の追加ルール:
+
+- 確認や質問は不要。自主的に実装する
+- `docs/03_tasks/` 配下のタスクファイルをすべて読み、記載されたタスクをすべて実装する
+- 完了後、各タスクファイルに Review Packet を追記する
+- 実行コマンドのテンプレートは `docs/operations/codex-exec-template.md` を参照
