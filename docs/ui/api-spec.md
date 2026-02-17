@@ -1,6 +1,6 @@
-# API仕様（UI-バックエンド間）
+# API仕様（UI-BFF間）
 
-**目的**: フロントエンド（UI層）とバックエンド間のREST API仕様を定義する
+**目的**: フロントエンド（UI層）とBFF間のREST API仕様を定義する
 **スコープ**: APIエンドポイント、リクエスト/レスポンス型、エラーコード
 
 **関連ドキュメント**:
@@ -13,9 +13,19 @@
 ---
 
 ## 概要
-AI EC Experiment のバックエンド API 仕様書
+AI EC Experiment の API 仕様書（Phase 3 / BFF構成）。
 
-ベースURL: `http://localhost:8080/api`
+ブラウザ（UI）から利用する公開APIベースURL:
+
+- Customer BFF: `http://localhost:3001`
+- BackOffice BFF: `http://localhost:3002`
+
+内部API（Core API）ベースURL:
+
+- `http://backend:8080`（内部ネットワーク専用）
+- 外部ブラウザからの直接アクセスは不可
+
+> 注記: 本書前半には移行前からの Core API 詳細を含む。UI 実装の接続先は末尾の「API構成（Phase 3完了後）」を正とする。
 
 ## 共通レスポンス形式
 
@@ -40,7 +50,7 @@ AI EC Experiment のバックエンド API 仕様書
 
 ---
 
-## 商品 API
+## 商品 API（Core API / 内部参照）
 
 ### 1. 商品一覧取得
 公開されている商品の一覧を取得します。
@@ -1506,10 +1516,79 @@ Authorization: Bearer <bo_token>
 1. すべてのリクエストには `Content-Type: application/json` ヘッダーが必要です
 2. カート関連のAPIは `X-Session-Id` ヘッダーが必須です
 3. 認証が必要なAPIは `Authorization: Bearer <token>` ヘッダーが必須です
-   - 顧客向けAPI（`/api/**`）: `authToken` を使用
-   - 管理者向けAPI（`/api/bo/**`）: `bo_token` を使用
+   - 顧客向けAPI（例: `/api/products`, `/api/cart`, `/api/orders`）: `authToken` を使用
+   - 管理者向けAPI（例: `/api/bo-auth/**`, `/api/admin/**`, `/api/order/**`, `/api/inventory/**`）: `bo_token` を使用
 4. セッションIDはクライアント側で生成・管理します
 5. 商品の在庫数は注文時にチェックされます
 6. 注文番号は `ORD-xxxxxxxxxx` 形式で自動生成されます
-7. 管理API（`/api/bo/**`）は BoUser 認証が必須です。顧客トークンでアクセスすると 401/403 エラーが返されます
+7. 管理API（`/api/bo-auth/**`, `/api/admin/**`, `/api/order/**`, `/api/inventory/**`）は BoUser 認証が必須です。顧客トークンでアクセスすると 401/403 エラーが返されます
 8. 管理APIのレスポンスには `Cache-Control: no-store` ヘッダーが付与されます（キャッシュ無効化）
+
+## API構成（Phase 3完了後）
+
+### Customer BFF（顧客向け）
+
+**ベースURL**: `http://localhost:3001`
+
+| エンドポイント | メソッド | 説明 | 認証 |
+|--------------|---------|------|------|
+| /health | GET | ヘルスチェック | 不要 |
+| /api/products | GET | 商品一覧取得 | 不要 |
+| /api/products/:id | GET | 商品詳細取得 | 不要 |
+| /api/cart | GET | カート取得 | User |
+| /api/cart/items | POST | カート追加 | User |
+| /api/cart/items/:id | PUT | カート数量変更 | User |
+| /api/cart/items/:id | DELETE | カート商品削除 | User |
+| /api/auth/register | POST | 会員登録 | 不要 |
+| /api/auth/login | POST | 会員ログイン | 不要 |
+| /api/auth/logout | POST | 会員ログアウト | User |
+| /api/members/me | GET | 会員情報取得 | User |
+| /api/orders | POST | 注文確定 | User |
+| /api/orders | GET | 注文一覧（会員） | User |
+| /api/orders/history | GET | 注文履歴 | User |
+| /api/orders/:id | GET | 注文詳細 | User |
+| /api/orders/:id/cancel | POST | 注文キャンセル | User |
+
+（詳細は技術設計ドキュメント参照）
+
+### BackOffice BFF（管理向け）
+
+**ベースURL**: `http://localhost:3002`
+
+| エンドポイント | メソッド | 説明 | 認証 |
+|--------------|---------|------|------|
+| /health | GET | ヘルスチェック | 不要 |
+| /api/bo-auth/login | POST | 管理ログイン | 不要 |
+| /api/bo-auth/logout | POST | 管理ログアウト | BoUser |
+| /api/inventory | GET | 在庫一覧取得 | BoUser |
+| /api/inventory/adjustments | GET | 在庫調整履歴 | BoUser |
+| /api/inventory/adjust | POST | 在庫調整 | BoUser |
+| /api/inventory/:id | PUT | 在庫更新 | BoUser |
+| /api/admin/orders | GET | 注文一覧取得 | BoUser |
+| /api/admin/orders/:id | GET | 注文詳細取得 | BoUser |
+| /api/admin/orders/:id | PUT | 注文更新 | BoUser |
+| /api/admin/orders/:id/confirm | POST | 注文確認 | BoUser |
+| /api/admin/orders/:id/ship | POST | 注文発送 | BoUser |
+| /api/admin/orders/:id/deliver | POST | 配達完了 | BoUser |
+| /api/admin/orders/:id/cancel | POST | 注文キャンセル | BoUser |
+| /api/order | GET | 注文一覧取得（互換エイリアス） | BoUser |
+| /api/order/:id | GET | 注文詳細取得（互換エイリアス） | BoUser |
+| /api/order/:id | PUT | 注文更新（互換エイリアス） | BoUser |
+| /api/order/:id/confirm | POST | 注文確認（互換エイリアス） | BoUser |
+| /api/order/:id/ship | POST | 注文発送（互換エイリアス） | BoUser |
+| /api/order/:id/deliver | POST | 配達完了（互換エイリアス） | BoUser |
+| /api/order/:id/cancel | POST | 注文キャンセル（互換エイリアス） | BoUser |
+| /api/admin/members | GET | 会員一覧取得 | BoUser |
+| /api/admin/members/:id | GET | 会員詳細取得 | BoUser |
+| /api/admin/members/:id/status | PUT | 会員状態更新 | BoUser |
+| /api/admin/bo-users | GET | BoUser一覧取得 | BoUser |
+| /api/admin/bo-users | POST | BoUser作成 | BoUser |
+
+（詳細は技術設計ドキュメント参照）
+
+### Core API（内部専用）
+
+**ベースURL**: `http://backend:8080`（内部ネットワークのみ）
+
+- 外部からの直接アクセスは不可
+- BFF経由でのみアクセス可能

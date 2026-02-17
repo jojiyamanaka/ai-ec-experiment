@@ -14,8 +14,9 @@ import type {
   LoginRequest,
 } from '../types/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const APP_MODE = import.meta.env.VITE_APP_MODE === 'admin' ? 'admin' : 'customer'
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  || (APP_MODE === 'admin' ? 'http://localhost:3002' : 'http://localhost:3001')
 type AuthContext = 'auto' | 'customer' | 'bo'
 
 // セッションIDの生成・取得
@@ -146,14 +147,14 @@ export async function getItems(
   page = 1,
   limit = 20
 ): Promise<ApiResponse<ProductListResponse>> {
-  return fetchApi<ProductListResponse>(`/api/item?page=${page}&limit=${limit}`)
+  return fetchApi<ProductListResponse>(`/api/products?page=${page}&limit=${limit}`)
 }
 
 /**
  * 商品詳細取得
  */
 export async function getItemById(id: number): Promise<ApiResponse<Product>> {
-  return fetchApi<Product>(`/api/item/${id}`)
+  return fetchApi<Product>(`/api/products/${id}`)
 }
 
 /**
@@ -177,7 +178,7 @@ export async function updateItem(
  * カート取得
  */
 export async function getCart(): Promise<ApiResponse<Cart>> {
-  return fetchApi<Cart>('/api/order/cart')
+  return fetchApi<Cart>('/api/cart')
 }
 
 /**
@@ -186,7 +187,7 @@ export async function getCart(): Promise<ApiResponse<Cart>> {
 export async function addToCart(
   request: AddToCartRequest
 ): Promise<ApiResponse<Cart>> {
-  return fetchApi<Cart>('/api/order/cart/items', {
+  return fetchApi<Cart>('/api/cart/items', {
     method: 'POST',
     body: JSON.stringify(request),
   })
@@ -199,7 +200,7 @@ export async function updateCartItemQuantity(
   itemId: number,
   request: UpdateQuantityRequest
 ): Promise<ApiResponse<Cart>> {
-  return fetchApi<Cart>(`/api/order/cart/items/${itemId}`, {
+  return fetchApi<Cart>(`/api/cart/items/${itemId}`, {
     method: 'PUT',
     body: JSON.stringify(request),
   })
@@ -209,7 +210,7 @@ export async function updateCartItemQuantity(
  * カートから商品削除
  */
 export async function removeFromCart(itemId: number): Promise<ApiResponse<Cart>> {
-  return fetchApi<Cart>(`/api/order/cart/items/${itemId}`, {
+  return fetchApi<Cart>(`/api/cart/items/${itemId}`, {
     method: 'DELETE',
   })
 }
@@ -224,7 +225,7 @@ export async function removeFromCart(itemId: number): Promise<ApiResponse<Cart>>
 export async function createOrder(
   request: CreateOrderRequest
 ): Promise<ApiResponse<Order>> {
-  return fetchApi<Order>('/api/order', {
+  return fetchApi<Order>('/api/orders', {
     method: 'POST',
     body: JSON.stringify(request),
   })
@@ -234,21 +235,24 @@ export async function createOrder(
  * 注文詳細取得
  */
 export async function getOrderById(id: number): Promise<ApiResponse<Order>> {
-  return fetchApi<Order>(`/api/order/${id}`)
+  return fetchApi<Order>(`/api/orders/${id}`)
 }
 
 /**
  * 会員の注文履歴を取得
  */
 export async function getOrderHistory(): Promise<ApiResponse<Order[]>> {
-  return fetchApi<Order[]>('/api/order/history')
+  return fetchApi<Order[]>('/api/orders/history')
 }
 
 /**
  * 注文キャンセル
  */
 export async function cancelOrder(orderId: number): Promise<ApiResponse<Order>> {
-  return fetchApi<Order>(`/api/order/${orderId}/cancel`, {
+  const endpoint = APP_MODE === 'admin'
+    ? `/api/order/${orderId}/cancel`
+    : `/api/orders/${orderId}/cancel`
+  return fetchApi<Order>(endpoint, {
     method: 'POST',
   })
 }
@@ -284,7 +288,17 @@ export async function deliverOrder(orderId: number): Promise<ApiResponse<Order>>
  * 全注文取得（管理者用）
  */
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
-  return fetchApi<Order[]>('/api/order', {}, 'bo')
+  const response = await fetchApi<any>('/api/order', {}, 'bo')
+  if (!response.success || !response.data) {
+    return response as ApiResponse<Order[]>
+  }
+  if (Array.isArray(response.data)) {
+    return response as ApiResponse<Order[]>
+  }
+  return {
+    success: true,
+    data: response.data.orders ?? [],
+  }
 }
 
 // ============================================

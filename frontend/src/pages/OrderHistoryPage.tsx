@@ -4,6 +4,18 @@ import { useAuth } from '../contexts/AuthContext'
 import * as api from '../lib/api'
 import type { Order } from '../types/api'
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: '作成済み',
+  CONFIRMED: '確認済み',
+  SHIPPED: '発送済み',
+  DELIVERED: '配達完了',
+  CANCELLED: 'キャンセル',
+}
+
+function getStatusLabel(status: string): string {
+  return STATUS_LABELS[status] ?? status
+}
+
 export default function OrderHistoryPage() {
   const { isAuthenticated } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
@@ -106,7 +118,7 @@ export default function OrderHistoryPage() {
                       : 'bg-zinc-100 text-zinc-800'
                   }`}
                 >
-                  {order.status}
+                  {getStatusLabel(order.status)}
                 </span>
               </div>
             </div>

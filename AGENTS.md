@@ -7,7 +7,10 @@ Playwright の利用方法は `docs/test/playwright-runbook.md` を参照する�
 
 ## プロジェクト構成
 
-- `backend/` — Spring Boot 3.4.2 / Java 21 / SQLite
+- `backend/` — Spring Boot 3.4.2 / Java 21 / PostgreSQL（Core API）
+- `bff/customer-bff/` — NestJS（顧客向けBFF）
+- `bff/backoffice-bff/` — NestJS（管理向けBFF）
+- `bff/shared/` — 共有DTO・型定義（workspaceパッケージ）
 - `frontend/` — React 19 / TypeScript / Vite / Tailwind CSS 4
 
 ## バックエンドの規約
@@ -72,7 +75,13 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
 ### 状態管理
 
 - `ProductContext` — 商品データ
-- `CartContext` — カート状態（バックエンドと同期）
+- `CartContext` — カート状態（Customer BFF と同期）
+
+### API接続先（BFF構成）
+
+- 顧客画面: `frontend (5173) -> customer-bff (3001) -> backend (8080/internal)`
+- 管理画面: `frontend (5174) -> backoffice-bff (3002) -> backend (8080/internal)`
+- ブラウザから Core API (`localhost:8080`) への直接アクセスは行わない
 
 ### コーディング
 

@@ -17,8 +17,14 @@
 docker compose up -d
 docker compose ps
 curl -s "http://localhost:5173" >/dev/null
-curl -s "http://localhost:8080/api/item" >/dev/null
+curl -s "http://localhost:5174" >/dev/null
+curl -s "http://localhost:3001/health" >/dev/null
+curl -s "http://localhost:3002/health" >/dev/null
 ```
+
+## 常に許可（確認なしで実行してよい）
+E2E Playwright スモークテストは、タスクのテストリストに基づく場合、
+ユーザー確認なしで実行してよい（事前許可済み）。
 
 ## スクリプト配置ルール
 1. 検証スクリプトは一時的に `tmp/*.mjs` へ作成する
@@ -57,6 +63,7 @@ docker run --rm --network host \
 3. `playwright` モジュールは毎回コンテナ内でインストールする前提
 4. SPA 遷移の待機は `waitForURL` だけでなく、要素表示待機も併用する
 5. 検証スクリプトがデータを作成・更新する場合は、DB への影響を考慮する
+6. Core API（`localhost:8080`）は内部化されているため、ブラウザ疎通確認には使わない
 
 ## 片付け
 ```bash

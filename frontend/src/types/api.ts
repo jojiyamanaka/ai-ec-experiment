@@ -1,4 +1,15 @@
-// API レスポンスの型定義
+// 共通型定義を再エクスポート
+export type {
+  ApiResponse,
+  ProductDto,
+  CartDto,
+  CartItemDto,
+  OrderDto,
+  OrderItemDto,
+  UserDto,
+} from '@app/shared'
+
+// フロントエンド固有の型定義はそのまま
 
 export interface Product {
   id: number
@@ -37,6 +48,7 @@ export interface Order {
   items: OrderItem[]
   totalPrice: number
   status: string
+  statusLabel?: string
   createdAt: string
   updatedAt?: string
 }
@@ -59,13 +71,6 @@ export interface ApiError {
   code: string
   message: string
   details?: StockShortageDetail[] | UnavailableProductDetail[]
-}
-
-// API レスポンス共通型
-export interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: ApiError
 }
 
 // リクエスト型

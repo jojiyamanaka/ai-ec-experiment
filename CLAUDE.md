@@ -4,13 +4,13 @@
 
 ## プロジェクト概要
 
-AIを活用したECサイト実験プロジェクト。React + TypeScript のフロントエンドと Spring Boot + SQLite のバックエンドを Docker コンテナで動作させる。
+AIを活用したECサイト実験プロジェクト。React + TypeScript のフロントエンド、NestJS BFF、Spring Boot Core API を Docker コンテナで動作させる。
 
 ## 開発コマンド
 
 ### Docker（メインの開発フロー）
 ```bash
-docker compose up -d          # 全コンテナ起動（frontend + backend）
+docker compose up -d          # 全コンテナ起動（frontend + bff + backend + postgres）
 docker compose down            # 全コンテナ停止
 docker compose logs -f         # ログ確認
 docker compose logs -f backend # バックエンドのログのみ確認
@@ -19,7 +19,8 @@ docker compose logs -f backend # バックエンドのログのみ確認
 ### フロントエンド（コンテナ内またはローカル）
 ```bash
 cd frontend
-npm run dev      # 開発サーバー起動（Vite、ポート5173）
+npm run dev:customer  # 顧客画面（ポート5173）
+npm run dev:admin     # 管理画面（ポート5174）
 npm run build    # 型チェック + ビルド（tsc -b && vite build）
 npm run lint     # ESLint
 ```
@@ -35,8 +36,11 @@ cd backend
 ```
 
 ### アクセスURL
-- フロントエンド: http://localhost:5173
-- バックエンドAPI: http://localhost:8080
+- 顧客画面: http://localhost:5173
+- 管理画面: http://localhost:5174
+- Customer BFF: http://localhost:3001
+- BackOffice BFF: http://localhost:3002
+- Core API: `backend:8080`（内部ネットワーク。ブラウザから直接アクセスしない）
 
 ## アーキテクチャ
 
@@ -50,13 +54,18 @@ cd backend
 
 ### バックエンド（Spring Boot 3.4.2、Java 21）
 - **レイヤードアーキテクチャ**: Controller → Service → Repository → Entity
-- **DB**: SQLite + Hibernate（方言: `hibernate-community-dialects` の `SQLiteDialect`）。DBファイルはコンテナ内 `/app/data/ec.db`。
+- **DB**: PostgreSQL + Hibernate（方言: `org.hibernate.dialect.PostgreSQLDialect`）
 - **Lombok**: エンティティやサービス全体で使用（`@RequiredArgsConstructor`, `@Data` 等）
 - **例外処理**: `GlobalExceptionHandler`（`@RestControllerAdvice`）がカスタム例外をHTTPレスポンスにマッピング:
   - `ResourceNotFoundException` → 404
   - `BusinessException` → 400
   - `ConflictException` → 409
 - **APIレスポンス形式**: 全エンドポイントが `ApiResponse<T>`（`success` ブール値）を返す。`ApiResponse.success(data)` / `ApiResponse.error(code, message)` を使用。
+
+### BFF（NestJS）
+- **customer-bff**: 顧客画面用 API (`/api/products`, `/api/cart`, `/api/orders` など)
+- **backoffice-bff**: 管理画面用 API (`/api/inventory`, `/api/admin/orders`, `/api/admin/members` など)
+- **共通型**: `@app/shared` を workspace で参照
 
 ### 在庫引当システム（2段階方式）
 仮引当・本引当モデルを採用:
@@ -81,9 +90,9 @@ cd backend
 
 ## 主要な設定
 
-- **CORS**: `WebConfig.java` で設定。許可オリジンは `application.yml`（`app.cors.*`）から読み込み。現在は `http://localhost:5173` を許可。
-- **DBパス**: 環境変数 `DB_PATH` または Springプロパティで設定可能。デフォルト: `./data/ec.db`。Docker内: `/app/data/ec.db`。
-- **フロントエンドAPI URL**: 環境変数 `VITE_API_URL` で設定（デフォルト: `http://localhost:8080`）。
+- **CORS**: `application.yml` の `app.cors.*` で設定。開発時は `http://localhost:5173` / `http://localhost:5174` を許可し、`production-internal` では BFF 起点のみ許可。
+- **DB接続**: `DB_URL` / `DB_USER` / `DB_PASSWORD`（開発デフォルト: `jdbc:postgresql://localhost:5432/ec_app`）。
+- **フロントエンドAPI URL**: 環境変数 `VITE_API_URL` で設定（デフォルト: customer=`http://localhost:3001`, admin=`http://localhost:3002`）。
 
 ## 機能開発プロセス
 

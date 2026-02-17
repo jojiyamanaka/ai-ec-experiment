@@ -56,7 +56,7 @@ export default function AdminInventoryPage() {
     try {
       const response = await api.get<InventoryAdjustment[]>('/bo/admin/inventory/adjustments')
       if (response.success && response.data) {
-        const normalized = response.data.map((adjustment) => ({
+        const normalized = response.data.map((adjustment: InventoryAdjustment) => ({
           ...adjustment,
           productId: adjustment.productId ?? adjustment.product?.id ?? 0,
           productName: adjustment.productName ?? adjustment.product?.name,

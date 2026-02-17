@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import type { Order } from '../types/api'
 
+const STATUS_LABELS: Record<string, string> = {
+  ALL: 'すべて',
+  PENDING: '作成済み',
+  CONFIRMED: '確認済み',
+  SHIPPED: '発送済み',
+  DELIVERED: '配達完了',
+  CANCELLED: 'キャンセル',
+}
+
+function getStatusLabel(status: string): string {
+  return STATUS_LABELS[status] ?? status
+}
+
 export default function AdminOrderPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,7 +150,7 @@ export default function AdminOrderPage() {
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            {status === 'ALL' ? 'すべて' : status}
+            {getStatusLabel(status)}
           </button>
         ))}
       </div>
@@ -183,7 +196,7 @@ export default function AdminOrderPage() {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                   }`}>
-                    {order.status}
+                    {getStatusLabel(order.status)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm tabular-nums text-gray-900">
@@ -226,7 +239,7 @@ export default function AdminOrderPage() {
                 {selectedOrder.userDisplayName || '—'}
               </p>
               <p>
-                <span className="font-medium text-gray-900">ステータス:</span> {selectedOrder.status}
+                <span className="font-medium text-gray-900">ステータス:</span> {getStatusLabel(selectedOrder.status)}
               </p>
               <p>
                 <span className="font-medium text-gray-900">合計金額:</span>{' '}

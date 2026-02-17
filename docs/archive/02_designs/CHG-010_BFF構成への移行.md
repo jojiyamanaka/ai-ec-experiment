@@ -9,7 +9,7 @@
 │                        ブラウザ                              │
 └──────────────┬──────────────────────┬───────────────────────┘
                │                      │
-               │ (顧客画面)           │ (管理画面)
+               │ (顧客画面: localhost:5173) │ (管理画面: localhost:5174)
                ↓                      ↓
 ┌──────────────────────────┐  ┌──────────────────────────┐
 │   Customer BFF           │  │   BackOffice BFF         │
@@ -138,7 +138,8 @@ ai-ec-experiment/
     "bff/backoffice-bff"
   ],
   "scripts": {
-    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:frontend-customer": "npm run dev:customer --workspace=frontend",
+    "dev:frontend-admin": "npm run dev:admin --workspace=frontend",
     "dev:customer-bff": "npm run start:dev --workspace=bff/customer-bff",
     "dev:backoffice-bff": "npm run start:dev --workspace=bff/backoffice-bff",
     "build:all": "npm run build --workspaces --if-present",
@@ -1051,15 +1052,28 @@ services:
       - public
       - internal
 
-  frontend:
+  frontend-customer:
     build: ./frontend
     ports:
-      - "5173:80"
+      - "5173:5173"
     environment:
-      - VITE_CUSTOMER_BFF_URL=http://localhost:3001
-      - VITE_BACKOFFICE_BFF_URL=http://localhost:3002
+      - VITE_APP_MODE=customer
+      - VITE_API_URL=http://localhost:3001
+    command: npm run dev:customer
     depends_on:
       - customer-bff
+    networks:
+      - public
+
+  frontend-admin:
+    build: ./frontend
+    ports:
+      - "5174:5174"
+    environment:
+      - VITE_APP_MODE=admin
+      - VITE_API_URL=http://localhost:3002
+    command: npm run dev:admin
+    depends_on:
       - backoffice-bff
     networks:
       - public
@@ -1083,14 +1097,27 @@ networks:
 | `CORE_API_URL` | Core API URL | `http://localhost:8080` | ○ |
 | `CORE_API_TIMEOUT` | Core APIタイムアウト（ms） | `5000` | × |
 | `CORE_API_RETRY` | Core APIリトライ回数 | `2` | × |
+| `CORS_ALLOWED_ORIGINS` | 許可するOrigin | `customer-bff: http://localhost:5173` / `backoffice-bff: http://localhost:5174` | ○ |
 | `LOG_LEVEL` | ログレベル | `info` | × |
 
 #### フロントエンド
 
 | 環境変数 | 説明 | デフォルト値 | 必須 |
 |---------|------|------------|------|
-| `VITE_CUSTOMER_BFF_URL` | Customer BFF URL | `http://localhost:3001` | ○ |
-| `VITE_BACKOFFICE_BFF_URL` | BackOffice BFF URL | `http://localhost:3002` | ○ |
+| `VITE_APP_MODE` | フロントの動作モード | `customer` / `admin` | ○ |
+| `VITE_API_URL` | 接続先BFF URL | `customer: http://localhost:3001` / `admin: http://localhost:3002` | ○ |
+
+モード別の `.env` 例:
+
+```bash
+# frontend/.env.customer
+VITE_APP_MODE=customer
+VITE_API_URL=http://localhost:3001
+
+# frontend/.env.admin
+VITE_APP_MODE=admin
+VITE_API_URL=http://localhost:3002
+```
 
 ---
 
@@ -1229,8 +1256,11 @@ describe('AuthGuard', () => {
 **Phase 1/2 でのロールバック**（BFF障害時）:
 1. フロントエンドの環境変数を旧Core API URLに戻す
    ```bash
-   # .env.production
-   VITE_API_URL=http://localhost:8080  # BFF URLから戻す
+   # frontend/.env.customer
+   VITE_API_URL=http://localhost:8080
+
+   # frontend/.env.admin
+   VITE_API_URL=http://localhost:8080
    ```
 2. フロントエンド再ビルド・デプロイ
 3. BFFコンテナを停止
@@ -1289,11 +1319,13 @@ SwaggerModule.setup('api-docs', app, document);
 - **API契約**: `ApiResponse<T>` 形式を維持
 - **エラーコード**: 既存のCore APIエラーコードを継承（BFF固有コードは `BFF_` プレフィックス）
 - **認証方式**: CHG-008のUser/BoUser分離を継承
+- **画面公開面**: BUG-01 の customer/admin 分離（localhost:5173 / localhost:5174）を継承
 - **データベース**: CHG-009のPostgreSQLを継続利用
 
 ### 非機能要件
 
 - **セキュリティ**: Core APIは内部ネットワークのみ、BFFがインターネット公開
+- **CORS制約**: customer-bff は `http://localhost:5173` のみ許可、backoffice-bff は `http://localhost:5174` のみ許可
 - **性能**: 主要画面のp95レスポンスタイム +20%以内
 - **可用性**: BFF障害時もCore API直アクセスでロールバック可能（Phase 3前）
 - **保守性**: モジュール単位で責務分離、画面要件変更を局所修正で対応

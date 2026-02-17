@@ -1,6 +1,6 @@
 # AI EC Experiment - 技術仕様書
 
-**最終更新日**: 2025-02-11
+**最終更新日**: 2026-02-17
 
 ---
 
@@ -14,8 +14,9 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 - **フロントエンド**: React 19 + TypeScript + Vite
 - **スタイリング**: Tailwind CSS 4
 - **ルーティング**: React Router v7
+- **BFF**: NestJS（Customer BFF / BackOffice BFF）
 - **バックエンド**: Spring Boot 3.4.2 + Java 21
-- **データベース**: SQLite + Hibernate
+- **データベース**: PostgreSQL + Hibernate
 - **コンテナ**: Docker + Docker Compose
 
 ---
@@ -48,23 +49,28 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 ### 全体構成
 
 ```
-┌──────────────────┐
-│   Frontend       │
-│  (React + Vite)  │  ← Port 5173
-└────────┬─────────┘
-         │ HTTP
-         │ (CORS)
-         ▼
-┌──────────────────┐
-│   Backend        │
-│  (Spring Boot)   │  ← Port 8080
-└────────┬─────────┘
-         │ JDBC
-         ▼
-┌──────────────────┐
-│   Database       │
-│    (SQLite)      │  ← /app/data/ec.db
-└──────────────────┘
+┌──────────────────┐     ┌──────────────────┐
+│ Frontend(Customer)│     │ Frontend(Admin)  │
+│  (React, 5173)    │     │  (React, 5174)   │
+└────────┬──────────┘     └────────┬─────────┘
+         │ HTTP                           │ HTTP
+         ▼                                ▼
+┌──────────────────┐     ┌──────────────────┐
+│ Customer BFF     │     │ BackOffice BFF   │
+│ (NestJS, 3001)   │     │ (NestJS, 3002)   │
+└────────┬─────────┘     └────────┬─────────┘
+         │ internal HTTP                 │ internal HTTP
+         └──────────────┬────────────────┘
+                        ▼
+               ┌──────────────────┐
+               │ Core API         │
+               │ (Spring, 8080)   │  ※ internal network only
+               └────────┬─────────┘
+                        │ JDBC
+                        ▼
+               ┌──────────────────┐
+               │ PostgreSQL 16    │
+               └──────────────────┘
 ```
 
 ---
@@ -277,7 +283,8 @@ interface Order { /* ... */ }
 - **Java 21**: プログラミング言語
 - **Spring Data JPA**: データアクセス層
 - **Hibernate**: ORM
-- **SQLite**: 組み込みデータベース
+- **PostgreSQL**: リレーショナルデータベース
+- **Flyway**: スキーママイグレーション
 - **Lombok**: ボイラープレートコード削減
 
 ### アーキテクチャパターン
@@ -316,11 +323,12 @@ Entity (データモデル)
 
 ### データベース
 
-**SQLite + Hibernate** による永続化:
+**PostgreSQL + Hibernate + Flyway** による永続化:
 
-- **方言**: `org.hibernate.community.dialect.SQLiteDialect`
-- **DBファイルパス**: `/app/data/ec.db`（Docker内）、`./data/ec.db`（ローカル）
-- **スキーマ管理**: Hibernate による自動生成（`spring.jpa.hibernate.ddl-auto=update`）
+- **方言**: `org.hibernate.dialect.PostgreSQLDialect`
+- **接続先（開発）**: `jdbc:postgresql://localhost:5432/ec_app`
+- **接続先（Docker内部）**: `jdbc:postgresql://postgres:5432/ec_db`
+- **スキーマ管理**: Flyway（`db/flyway`）でバージョン管理し、`ddl-auto=validate` で検証
 
 **参照**: [data-model.md](./data-model.md) - テーブル定義の詳細
 
@@ -367,11 +375,12 @@ public class ApiResponse<T> {
 
 ### CORS設定
 
-**WebConfig.java** で CORS を設定:
+**`application.yml` の `app.cors.*`** で CORS を設定:
 
-- **許可オリジン**: `http://localhost:5173`（`application.yml` で設定）
+- **開発プロファイル**: `http://localhost:5173`, `http://localhost:5174`
+- **production-internal**: `http://customer-bff:3001`, `http://backoffice-bff:3002`
 - **許可メソッド**: GET, POST, PUT, DELETE, OPTIONS
-- **許可ヘッダー**: `Content-Type`, `X-Session-Id`
+- **許可ヘッダー**: `*`
 - **クレデンシャル**: 許可
 
 ---
@@ -445,21 +454,31 @@ docker compose down
 ```bash
 cd frontend
 npm install
-npm run dev  # http://localhost:5173
+npm run dev:customer  # http://localhost:5173
+npm run dev:admin     # http://localhost:5174
+```
+
+**BFF**:
+```bash
+npm run dev:customer-bff   # http://localhost:3001
+npm run dev:backoffice-bff # http://localhost:3002
 ```
 
 **バックエンド**:
 ```bash
 cd backend
-./mvnw spring-boot:run  # http://localhost:8080
+./mvnw spring-boot:run  # Core API (開発時のみ localhost:8080)
 ```
 
 ### ポート番号
 
 | サービス | ポート | URL |
 |---------|--------|-----|
-| フロントエンド | 5173 | http://localhost:5173 |
-| バックエンド | 8080 | http://localhost:8080 |
+| フロントエンド（顧客） | 5173 | http://localhost:5173 |
+| フロントエンド（管理） | 5174 | http://localhost:5174 |
+| Customer BFF | 3001 | http://localhost:3001 |
+| BackOffice BFF | 3002 | http://localhost:3002 |
+| Core API | 8080 | internal network（通常は外部非公開） |
 
 ---
 
@@ -517,7 +536,7 @@ cd backend
 
 ### 現在の実装
 
-- **CORS**: 特定オリジン（`http://localhost:5173`）のみ許可
+- **CORS**: 開発時は `http://localhost:5173` / `http://localhost:5174` を許可。内部プロファイルでは BFF 起点のみ許可
 - **SQLインジェクション対策**: JPA による Prepared Statement の使用
 - **XSS対策**: React による自動エスケープ
 - **認証**: トークンベース認証（UUID v4、SHA-256ハッシュ）
@@ -590,4 +609,22 @@ cd backend
 
 ---
 
-**最終更新**: 2025-02-11
+**最終更新**: 2026-02-17
+
+## アーキテクチャ変更履歴
+
+### CHG-010: BFF構成への移行（Phase 3完了）
+
+**実施日**: 2026-XX-XX
+
+**変更内容**:
+- Customer BFF導入（顧客向けAPI）
+- BackOffice BFF導入（管理向けAPI）
+- Core APIの内部ネットワーク化
+
+**影響**:
+- Core APIへの直接アクセスは不可
+- すべてのAPI呼び出しはBFF経由
+- 顧客トークンと管理トークンの境界を明確化
+
+**ロールバック手順**: `docs/operations/rollback-procedure.md` 参照

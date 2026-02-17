@@ -8,10 +8,13 @@
     "dev:customer": "vite --mode customer",
     "dev:admin": "vite --mode admin",
     "build": "tsc -b && vite build",
+    "test:e2e": "bash ./e2e/customer-smoke.sh",
+    "test:e2e:admin": "bash ./e2e/admin-smoke.sh",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@app/shared": "^1.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

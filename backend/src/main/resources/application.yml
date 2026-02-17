@@ -65,3 +65,44 @@ app:
     allowed-methods: GET,POST,PUT,DELETE,OPTIONS
     allowed-headers: "*"
     allow-credentials: true
+
+---
+# 本番環境（内部ネットワーク専用）
+spring:
+  config:
+    activate:
+      on-profile: production-internal
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/ec_db
+    username: ec_user
+    password: ec_password
+
+# サーバー設定（内部専用）
+server:
+  port: 8080
+  # 内部ネットワークのみで動作
+  address: 0.0.0.0
+
+# CORS設定（BFFからのアクセスのみ許可）
+app:
+  cors:
+    allowed-origins:
+      - http://customer-bff:3001
+      - http://backoffice-bff:3002
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    allowed-headers:
+      - "*"
+    allow-credentials: true
+
+# ログ設定
+logging:
+  level:
+    com.example.aiec: INFO
+    org.springframework: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [traceId=%X{traceId}] - %msg%n"

@@ -50,7 +50,8 @@ npm workspaceを設定し、BFF・共通型定義のプロジェクト構造を�
     "bff/backoffice-bff"
   ],
   "scripts": {
-    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:frontend-customer": "npm run dev:customer --workspace=frontend",
+    "dev:frontend-admin": "npm run dev:admin --workspace=frontend",
     "dev:customer-bff": "npm run start:dev --workspace=bff/customer-bff",
     "dev:backoffice-bff": "npm run start:dev --workspace=bff/backoffice-bff",
     "build:all": "npm run build --workspaces --if-present",
@@ -1542,7 +1543,7 @@ npm-debug.log
 
 ```yaml
 services:
-  # 既存サービス（postgres, backend, frontend）
+  # 既存サービス（postgres, backend, frontend-customer, frontend-admin）
 
   customer-bff:
     build:
@@ -1624,12 +1625,13 @@ export type {
 // フロントエンド固有の型定義はそのまま
 ```
 
-#### 8.3 .env.development 更新
+#### 8.3 .env.customer 更新
 
-**ファイル**: `frontend/.env.development`
+**ファイル**: `frontend/.env.customer`
 
 ```bash
-# BFF URL に変更
+# customer モードで Customer BFF に接続
+VITE_APP_MODE=customer
 VITE_API_URL=http://localhost:3001
 ```
 
@@ -1642,7 +1644,7 @@ VITE_API_URL=http://localhost:3001
 ```bash
 # フロントエンド起動
 cd frontend
-npm run dev
+npm run dev:customer
 
 # ブラウザで http://localhost:5173 を開く
 # → 商品一覧が表示されればOK

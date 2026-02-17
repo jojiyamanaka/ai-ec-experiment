@@ -114,16 +114,30 @@ services:
       - public
       - internal
 
-  frontend:
+  frontend-customer:
     build: ./frontend
-    container_name: ec-frontend
+    container_name: ec-frontend-customer
     ports:
-      - "5173:80"
+      - "5173:5173"
     environment:
-      - VITE_CUSTOMER_BFF_URL=http://localhost:3001
-      - VITE_BACKOFFICE_BFF_URL=http://localhost:3002
+      - VITE_APP_MODE=customer
+      - VITE_API_URL=http://localhost:3001
+    command: npm run dev:customer
     depends_on:
       - customer-bff
+    networks:
+      - public
+
+  frontend-admin:
+    build: ./frontend
+    container_name: ec-frontend-admin
+    ports:
+      - "5174:5174"
+    environment:
+      - VITE_APP_MODE=admin
+      - VITE_API_URL=http://localhost:3002
+    command: npm run dev:admin
+    depends_on:
       - backoffice-bff
     networks:
       - public
@@ -141,7 +155,7 @@ volumes:
 
 #### 1.2 ネットワーク分離の説明
 
-- **public ネットワーク**: インターネットに公開（frontend, customer-bff, backoffice-bff）
+- **public ネットワーク**: インターネットに公開（frontend-customer, frontend-admin, customer-bff, backoffice-bff）
 - **internal ネットワーク**: 内部通信のみ（backend, postgres）
   - `internal: true` により外部からのアクセスを完全遮断
   - BFFからのみアクセス可能
@@ -724,15 +738,18 @@ curl http://localhost:8080/products
 BFF障害時のみ実施：
 
 \`\`\`bash
-# frontend/.env.production
-VITE_API_URL=http://localhost:8080  # BFF URLから戻す
+# frontend/.env.customer
+VITE_API_URL=http://localhost:8080
+
+# frontend/.env.admin
+VITE_API_URL=http://localhost:8080
 \`\`\`
 
 \`\`\`bash
 # フロントエンド再ビルド・デプロイ
 cd frontend
 npm run build
-docker compose up -d frontend
+docker compose up -d frontend-customer frontend-admin
 \`\`\`
 
 ### Step 5: 動作確認
@@ -979,17 +996,20 @@ Phase 3完了に伴い、関連ドキュメントを更新する。
 │  ブラウザ   │
 └──────┬──────┘
        │
-       ├─────────────┬─────────────┐
-       │             │             │
-       ↓             ↓             ↓
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│ Frontend │  │Customer  │  │BackOffice│
-│          │  │   BFF    │  │   BFF    │
-│(Port 5173)│ │(Port 3001)│ │(Port 3002)│
-└──────────┘  └─────┬────┘  └─────┬────┘
-                    │             │
-                    └──────┬──────┘
-                           ↓
+   ┌───┴───────────┐
+   │               │
+   ↓               ↓
+┌──────────────┐ ┌──────────────┐
+│Customer Front│ │ Admin Front  │
+│ (Port 5173)  │ │ (Port 5174)  │
+└──────┬───────┘ └──────┬───────┘
+       ↓                ↓
+┌──────────────┐ ┌──────────────┐
+│Customer BFF  │ │BackOffice BFF│
+│ (Port 3001)  │ │ (Port 3002)  │
+└──────┬───────┘ └──────┬───────┘
+       └───────┬────────┘
+               ↓
                   ┌────────────────┐
                   │   Core API     │
                   │  (内部のみ)    │
@@ -1022,7 +1042,8 @@ docker compose logs -f backend         # Core APIログ
 
 ### アクセスURL
 
-- フロントエンド: http://localhost:5173
+- 顧客画面: http://localhost:5173
+- 管理画面: http://localhost:5174
 - Customer BFF: http://localhost:3001
 - BackOffice BFF: http://localhost:3002
 - Core API: 直接アクセス不可（内部ネットワークのみ）

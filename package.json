@@ -1,0 +1,23 @@
+{
+  "name": "ai-ec-experiment",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "bff/shared",
+    "bff/customer-bff",
+    "bff/backoffice-bff"
+  ],
+  "scripts": {
+    "dev:frontend-customer": "npm run dev:customer --workspace=frontend",
+    "dev:frontend-admin": "npm run dev:admin --workspace=frontend",
+    "dev:customer-bff": "npm run start:dev --workspace=bff/customer-bff",
+    "dev:backoffice-bff": "npm run start:dev --workspace=bff/backoffice-bff",
+    "build:all": "npm run build --workspaces --if-present",
+    "test:all": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

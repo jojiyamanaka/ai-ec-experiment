@@ -17,13 +17,26 @@
 cd bff/backoffice-bff
 npm run start:dev
 
-# 管理画面から接続確認
+# BackOffice BFF API 接続確認
 curl http://localhost:3002/api/inventory \
   -H "Authorization: Bearer {boUserToken}"
 
 # E2Eテスト
 cd frontend
 npm run test:e2e:admin
+```
+
+---
+
+### アーキテクチャ（Phase 2）
+
+```text
+ブラウザ
+  ├─> Customer Front（localhost:5173, 静的配信）
+  │      └─(fetch)─> Customer BFF（localhost:3001）
+  └─> Admin Front（localhost:5174, 静的配信）
+         └─(fetch)─> BackOffice BFF（localhost:3002）
+                           └─> Core API（localhost:8080）
 ```
 
 ---
@@ -188,7 +201,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5174',
     credentials: true,
   });
 
@@ -1161,7 +1174,7 @@ npm-debug.log
 
 ```yaml
 services:
-  # 既存サービス（postgres, backend, customer-bff, frontend）
+  # 既存サービス（postgres, backend, customer-bff, frontend-customer, frontend-admin）
 
   backoffice-bff:
     build:
@@ -1207,78 +1220,42 @@ curl -X POST http://localhost:3002/api/bo-auth/login \
 ### 目的
 管理画面のAPI呼び出し先をBackOffice BFFに切り替える。
 
+### 前提
+- Front は静的配信のみを担当する
+- APIリクエストはブラウザからBFFへ直接送信する
+- 管理画面は `localhost:5174` から `localhost:3002`（BackOffice BFF）を利用する
+
 ### 実装内容
 
-#### 8.1 .env.development 更新
+#### 8.1 .env.admin 更新
 
-**ファイル**: `frontend/.env.development`
+**ファイル**: `frontend/.env.admin`
 
 ```bash
-# 顧客向けBFF
-VITE_CUSTOMER_BFF_URL=http://localhost:3001
-
-# 管理向けBFF
-VITE_BACKOFFICE_BFF_URL=http://localhost:3002
+# admin モードで BackOffice BFF に接続
+VITE_APP_MODE=admin
+VITE_API_URL=http://localhost:3002
 ```
 
-#### 8.2 frontend/src/lib/api.ts の更新（管理画面用API追加）
+#### 8.2 frontend/src/lib/api.ts の確認（変更不要）
 
-**ファイル**: `frontend/src/lib/api.ts` に追加
+既存の `api.ts` をそのまま使用する。
 
-```typescript
-const CUSTOMER_BFF_URL = import.meta.env.VITE_CUSTOMER_BFF_URL || 'http://localhost:3001';
-const BACKOFFICE_BFF_URL = import.meta.env.VITE_BACKOFFICE_BFF_URL || 'http://localhost:3002';
+理由:
+- `VITE_API_URL` により接続先BFFを切り替え可能
+- 管理系API呼び出し時は `bo_token` を使う既存ロジックを維持できる
+- `fetch` 直接実装の追加は不要
 
-// 管理画面用APIクライアント
-const backofficeApiClient = {
-  get: async <T>(path: string): Promise<T> => {
-    const token = localStorage.getItem('boToken');
-    const response = await fetch(`${BACKOFFICE_BFF_URL}${path}`, {
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-    });
-    return response.json();
-  },
-  post: async <T>(path: string, data: any): Promise<T> => {
-    const token = localStorage.getItem('boToken');
-    const response = await fetch(`${BACKOFFICE_BFF_URL}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  },
-  put: async <T>(path: string, data: any): Promise<T> => {
-    const token = localStorage.getItem('boToken');
-    const response = await fetch(`${BACKOFFICE_BFF_URL}${path}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  },
-};
+#### 8.3 管理画面コンポーネントの確認
 
-export { backofficeApiClient };
-```
-
-#### 8.3 管理画面コンポーネントの更新
-
-管理画面の各ページで `backofficeApiClient` を使用するように変更：
+管理画面の各ページは既存の `api.ts` 経由呼び出しを維持する。
 
 ```typescript
 // 例: AdminInventoryPage.tsx
-import { backofficeApiClient } from '../lib/api';
+import * as api from '../lib/api';
 
 // 在庫一覧取得
-const response = await backofficeApiClient.get('/api/inventory');
+const response = await api.get('/bo/admin/inventory');
 ```
 
 ### 検証
@@ -1286,9 +1263,9 @@ const response = await backofficeApiClient.get('/api/inventory');
 ```bash
 # フロントエンド起動
 cd frontend
-npm run dev
+npm run dev:admin
 
-# ブラウザで http://localhost:5173/admin を開く
+# ブラウザで http://localhost:5174/bo/item を開く
 # → 管理画面が表示され、BackOffice BFF経由でAPIが呼ばれればOK
 # → DevToolsのNetworkタブで http://localhost:3002/api/* へのリクエストを確認
 ```
@@ -1453,6 +1430,7 @@ docker compose exec backend cat /app/logs/audit.log
 - [ ] 監査ログが正常に記録される
 - [ ] トレースIDがブラウザ→BFF→Core APIで伝播する
 - [ ] 管理画面が BackOffice BFF 経由で正常動作する
+- [ ] 管理画面の通信経路が `localhost:5174 -> localhost:3002 -> Core API` である
 
 ---
 

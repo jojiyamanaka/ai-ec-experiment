@@ -17,8 +17,56 @@
 docker compose up -d
 docker compose ps
 docker compose logs backend --since 5m
+docker compose logs customer-bff --since 5m
+docker compose logs backoffice-bff --since 5m
 docker compose exec backend ./mvnw compile
-docker compose exec frontend npm run build
+docker compose exec frontend-customer npm run build
+docker compose exec frontend-admin npm run build
+docker compose exec customer-bff curl -sS "http://localhost:3001/health"
+docker compose exec backoffice-bff curl -sS "http://localhost:3002/health"
+```
+
+## Docker で npm install する場合のルール
+`docker run` で `npm install` を実行する場合は、生成物の所有者をホストユーザーに揃えるため、**必ず** `-u "$(id -u):$(id -g)"` を付ける。
+また、**root（`-u` なし）で `node_modules` を作成しない**。
+
+```bash
+docker run --rm --dns 1.1.1.1 --dns 8.8.8.8 \
+  -u "$(id -u):$(id -g)" \
+  -v "$(pwd):/work" -w /work node:20-bookworm bash -lc '
+    npm config set registry https://registry.npmjs.org/
+    npm config set fetch-retries 5
+    npm config set fetch-retry-mintimeout 20000
+    npm config set fetch-retry-maxtimeout 120000
+    npm install --workspaces --include-workspace-root --no-audit --prefer-online
+  '
+```
+
+## npm workspace 運用ルール（必須）
+1. ルート `package-lock.json` を必ずコミットし、`docker build` の `npm ci` 再現性を担保する
+2. `@app/shared` 依存は npm workspaces で解決可能な指定を維持する
+3. lockfile 更新後に workspace リンクを確認する（`(empty)` は失敗）
+
+```bash
+npm -w frontend ls @app/shared
+npm -w bff/customer-bff ls @app/shared
+npm -w bff/backoffice-bff ls @app/shared
+```
+
+## root 所有ファイル復旧手順
+`EACCES`（`node_modules` / `package-lock.json` の権限エラー）が出た場合は、以下で復旧する。
+
+```bash
+rm -rf node_modules
+rm -f package-lock.json
+```
+
+ホストで削除できない場合は Docker（root）で削除する。
+
+```bash
+docker run --rm --dns 1.1.1.1 --dns 8.8.8.8 \
+  -v "$(pwd):/work" -w /work node:20-bookworm \
+  bash -lc 'rm -rf node_modules package-lock.json'
 ```
 
 ## タスク実装後の検証フロー
@@ -40,7 +88,7 @@ docker compose exec frontend npm run build
 3. JSON 保存はヒアドキュメントで一時ファイルへ書き込む
 4. カート/注文 API は `X-Session-Id` ヘッダーを付与する
 5. `email` / `X-Session-Id` は時刻付きで一意値を使う（再実行時の重複回避）
-6. `localhost:8080` へ直接到達できない場合は `docker compose exec backend` 内から `curl` を実行する
+6. WSL から `localhost` 到達不可の場合は、対象コンテナ内から `curl` を実行する（customer は `customer-bff`、admin は `backoffice-bff`）
 
 例:
 
@@ -54,14 +102,14 @@ curl -s -X POST \
   -H "X-Session-Id: ${session}" \
   -H "Content-Type: application/json" \
   --data-binary "@${tmp}" \
-  "http://localhost:8080/api/order/cart/items"
+  "http://localhost:3001/api/cart/items"
 rm -f "$tmp"
 ```
 
 `localhost` 直叩きが失敗する場合の例:
 
 ```bash
-docker compose exec backend curl -sS "http://localhost:8080/api/item"
+docker compose exec customer-bff curl -sS "http://localhost:3001/api/products"
 ```
 
 ## SQLスクリプト実行（Docker）

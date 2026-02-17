@@ -1,88 +1,133 @@
+version: '3.8'
+
 services:
-  # PostgreSQL
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: ec-postgres
     environment:
-      POSTGRES_DB: ec_app
-      POSTGRES_USER: ec_app_user
-      POSTGRES_PASSWORD: changeme
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      POSTGRES_USER: ec_user
+      POSTGRES_PASSWORD: ec_password
+      POSTGRES_DB: ec_db
     ports:
-      - "5432:5432"
+      - "5432:5432"  # 開発環境のみ公開
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ec_app_user -d ec_app"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
     networks:
-      - app-network
+      - internal
+
+  backend:
+    build: ./backend
+    container_name: ec-backend
+    # ポート公開を削除（内部ネットワークのみ）
+    # ports:
+    #   - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ec_db
+      - SPRING_DATASOURCE_USERNAME=ec_user
+      - SPRING_DATASOURCE_PASSWORD=ec_password
+      - SPRING_PROFILES_ACTIVE=production-internal
+    depends_on:
+      - postgres
+    networks:
+      - internal  # 内部ネットワークのみ
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  customer-bff:
+    build:
+      context: .
+      dockerfile: bff/customer-bff/Dockerfile
+    container_name: ec-customer-bff
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CORE_API_URL=http://backend:8080
+      - CORE_API_TIMEOUT=5000
+      - CORE_API_RETRY=2
+      - LOG_LEVEL=info
+    depends_on:
+      - backend
+    networks:
+      - public    # 外部公開
+      - internal  # Core API接続
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backoffice-bff:
+    build:
+      context: .
+      dockerfile: bff/backoffice-bff/Dockerfile
+    container_name: ec-backoffice-bff
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - CORE_API_URL=http://backend:8080
+      - CORE_API_TIMEOUT=5000
+      - CORE_API_RETRY=2
+      - LOG_LEVEL=info
+    depends_on:
+      - backend
+    networks:
+      - public
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend-customer:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: ai-ec-frontend-customer
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    container_name: ec-frontend-customer
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # node_modules はコンテナ内のものを使用
     environment:
-      - VITE_API_URL=http://localhost:8080
       - VITE_APP_MODE=customer
+      - VITE_API_URL=http://localhost:3001
     command: npm run dev:customer
-    stdin_open: true
-    tty: true
+    depends_on:
+      - customer-bff
     networks:
-      - app-network
+      - public
 
   frontend-admin:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: ai-ec-frontend-admin
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    container_name: ec-frontend-admin
     ports:
       - "5174:5174"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # node_modules はコンテナ内のものを使用
     environment:
-      - VITE_API_URL=http://localhost:8080
       - VITE_APP_MODE=admin
+      - VITE_API_URL=http://localhost:3002
     command: npm run dev:admin
-    stdin_open: true
-    tty: true
-    networks:
-      - app-network
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    container_name: ai-ec-backend
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./backend:/app
-      - ~/.m2:/root/.m2  # Maven キャッシュ
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      DB_URL: jdbc:postgresql://postgres:5432/ec_app
-      DB_USER: ec_app_user
-      DB_PASSWORD: changeme
-    command: ./mvnw spring-boot:run
-    networks:
-      - app-network
     depends_on:
-      postgres:
-        condition: service_healthy
-
-volumes:
-  postgres_data:
+      - backoffice-bff
+    networks:
+      - public
 
 networks:
-  app-network:
+  public:
     driver: bridge
+  internal:
+    driver: bridge
+    internal: true  # 外部からのアクセスを遮断
+
+volumes:
+  postgres-data:
