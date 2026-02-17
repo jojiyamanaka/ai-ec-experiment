@@ -5,9 +5,9 @@
 
 ## テスト環境
 - Docker Compose
-- WSL (bash)
+- macOS (zsh)
 - ネットワーク分離設定適用済み
-- 注記: このWSL環境では `localhost:3001` / `localhost:3002` への直接到達ができないため、
+- 注記: ホスト環境から `localhost:3001` / `localhost:3002` への直接到達ができない場合は、
   BFFの疎通確認は `docker compose exec` 経由で実施
 
 ## テスト結果

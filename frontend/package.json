@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node ../scripts/ensure-frontend-native-deps.mjs",
+    "predev:customer": "node ../scripts/ensure-frontend-native-deps.mjs",
+    "predev:admin": "node ../scripts/ensure-frontend-native-deps.mjs",
+    "prebuild": "node ../scripts/ensure-frontend-native-deps.mjs",
     "dev": "vite",
     "dev:customer": "vite --mode customer",
     "dev:admin": "vite --mode admin",

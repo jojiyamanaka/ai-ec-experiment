@@ -2,6 +2,11 @@
   "name": "ai-ec-experiment",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "npm@10.9.4",
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  },
   "workspaces": [
     "frontend",
     "bff/shared",
@@ -13,6 +18,7 @@
     "dev:frontend-admin": "npm run dev:admin --workspace=frontend",
     "dev:customer-bff": "npm run start:dev --workspace=bff/customer-bff",
     "dev:backoffice-bff": "npm run start:dev --workspace=bff/backoffice-bff",
+    "fix:frontend-native-deps": "node scripts/ensure-frontend-native-deps.mjs",
     "build:all": "npm run build --workspaces --if-present",
     "test:all": "npm run test --workspaces --if-present"
   },

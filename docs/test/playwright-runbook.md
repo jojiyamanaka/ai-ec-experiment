@@ -1,6 +1,6 @@
-# Playwright 利用ガイド（Docker / WSL bash）
+# Playwright 利用ガイド（Docker / macOS zsh）
 
-最終更新: 2026-02-12
+最終更新: 2026-02-17
 
 ## 目的
 このドキュメントは、このリポジトリで Playwright を使って UI 検証を行うための「実行方法」と「注意点」をまとめたものです。

@@ -12,6 +12,8 @@ AI を活用した EC サイト実験プロジェクト
 
 ### 前提条件
 - Docker Desktop インストール済み
+- Node.js 20.x / npm 10.x（ローカルで `npm run build:all` を実行する場合）
+- Java 21 Runtime（ローカルで `backend` を直接起動する場合）
 
 ### 起動方法
 

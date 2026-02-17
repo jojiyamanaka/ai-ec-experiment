@@ -2,7 +2,7 @@
 
 ## テスト手順
 
-テスト実施手順・WSL (bash) 操作ルールは `docs/test/testing-operations.md` を参照する。  
+テスト実施手順・macOS (zsh/bash) 操作ルールは `docs/test/testing-operations.md` を参照する。  
 Playwright の利用方法は `docs/test/playwright-runbook.md` を参照する。
 
 ## プロジェクト構成

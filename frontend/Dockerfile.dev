@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # 開発用 Dockerfile
-FROM node:22-alpine
+FROM node:20-bookworm
 
 WORKDIR /app
 
@@ -9,10 +9,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY bff/shared/package.json ./bff/shared/package.json
 COPY frontend/package.json ./frontend/package.json
+COPY scripts/ensure-frontend-native-deps.mjs ./scripts/ensure-frontend-native-deps.mjs
 
 # frontend と共有パッケージの依存関係をインストール
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --workspace=bff/shared --workspace=frontend --include-workspace-root=false --no-audit
+    npm ci --workspace=bff/shared --workspace=frontend --include-workspace-root=false --no-audit \
+    && node ./scripts/ensure-frontend-native-deps.mjs
 
 # ソースコードをコピー
 COPY bff/shared ./bff/shared
