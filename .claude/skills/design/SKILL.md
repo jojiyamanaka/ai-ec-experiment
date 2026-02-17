@@ -1,0 +1,74 @@
+---
+name: design
+description: 要件定義書から技術設計書を作成する。CHG番号を引数に取り、関連ドキュメントとコードを調査して設計書を生成する。
+argument-hint: "[CHG番号 例: CHG-011]"
+disable-model-invocation: true
+---
+
+# 技術設計書の作成
+
+CHG番号: $ARGUMENTS
+
+## 手順
+
+### 1. 要件定義書の読み込み
+
+`docs/01_requirements/` から $ARGUMENTS に一致するファイルを検索して読み込む。
+見つからない場合はユーザーに報告して終了する。
+
+### 2. 関連ドキュメントの調査
+
+要件定義書の内容を分析し、影響するドメインに応じて以下を参照する:
+
+| 作業内容 | 参照ドキュメント |
+|---------|-------------|
+| フロントエンド（顧客画面） | `docs/ui/customer-ui.md`, `docs/ui/api-spec.md` |
+| フロントエンド（管理画面） | `docs/ui/admin-ui.md`, `docs/ui/api-spec.md` |
+| バックエンドAPI | `docs/ui/api-spec.md`, `docs/data-model.md` |
+| 在庫・引当 | `docs/specs/inventory.md` |
+| 注文フロー | `docs/specs/order.md` |
+| 認証・認可 | `docs/specs/authentication.md` |
+| 商品・価格 | `docs/specs/product.md` |
+| BFF | `docs/specs/bff-architecture.md` |
+| DBスキーマ | `docs/data-model.md` |
+| UIスタイリング | `docs/design-system.md` |
+
+常に参照: `docs/SPEC.md`, `docs/requirements.md`
+
+### 3. 既存コードパターンの調査
+
+要件に関連する既存の実装を確認し、一貫性のある設計にする:
+
+- バックエンド (`backend/src/`): エンティティ、サービス、コントローラ、DTO
+- フロントエンド (`frontend/src/`): ページ、コンポーネント、Context、API呼び出し
+- BFF (`bff/`): コントローラ、サービス、Core API連携
+
+### 4. 設計判断が必要な場合はユーザーに質問する
+
+以下のケースでは AskUserQuestion ツールで確認する:
+
+- 複数の実装アプローチが考えられる場合
+- 既存パターンから逸脱する必要がある場合
+- 要件定義書に曖昧な点や不足情報がある場合
+- 影響範囲が大きく方針確認が必要な場合
+- API設計で複数の選択肢がある場合
+
+質問は具体的な選択肢を提示し、トレードオフを説明すること。
+
+### 5. 設計書の作成
+
+`docs/02_designs/` にファイルを作成する。
+ファイル名は要件定義書と同じ命名規則 (`CHG-XXX_<機能名>.md`) に従う。
+
+構成テンプレートは [template.md](template.md) を参照。
+過去の設計書の例は [examples/](examples/) を参照。
+
+セクションは機能の規模に応じて取捨選択する。小規模な変更で不要なセクションは省略してよい。
+コード例は具体的に、変更前/変更後を明示する。
+
+### 6. ユーザーへの報告
+
+作成した設計書の概要を報告する:
+- 設計方針の要約
+- 主要な変更対象ファイル
+- 設計上の判断事項や制約
