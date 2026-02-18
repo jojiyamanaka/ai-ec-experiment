@@ -21,6 +21,10 @@ export default () => ({
     timeout: parseIntEnv('CORE_API_TIMEOUT', 5000),
     retry: parseIntEnv('CORE_API_RETRY', 2),
   },
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseIntEnv('REDIS_PORT', 6379),
+  },
   logging: {
     level: process.env.LOG_LEVEL || 'info',
   },

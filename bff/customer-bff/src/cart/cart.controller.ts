@@ -2,6 +2,8 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req } from 
 import { AuthGuard } from '../auth/auth.guard';
 import { CartService } from './cart.service';
 import { ApiResponse } from '@app/shared';
+import { RateLimitGuard } from '../common/guards/rate-limit.guard';
+import { RateLimit } from '../common/decorators/rate-limit.decorator';
 
 @Controller('api/cart')
 @UseGuards(AuthGuard)
@@ -14,6 +16,8 @@ export class CartController {
   }
 
   @Post('items')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 10, ttlSeconds: 60, keyType: 'user' })
   async addCartItem(
     @Body() body: { productId: number; quantity: number },
     @Req() req: any,

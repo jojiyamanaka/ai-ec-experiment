@@ -127,6 +127,23 @@ AI EC Experimentにおける認証・認可システムの振る舞いを定義�
 
 ---
 
+---
+
+## 10. BFF 認証トークンキャッシュ（CHG-014〜）
+
+**目的**: Core API `/api/auth/me` への毎リクエスト呼び出しを削減。
+
+**方式**: Read-Through Cache（Redis Key: `auth:token:{tokenHash}`, TTL 1分）
+- **認証チェック**: Redis HIT → キャッシュデータを使用、MISS → Core API 呼び出し → Redis 保存
+- **ログアウト**: Core API で `isRevoked = true` 更新後、Redis キャッシュを即時削除
+- **障害時フォールバック**: Redis 障害時は Core API から直接取得
+
+**整合性**: PostgreSQL が真実のソース。Redis はキャッシュのみ（書き込みなし）。ログアウト反映遅延は最大1分。
+
+---
+
 ## 実装クラス一覧
 
 **バックエンド**: `AuthController.java`, `AuthService.java`, `User.java`, `AuthToken.java`, `OperationHistoryService.java`, `GlobalExceptionHandler.java`
+
+**Customer BFF**: `auth.guard.ts`（Redis キャッシュ付きトークン検証）, `redis/redis.service.ts`

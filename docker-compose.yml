@@ -53,8 +53,12 @@ services:
       - CORE_API_TIMEOUT=5000
       - CORE_API_RETRY=2
       - LOG_LEVEL=info
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TIMEOUT=5000
     depends_on:
       - backend
+      - redis
     networks:
       - public    # 外部公開
       - internal  # Core API接続
@@ -79,8 +83,12 @@ services:
       - CORE_API_TIMEOUT=5000
       - CORE_API_RETRY=2
       - LOG_LEVEL=info
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TIMEOUT=5000
     depends_on:
       - backend
+      - redis
     networks:
       - public
       - internal
@@ -123,6 +131,15 @@ services:
     networks:
       - public
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: ec-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - internal
+
 networks:
   public:
     driver: bridge
@@ -132,3 +149,4 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:

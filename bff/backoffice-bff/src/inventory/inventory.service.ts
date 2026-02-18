@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CoreApiService } from '../core-api/core-api.service';
+import { RedisService } from '../redis/redis.service';
 import { ApiResponse } from '@app/shared';
 
 interface CoreInventoryItem {
@@ -13,7 +14,10 @@ interface CoreInventoryItem {
 
 @Injectable()
 export class InventoryService {
-  constructor(private coreApiService: CoreApiService) {}
+  constructor(
+    private coreApiService: CoreApiService,
+    private redisService: RedisService,
+  ) {}
 
   async getInventory(token: string, traceId?: string): Promise<ApiResponse<any>> {
     return this.coreApiService.get<ApiResponse<any>>(
@@ -38,12 +42,19 @@ export class InventoryService {
     token: string,
     traceId?: string,
   ): Promise<ApiResponse<any>> {
-    return this.coreApiService.post<ApiResponse<any>>(
+    const response = await this.coreApiService.post<ApiResponse<any>>(
       '/api/bo/admin/inventory/adjust',
       { productId, quantityDelta, reason },
       token,
       traceId,
     );
+
+    if (response.success) {
+      // 商品キャッシュとリスト全体を無効化
+      await this.redisService.del(`cache:product:${productId}`);
+      await this.redisService.delPattern('cache:products:list:*');
+    }
+    return response;
   }
 
   async updateInventory(

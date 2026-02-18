@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { CoreApiService } from '../core-api/core-api.service';
+import { RedisService } from '../redis/redis.service';
 import { ApiResponse } from '@app/shared';
 
 @Injectable()
 export class OrdersService {
-  constructor(private coreApiService: CoreApiService) {}
+  constructor(
+    private coreApiService: CoreApiService,
+    private redisService: RedisService,
+  ) {}
 
   async createOrder(
     token: string,
@@ -96,6 +100,43 @@ export class OrdersService {
     return {
       success: true,
       data: this.normalizeOrder(response.data),
+    };
+  }
+
+  async getOrderFull(
+    id: number,
+    token: string,
+    userId?: number,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    // 注文詳細取得（キャッシュなし — 最新状態を返す）
+    const orderResponse = await this.getOrderById(id, token, userId, traceId);
+    if (!orderResponse.success) return orderResponse;
+
+    const order = orderResponse.data;
+    const items = order.items ?? [];
+
+    // 各注文アイテムの商品情報を並列取得（商品キャッシュ活用）
+    const enrichedItems = await Promise.all(
+      items.map(async (item: any) => {
+        const cacheKey = `cache:product:${item.productId}`;
+        let product = await this.redisService.get<any>(cacheKey);
+        if (!product) {
+          const productResponse = await this.coreApiService.get<any>(
+            `/api/item/${item.productId}`,
+            undefined,
+            traceId,
+          );
+          product = productResponse.success ? productResponse.data : null;
+          if (product) await this.redisService.set(cacheKey, product, 600);
+        }
+        return { ...item, product };
+      }),
+    );
+
+    return {
+      success: true,
+      data: { order, items: enrichedItems },
     };
   }
 

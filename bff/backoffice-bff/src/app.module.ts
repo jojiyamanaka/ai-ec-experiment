@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CoreApiModule } from './core-api/core-api.module';
+import { RedisModule } from './redis/redis.module';
 import { BoAuthModule } from './auth/bo-auth.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { OrdersModule } from './orders/orders.module';
@@ -16,6 +17,7 @@ import { HealthController } from './health/health.controller';
       load: [configuration],
       isGlobal: true,
     }),
+    RedisModule,
     CoreApiModule,
     BoAuthModule,
     InventoryModule,

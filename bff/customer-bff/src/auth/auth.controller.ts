@@ -2,12 +2,16 @@ import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { ApiResponse } from '@app/shared';
+import { RateLimitGuard } from '../common/guards/rate-limit.guard';
+import { RateLimit } from '../common/decorators/rate-limit.decorator';
 
 @Controller('api/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 3, ttlSeconds: 600, keyType: 'ip' })
   async register(
     @Body() body: { email?: string; password: string; displayName?: string; username?: string; fullName?: string },
     @Req() req: any,
@@ -18,12 +22,14 @@ export class AuthController {
   }
 
   @Post('login')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ limit: 5, ttlSeconds: 60, keyType: 'ip' })
   async login(
     @Body() body: { email?: string; username?: string; password: string },
     @Req() req: any,
   ): Promise<ApiResponse<any>> {
     const email = body.email ?? body.username ?? '';
-    return this.authService.login(email, body.password, req.traceId);
+    return this.authService.login(email, body.password, req.traceId, req['session']?.sessionId);
   }
 
   @Post('logout')

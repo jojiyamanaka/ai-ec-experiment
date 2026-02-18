@@ -37,7 +37,7 @@ AI EC Experiment の API 仕様書（Phase 3 / BFF構成）。
 | ヘッダー | 用途 | 必須条件 |
 |---------|------|---------|
 | `Content-Type: application/json` | 全リクエスト | 常に |
-| `X-Session-Id: <uuid>` | カート・注文操作 | カート/注文API |
+| `X-Session-Id: <uuid>` | セッション識別（ゲスト/会員共通） | 全API（BFFが初回生成） |
 | `Authorization: Bearer <token>` | 顧客認証 | 認証必須API |
 | `Authorization: Bearer <bo_token>` | 管理者認証 | 管理API |
 
@@ -54,6 +54,17 @@ AI EC Experiment の API 仕様書（Phase 3 / BFF構成）。
 **AuthResponse オブジェクト**: `{ user: User, token, expiresAt }`
 **BoUser オブジェクト**: `{ id, email, displayName, permissionLevel, lastLoginAt, isActive, createdAt, updatedAt }`
 **BoAuthResponse オブジェクト**: `{ user: BoUser, token, expiresAt }`
+
+---
+
+## BFF 集約エンドポイント（Customer BFF のみ）
+
+Core API には存在せず、BFF が複数 Core API を並列呼び出しして集約して返す。
+
+| Method | Path | 認証 | Response (data) |
+|--------|------|------|-----------------|
+| GET | `/api/products/:id/full` | 不要 | `{ product: Product, relatedProducts: Product[] }` |
+| GET | `/api/orders/:id/full` | User | `{ order: Order, items: [{ ...OrderItem, product: Product }] }` |
 
 ---
 

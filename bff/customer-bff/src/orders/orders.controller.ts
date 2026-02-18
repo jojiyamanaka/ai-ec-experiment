@@ -34,6 +34,14 @@ export class OrdersController {
     return this.ordersService.getOrderById(parseInt(id, 10), req.token, req.user?.id, req.traceId);
   }
 
+  @Get(':id/full')
+  async getOrderFull(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.ordersService.getOrderFull(parseInt(id, 10), req.token, req.user?.id, req.traceId);
+  }
+
   @Post(':id/cancel')
   async cancelOrder(
     @Param('id') id: string,

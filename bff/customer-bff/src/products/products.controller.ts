@@ -22,4 +22,12 @@ export class ProductsController {
   ): Promise<ApiResponse<any>> {
     return this.productsService.getProductById(parseInt(id, 10), req.traceId);
   }
+
+  @Get(':id/full')
+  async getProductFull(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.productsService.getProductFull(parseInt(id, 10), req.traceId);
+  }
 }
