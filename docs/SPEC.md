@@ -67,9 +67,6 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 - **[認証](./specs/authentication.md)** - 顧客/管理者の認証・認可
 - **[BFFアーキテクチャ](./specs/bff-architecture.md)** - Customer BFF / BackOffice BFF の構成
 
-### その他
-- **[仕様と実装のギャップ一覧](./spec-implementation-gaps.md)** - 未実装機能、制約事項
-
 ### タスク別ドキュメント参照ガイド
 
 | 作業内容 | 参照すべきドキュメント |
@@ -88,6 +85,23 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 ---
 
 ## アーキテクチャ変更履歴
+
+### CHG-013: モジュラーモノリス設計（Phase 1〜4完了）
+
+**変更内容**:
+- パッケージ構造を横割り→モジュール別に再編（`modules/{module}/domain|adapter|application`）
+- Port/UseCase パターン導入（モジュール間連携はインターフェース経由）
+- ArchUnit によるモジュール境界制約テスト追加（10ルール）
+- 監査ログをイベント駆動（`OperationPerformedEvent` + REQUIRES_NEW）に移行
+
+**制約**:
+- 他モジュールの `domain.*` 直接参照禁止。`application.port.*` 経由のみ
+- UseCase 実装クラスはパッケージプライベート（`class`、`public` 不可）
+- クロスモジュール JPA 関連禁止。参照は ID のみ
+
+**主要モジュール**: product / inventory / purchase（cart+order）/ customer / backoffice / shared
+
+---
 
 ### CHG-010: BFF構成への移行（Phase 3完了）
 

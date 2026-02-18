@@ -1,0 +1,29 @@
+# テスト用設定
+# Docker Compose の PostgreSQL に接続する
+# 使用方法: ./mvnw test (デフォルトで有効)
+# 無効化: TEST_DB_ENABLED=false ./mvnw test
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/ec_db}
+    username: ${TEST_DB_USER:ec_user}
+    password: ${TEST_DB_PASSWORD:ec_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/flyway
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: true
+
+# CORS設定（テスト用）
+app:
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:5174
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true

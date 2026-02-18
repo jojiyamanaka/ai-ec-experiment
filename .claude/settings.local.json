@@ -1,58 +1,58 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)",
-      "Bash(git push:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(chmod:*)",
-      "Bash(docker-compose logs:*)",
-      "Bash(docker-compose down:*)",
-      "Bash(docker-compose up:*)",
-      "Bash(docker-compose ps:*)",
-      "Bash(docker compose:*)",
-      "Bash(rg:*)",
-      "Bash(docker ps:*)",
-      "Bash(timeout:*)",
-      "Bash(ping:*)",
+      "Bash(git:*)",
+      "Bash(docker:*)",
+      "Bash(./mvnw:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(~/.claude/notify.sh)",
+      "Bash(echo:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(shutdown:*)",
+      "Bash(reboot:*)",
+      "Bash(chmod 777:*)",
+      "Bash(chown:*)",
       "Bash(curl:*)",
-      "Bash(python -m json.tool:*)",
-      "Bash(python3:*)",
-      "Bash(git checkout:*)",
-      "Bash(bash:*)",
-      "Bash(__NEW_LINE_f422e5a94b56b69c__ echo \"=== テスト 2: 注文確認（PENDING → CONFIRMED） ===\")",
-      "Bash(__NEW_LINE_96e322e023cea9b6__ echo \"=== テスト 3: 注文発送（CONFIRMED → SHIPPED） ===\")",
-      "Bash(__NEW_LINE_d38f27761b00011a__ echo \"=== テスト 4: 配達完了（SHIPPED → DELIVERED） ===\")",
-      "Bash(echo \"=== フロントエンド確認URL ===\n商品一覧: http://localhost:5173\n注文詳細: http://localhost:5173/order/5\n管理画面: http://localhost:5173/bo/order\n\n=== バックエンドAPI確認 ===\n全注文: curl http://localhost:8080/api/order\")",
-      "Bash(git mv:*)",
-      "Bash(./mvnw compile:*)",
-      "Bash(npm run build:*)",
-      "Bash(wc:*)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment status --short docs/)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff --name-status)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff --name-status --diff-filter=A)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment status --short)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff backend/src/main/java/com/example/aiec/exception/GlobalExceptionHandler.java)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff backend/src/main/java/com/example/aiec/service/CartService.java)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff backend/src/main/java/com/example/aiec/service/OrderService.java)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/types/api.ts)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/pages/ItemDetailPage.tsx)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/pages/OrderConfirmPage.tsx)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/contexts/CartContext.tsx)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/contexts/ProductContext.tsx)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/lib/api.ts)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff frontend/src/pages/AdminItemPage.tsx)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment log --oneline main..HEAD)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment add AGENTS.md CLAUDE.md PR_REQ-001.md backend/src/main/java/com/example/aiec/dto/UnavailableProductDetail.java backend/src/main/java/com/example/aiec/exception/ItemNotAvailableException.java backend/src/main/java/com/example/aiec/exception/GlobalExceptionHandler.java backend/src/main/java/com/example/aiec/service/CartService.java backend/src/main/java/com/example/aiec/service/OrderService.java docs/01_requirements/ docs/02_designs/ docs/03_tasks/ docs/spec-implementation-gaps.md docs/ui/api-spec.md frontend/src/contexts/CartContext.tsx frontend/src/contexts/ProductContext.tsx frontend/src/lib/api.ts frontend/src/pages/AdminItemPage.tsx frontend/src/pages/ItemDetailPage.tsx frontend/src/pages/OrderConfirmPage.tsx frontend/src/types/api.ts .claude/settings.local.json)",
-      "WebFetch(domain:store.united-arrows.co.jp)",
-      "Bash(sqlite3:*)",
-      "Bash(ls:*)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment remote -v)",
-      "Bash(ssh:*)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment diff)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment log --oneline -5)",
-      "Bash(git -C /Users/george/workspace/ai-ec-experiment ls-files frontend/tsconfig.json)",
-      "WebFetch(domain:qiita.com)"
+      "WebFetch",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(~/.ssh/**)",
+      "Read(**/*id_rsa*)",
+      "Read(**/*id_ed25519*)",
+      "Read(**/*token*)",
+      "Read(**/*secret*)",
+      "Read(**/*key*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"cwd\": \"'\"$(pwd)\"'\", \"notification_type\": \"stop\"}' | ~/.claude/notify.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/notify.sh"
+          }
+        ]
+      }
     ]
   }
 }

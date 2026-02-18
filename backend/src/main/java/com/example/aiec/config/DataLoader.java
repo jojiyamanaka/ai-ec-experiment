@@ -1,7 +1,7 @@
 package com.example.aiec.config;
 
-import com.example.aiec.entity.Product;
-import com.example.aiec.repository.ProductRepository;
+import com.example.aiec.modules.product.domain.entity.Product;
+import com.example.aiec.modules.product.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

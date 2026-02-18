@@ -1,0 +1,5 @@
+# テスト時のデフォルト設定
+# test プロファイルを自動で有効化する
+spring:
+  profiles:
+    active: test

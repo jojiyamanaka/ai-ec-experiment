@@ -9,12 +9,13 @@ services:
       POSTGRES_PASSWORD: ec_password
       POSTGRES_DB: ec_db
     ports:
-      - "5432:5432"  # 開発環境のみ公開
+      - "${POSTGRES_HOST_PORT:-5432}:5432"  # 開発環境のみ公開（無効化: POSTGRES_HOST_PORT=0）
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./backend/src/main/resources/db/init:/docker-entrypoint-initdb.d
     networks:
       - internal
+      - public  # ホストからのポート公開に必要
 
   backend:
     build: ./backend

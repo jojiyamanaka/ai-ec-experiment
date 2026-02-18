@@ -74,8 +74,3 @@ IMPORTANT: すべてのドキュメント更新時に以下を徹底する。こ
   - 認証関連 → `specs/authentication.md`
   - 商品関連 → `specs/product.md`
   - BFF関連 → `specs/bff-architecture.md`
-
-### docs/spec-implementation-gaps.md
-- **更新条件**: ギャップ一覧に記載されている項目が解消された場合
-- **更新内容**: 該当項目のステータスを「実装完了」に更新
-- **スキップ例**: ギャップ一覧に関連する項目がない場合

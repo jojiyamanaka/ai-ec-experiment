@@ -1,13 +1,13 @@
 package com.example.aiec.integration;
 
-import com.example.aiec.dto.ApiResponse;
-import com.example.aiec.entity.BoUser;
-import com.example.aiec.entity.PermissionLevel;
-import com.example.aiec.entity.User;
-import com.example.aiec.service.AuthService;
-import com.example.aiec.service.BoAuthService;
-import com.example.aiec.service.BoUserService;
-import com.example.aiec.service.UserService;
+import com.example.aiec.modules.shared.dto.ApiResponse;
+import com.example.aiec.modules.backoffice.domain.entity.BoUser;
+import com.example.aiec.modules.shared.domain.model.PermissionLevel;
+import com.example.aiec.modules.customer.domain.entity.User;
+import com.example.aiec.modules.customer.domain.service.AuthService;
+import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
+import com.example.aiec.modules.backoffice.domain.service.BoUserService;
+import com.example.aiec.modules.customer.domain.service.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
