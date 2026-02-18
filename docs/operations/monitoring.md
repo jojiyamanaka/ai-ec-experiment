@@ -30,6 +30,7 @@
 
 | 項目 | 確認方法 | 閾値 | アラート |
 |-----|---------|------|---------|
+| PostgreSQL外部公開 | docker ps | 本番でポート公開 | Warning |
 | BFF→Core API疎通 | 内部ヘルスチェック | 失敗 | Critical |
 | 外部→Core API遮断 | 定期確認 | アクセス可能 | Critical |
 
