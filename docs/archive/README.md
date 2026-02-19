@@ -112,6 +112,14 @@ archive/
 - **内容**: フロントエンドを FSD レイヤ（app/pages/widgets/features/entities/shared）に再編、依存ルール（上位→下位）を ESLint で強制
 - **主要ドキュメント反映先**: フロントエンド内部構成のみのためドキュメント影響なし
 
+### CHG-017: 非同期処理（監査ログ・メール送信）
+- **実装完了日**: 2026-02-19
+- **内容**: Transactional Outbox パターンで非同期処理基盤を構築。Mailpit でメール送信、OutboxEvent テーブルで失敗時の再試行・DLQ管理を実現
+- **主要ドキュメント反映先**:
+  - SPEC.md: インフラ構成詳細（Mailpit追加）、バックエンドアーキテクチャ（Outbox パターン記載）
+  - data-model.md: OutboxEvent エンティティ・スキーマ追加
+  - backend/AGENTS.md: shared/outbox サブパッケージ構成追加
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

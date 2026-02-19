@@ -9,9 +9,15 @@
 各モジュールのレイヤー:
 ```
 domain/      → エンティティ・値オブジェクト・ドメインサービス
-application/ → UseCase インターフェース（port）・UseCase 実装（パッケージプライベート）
+application/ → UseCase インターフェース（port）・UseCase 実装（パッケージプライベート）・ジョブ・非同期処理
 adapter/     → controller・repository・外部サービス実装
 ```
+
+**shared モジュールの特別な構成**:
+- `outbox/`: Transactional Outbox パターン実装（OutboxEvent、OutboxProcessor、イベントハンドラ群）
+  - domain: OutboxEvent エンティティ・リポジトリ
+  - application: OutboxEventPublisher（書き込み）、OutboxProcessor（ポーリングワーカー）、OutboxEventDispatcher（個別処理）
+  - handler: OutboxEventHandler インターフェース、EmailOutboxHandler（メール送信）、AuditLogOutboxHandler（監査ログ）
 
 **モジュール間依存ルール**（ArchUnit で検証）:
 - 他モジュールの `domain.*` 直接参照禁止 → `application.port.*` 経由のみ

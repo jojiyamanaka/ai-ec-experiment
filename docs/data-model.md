@@ -63,6 +63,7 @@
 | BoUser | `bo_users` | 管理者ユーザー |
 | BoAuthToken | `bo_auth_tokens` | 管理者認証トークン |
 | InventoryAdjustment | `inventory_adjustments` | 在庫調整履歴 |
+| OutboxEvent | `outbox_events` | 非同期イベント（Transactional Outbox） |
 
 ---
 
@@ -270,6 +271,32 @@ CREATE TABLE inventory_adjustments (
   CONSTRAINT fk_inventory_adjustments_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 ```
+
+### OutboxEvent（非同期イベント）
+
+```sql
+CREATE TYPE outbox_event_status AS ENUM ('PENDING', 'PROCESSING', 'PROCESSED', 'DEAD');
+
+CREATE TABLE outbox_events (
+  id BIGSERIAL PRIMARY KEY,
+  event_type VARCHAR(100) NOT NULL,
+  aggregate_id VARCHAR(255),
+  payload JSONB NOT NULL,
+  status outbox_event_status NOT NULL DEFAULT 'PENDING',
+  retry_count INT NOT NULL DEFAULT 0,
+  max_retries INT NOT NULL DEFAULT 3,
+  error_message TEXT,
+  scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  processed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_outbox_events_status_scheduled
+    ON outbox_events (status, scheduled_at)
+    WHERE status = 'PENDING';
+```
+
+**ルール**: Transactional Outbox パターン。メイン処理と同一トランザクション内でイベントをINSERT。ポーリングワーカーが PENDING を取得し、各ハンドラにディスパッチ。成功時 PROCESSED、失敗時は再試行（30秒指数バックオフ）→ max_retries到達で DEAD（DLQ相当）。
 
 ---
 

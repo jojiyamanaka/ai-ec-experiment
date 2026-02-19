@@ -98,6 +98,7 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 | Core API | Spring Boot 3.4.2 | 8080 | 内部ネットワークのみ |
 | PostgreSQL | 16 | 5432 | 永続データ |
 | Redis | 7.2 | 6379 | キャッシュ/セッション/レート制限（揮発可能） |
+| Mailpit | axllent/mailpit:latest | 8025(UI) / 1025(SMTP) | SMTPキャッチャ（開発環境） |
 | OTel Collector | otel/opentelemetry-collector-contrib | 4317(gRPC) / 4318(HTTP) | |
 | Jaeger | jaegertracing/all-in-one | 16686 | トレース UI |
 | Prometheus | prom/prometheus | 9090 | メトリクス収集 |
@@ -123,7 +124,7 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
   - UseCase 実装クラスはパッケージプライベート（`class`、`public` 不可）
   - クロスモジュール JPA 関連禁止。参照は ID のみ
 - ArchUnit による境界制約テスト（10ルール）
-- 監査ログはイベント駆動（`OperationPerformedEvent` + REQUIRES_NEW）
+- 非同期処理（監査ログ・メール送信）: Transactional Outbox パターン + ポーリングワーカー（`modules/shared/outbox`）
 
 ---
 
