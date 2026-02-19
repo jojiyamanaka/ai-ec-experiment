@@ -130,6 +130,13 @@ archive/
   - ui/api-spec.md: `/api/order/:id/ship` 削除、`/api/order/:id/mark-shipped` 追加
   - backend/AGENTS.md: shared/job と各モジュール job パッケージ構成追加
 
+### CHG-019: BFF OpenAPI 導入（@nestjs/swagger）
+- **実装完了日**: 2026-02-19
+- **内容**: Customer BFF・BackOffice BFF に `@nestjs/swagger` を導入。全エンドポイント・DTO の OpenAPI spec 自動生成、Swagger UI（`/api-docs`）を実装。ローカル開発・CI で spec を自動更新
+- **主要ドキュメント反映先**:
+  - ui/api-spec.md: BFF OpenAPI spec が SSOT である点を冒頭に明示
+  - specs/bff-architecture.md: OpenAPI spec 参照セクション追加、開発フロー記載
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

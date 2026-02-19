@@ -174,6 +174,34 @@ backoffice-bff/src/
 
 ---
 
+## 7. OpenAPI スペック
+
+### 自動生成・契約管理
+
+- **Customer BFF**: `docs/api/customer-bff-openapi.json`（SSOT、開発ガイド用）
+- **BackOffice BFF**: `docs/api/backoffice-bff-openapi.json`（SSOT、開発ガイド用）
+
+ビルド時にコントローラー・DTO の `@nestjs/swagger` デコレーターから自動生成。各エンドポイント仕様の正式契約は JSON ファイルである。
+
+### Swagger UI
+
+ローカル開発時、BFF 起動後:
+- Customer BFF: `http://localhost:3001/api-docs`
+- BackOffice BFF: `http://localhost:3002/api-docs`
+
+エンドポイント試打（Try it out）が可能。Production では環境変数 `SWAGGER_ENABLED=false` で無効化。
+
+### ローカル開発フロー
+
+```
+1. コントローラー/DTO を変更
+2. npm run generate:openapi
+3. docs/api/{bff-name}-openapi.json が更新される
+4. git add/commit で追跡
+```
+
+---
+
 ## 関連資料
 
 - **技術仕様**: [SPEC.md](../SPEC.md)
