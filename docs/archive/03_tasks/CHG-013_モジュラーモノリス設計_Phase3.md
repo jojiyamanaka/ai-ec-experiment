@@ -1,6 +1,6 @@
 # CHG-013: モジュラーモノリス設計 Phase 3 - 実装タスク
 
-要件: `docs/01_requirements/CHG-013_モジュラーモノリス設計`
+要件: `docs/01_requirements/CHG-013_モジュラーモノリス設計.md`
 設計: `docs/02_designs/CHG-013_モジュラーモノリス設計.md`
 作成日: 2026-02-18
 

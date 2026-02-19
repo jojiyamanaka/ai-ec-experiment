@@ -11,7 +11,9 @@ BFF は顧客向け（Customer BFF）と管理向け（BackOffice BFF）の2つ�
 
 **関連ドキュメント**:
 - [技術仕様](../SPEC.md) - 全体アーキテクチャ
-- [API仕様](../ui/api-spec.md) - エンドポイント詳細・レスポンス型
+- [Customer BFF OpenAPI仕様](../api/customer-bff-openapi.json) - 顧客向けエンドポイント契約
+- [BackOffice BFF OpenAPI仕様](../api/backoffice-bff-openapi.json) - 管理向けエンドポイント契約
+- [Core API OpenAPI仕様](../api/openapi.json) - Core API 契約
 - [認証仕様](./authentication.md) - 認証・認可
 
 ---
@@ -48,6 +50,10 @@ BFF は顧客向け（Customer BFF）と管理向け（BackOffice BFF）の2つ�
 | /api/auth/login | POST | 会員ログイン | 不要 | POST /api/auth/login |
 | /api/auth/logout | POST | 会員ログアウト | User | POST /api/auth/logout |
 | /api/members/me | GET | 会員情報取得 | User | GET /api/auth/me |
+| /api/members/me | PUT | 会員情報更新 | User | PUT /api/auth/me |
+| /api/members/me/addresses | POST | 住所追加 | User | POST /api/auth/me/addresses |
+| /api/members/me/addresses/:addressId | PUT | 住所更新 | User | PUT /api/auth/me/addresses/:addressId |
+| /api/members/me/addresses/:addressId | DELETE | 住所削除 | User | DELETE /api/auth/me/addresses/:addressId |
 | /api/orders | POST | 注文確定 | User | POST /api/order |
 | /api/orders | GET | 注文一覧（会員） | User | GET /api/order |
 | /api/orders/history | GET | 注文履歴 | User | GET /api/order/history |
@@ -117,8 +123,10 @@ customer-bff/src/
 | /api/admin/orders/:id/deliver | POST | 配達完了 | BoUser |
 | /api/admin/orders/:id/cancel | POST | 注文キャンセル | BoUser |
 | /api/order/* | * | 互換エイリアス（上記の /api/admin/orders と同等） | BoUser |
+| /api/admin/members | POST | 会員新規登録 | BoUser(ADMIN以上) |
 | /api/admin/members | GET | 会員一覧取得 | BoUser |
 | /api/admin/members/:id | GET | 会員詳細取得 | BoUser |
+| /api/admin/members/:id | PUT | 会員FULL更新 | BoUser(ADMIN以上) |
 | /api/admin/members/:id/status | PUT | 会員状態更新 | BoUser |
 | /api/admin/bo-users | GET | BoUser一覧取得 | BoUser |
 | /api/admin/bo-users | POST | BoUser作成 | BoUser |
@@ -205,5 +213,7 @@ backoffice-bff/src/
 ## 関連資料
 
 - **技術仕様**: [SPEC.md](../SPEC.md)
-- **API仕様**: [api-spec.md](../ui/api-spec.md)
+- **Customer BFF OpenAPI仕様**: [customer-bff-openapi.json](../api/customer-bff-openapi.json)
+- **BackOffice BFF OpenAPI仕様**: [backoffice-bff-openapi.json](../api/backoffice-bff-openapi.json)
+- **Core API OpenAPI仕様**: [openapi.json](../api/openapi.json)
 - **認証仕様**: [authentication.md](./authentication.md)

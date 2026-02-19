@@ -137,6 +137,17 @@ archive/
   - ui/api-spec.md: BFF OpenAPI spec が SSOT である点を冒頭に明示
   - specs/bff-architecture.md: OpenAPI spec 参照セクション追加、開発フロー記載
 
+### CHG-020: User データモデル項目追加と画面反映
+- **実装完了日**: 2026-02-20
+- **内容**: `users` テーブルに会員拡張項目を追加し、新設 `user_addresses` で複数住所を管理。顧客マイページ新設、BO会員FULL更新/新規登録、許可外フィールド拒否の契約を実装
+- **主要ドキュメント反映先**:
+  - data-model.md: users 拡張カラム・user_addresses エンティティ追加
+  - requirements.md: 会員情報管理・住所管理のビジネスルール追加
+  - ui/customer-ui.md: マイページ（会員情報更新・住所管理）仕様追加
+  - ui/admin-ui.md: 会員FULL更新・新規登録UI仕様追加
+  - specs/bff-architecture.md: Customer BFF 住所CRUD・BO 会員作成/FULL更新エンドポイント追加
+  - docs/api/*.json: 各 OpenAPI spec を CHG-020 契約に更新
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:
