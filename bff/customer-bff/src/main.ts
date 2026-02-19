@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { TraceInterceptor } from './common/interceptors/trace.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +16,17 @@ async function bootstrap() {
 
   // グローバルフィルター
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  const swaggerEnabled = process.env.SWAGGER_ENABLED !== 'false';
+  if (swaggerEnabled) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Customer BFF API')
+      .setDescription('顧客向け BFF エンドポイント')
+      .setVersion('1.0')
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api-docs', app, swaggerDocument);
+  }
 
   // CORS設定
   app.enableCors({

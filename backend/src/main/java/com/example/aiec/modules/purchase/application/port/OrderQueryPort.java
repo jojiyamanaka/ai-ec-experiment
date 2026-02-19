@@ -1,6 +1,6 @@
 package com.example.aiec.modules.purchase.application.port;
 
-import com.example.aiec.modules.purchase.adapter.dto.OrderDto;
+import com.example.aiec.modules.purchase.application.port.OrderDto;
 
 import java.util.List;
 

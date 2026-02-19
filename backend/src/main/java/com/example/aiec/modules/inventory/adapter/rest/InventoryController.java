@@ -1,8 +1,8 @@
 package com.example.aiec.modules.inventory.adapter.rest;
 
-import com.example.aiec.modules.inventory.adapter.dto.AvailabilityDto;
+import com.example.aiec.modules.inventory.application.port.AvailabilityDto;
 import com.example.aiec.modules.inventory.adapter.dto.CreateReservationRequest;
-import com.example.aiec.modules.inventory.adapter.dto.ReservationDto;
+import com.example.aiec.modules.inventory.application.port.ReservationDto;
 import com.example.aiec.modules.shared.dto.ApiResponse;
 import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;

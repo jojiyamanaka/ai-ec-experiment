@@ -1,9 +1,9 @@
 package com.example.aiec.modules.product.adapter.rest;
 
 import com.example.aiec.modules.shared.dto.ApiResponse;
-import com.example.aiec.modules.product.adapter.dto.ProductDto;
-import com.example.aiec.modules.product.adapter.dto.ProductListResponse;
-import com.example.aiec.modules.product.adapter.dto.UpdateProductRequest;
+import com.example.aiec.modules.product.application.port.ProductDto;
+import com.example.aiec.modules.product.application.port.ProductListResponse;
+import com.example.aiec.modules.product.application.port.UpdateProductRequest;
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
 import com.example.aiec.modules.shared.domain.model.PermissionLevel;
 import com.example.aiec.modules.shared.exception.BusinessException;
@@ -11,14 +11,15 @@ import com.example.aiec.modules.shared.exception.ForbiddenException;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * 商品コントローラ
@@ -32,7 +33,7 @@ public class ProductController {
     private final ProductQueryPort productQuery;
     private final ProductCommandPort productCommand;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * 商品一覧取得
@@ -79,9 +80,11 @@ public class ProductController {
         ProductDto product = productCommand.updateProduct(id, request);
 
         // 監査ログ記録イベント発行
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ADMIN_ACTION", boUser.getEmail(), "/api/item/" + id,
-                "Updated product: " + product.getName()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ADMIN_ACTION",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/item/" + id,
+                "details", "Updated product: " + product.getName()));
 
         return ApiResponse.success(product);
     }
@@ -102,9 +105,11 @@ public class ProductController {
     private void requireAdmin(BoUser boUser, String requestPath) {
         if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
                 && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "AUTHORIZATION_ERROR", boUser.getEmail(), requestPath,
-                    "BoUser attempted to access admin resource without permission"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "AUTHORIZATION_ERROR",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", requestPath,
+                    "details", "BoUser attempted to access admin resource without permission"));
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }

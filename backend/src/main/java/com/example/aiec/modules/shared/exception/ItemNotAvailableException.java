@@ -1,6 +1,6 @@
 package com.example.aiec.modules.shared.exception;
 
-import com.example.aiec.modules.purchase.adapter.dto.UnavailableProductDetail;
+import com.example.aiec.modules.purchase.application.port.UnavailableProductDetail;
 import lombok.Getter;
 
 import java.util.List;

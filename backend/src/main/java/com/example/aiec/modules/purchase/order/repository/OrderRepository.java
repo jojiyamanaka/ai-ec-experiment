@@ -50,6 +50,29 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.user.id = :userId")
     Optional<BigDecimal> sumTotalPriceByUserId(@Param("userId") Long userId);
 
+    @Query(value = """
+            SELECT o.*
+            FROM orders o
+            WHERE o.status = 'CONFIRMED'
+              AND o.is_deleted = FALSE
+              AND EXISTS (
+                  SELECT 1
+                  FROM stock_reservations sr
+                  WHERE sr.order_id = o.id
+                    AND sr.reservation_type = 'COMMITTED'
+                    AND sr.is_deleted = FALSE
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM shipments s
+                  WHERE s.order_id = o.id
+                    AND s.shipment_type = 'OUTBOUND'
+                    AND s.is_deleted = FALSE
+              )
+            ORDER BY o.created_at ASC
+            """, nativeQuery = true)
+    List<Order> findConfirmedWithoutOutboundShipment();
+
     @Modifying
     @Query("UPDATE Order o SET o.isDeleted = TRUE, o.deletedAt = CURRENT_TIMESTAMP, o.deletedByType = :deletedByType, o.deletedById = :deletedById WHERE o.id = :id")
     void softDelete(@Param("id") Long id, @Param("deletedByType") ActorType deletedByType, @Param("deletedById") Long deletedById);

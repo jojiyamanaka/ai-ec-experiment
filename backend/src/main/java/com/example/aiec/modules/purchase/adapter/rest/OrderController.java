@@ -4,7 +4,7 @@ import com.example.aiec.modules.purchase.adapter.dto.CartDto;
 import com.example.aiec.modules.purchase.adapter.dto.CartItemDto;
 import com.example.aiec.modules.purchase.adapter.dto.AddToCartRequest;
 import com.example.aiec.modules.purchase.adapter.dto.UpdateQuantityRequest;
-import com.example.aiec.modules.purchase.adapter.dto.OrderDto;
+import com.example.aiec.modules.purchase.application.port.OrderDto;
 import com.example.aiec.modules.purchase.adapter.dto.CreateOrderRequest;
 import com.example.aiec.modules.shared.dto.ApiResponse;
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
@@ -17,15 +17,15 @@ import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.purchase.application.port.OrderCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderQueryPort;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 注文・カートコントローラ
@@ -41,7 +41,7 @@ public class OrderController {
     private final OrderQueryPort orderQuery;
     private final AuthService authService;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * カート取得
@@ -126,11 +126,11 @@ public class OrderController {
 
         // 監査ログ記録イベント発行
         final Long finalUserId = userId;
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ORDER_CREATE",
-                finalUserId != null ? finalUserId.toString() : "guest",
-                "/api/order",
-                "orderId=" + order.getOrderId()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_CREATE",
+                "performedBy", finalUserId != null ? finalUserId.toString() : "guest",
+                "requestPath", "/api/order",
+                "details", "orderId=" + order.getOrderId()));
 
         return ApiResponse.success(order);
     }
@@ -203,11 +203,11 @@ public class OrderController {
 
         // 監査ログ記録イベント発行
         final Long finalUserId = userId;
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ORDER_CANCEL",
-                finalUserId != null ? finalUserId.toString() : "guest",
-                "/api/order/" + id + "/cancel",
-                "orderId=" + id));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_CANCEL",
+                "performedBy", finalUserId != null ? finalUserId.toString() : "guest",
+                "requestPath", "/api/order/" + id + "/cancel",
+                "details", "orderId=" + id));
 
         return ApiResponse.success(order);
     }
@@ -231,35 +231,39 @@ public class OrderController {
         OrderDto order = orderCommand.confirmOrder(id);
 
         // 監査ログ記録イベント発行
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ORDER_CONFIRM", boUser.getEmail(), "/api/order/" + id + "/confirm",
-                "Confirmed order: " + order.getOrderNumber()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_CONFIRM",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/order/" + id + "/confirm",
+                "details", "Confirmed order: " + order.getOrderNumber()));
 
         return ApiResponse.success(order);
     }
 
     /**
-     * 注文発送（管理者向け）
-     * POST /api/order/:id/ship
+     * 注文発送完了（管理者向け）
+     * POST /api/order/:id/mark-shipped
      */
-    @PostMapping("/{id}/ship")
-    @Operation(summary = "注文発送", description = "管理者が注文を発送済みにする")
-    public ApiResponse<OrderDto> shipOrder(
+    @PostMapping("/{id}/mark-shipped")
+    @Operation(summary = "注文発送完了", description = "管理者が注文を発送完了にする")
+    public ApiResponse<OrderDto> markShipped(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         // 認証・認可チェック
         String token = extractToken(authHeader);
         BoUser boUser = boAuthService.verifyToken(token);
-        requireAdmin(boUser, "/api/order/" + id + "/ship");
+        requireAdmin(boUser, "/api/order/" + id + "/mark-shipped");
 
         // 管理操作実行
-        OrderDto order = orderCommand.shipOrder(id);
+        OrderDto order = orderCommand.markShipped(id);
 
         // 監査ログ記録イベント発行
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ORDER_SHIP", boUser.getEmail(), "/api/order/" + id + "/ship",
-                "Shipped order: " + order.getOrderNumber()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_MARK_SHIPPED",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/order/" + id + "/mark-shipped",
+                "details", "Marked order shipped: " + order.getOrderNumber()));
 
         return ApiResponse.success(order);
     }
@@ -283,9 +287,11 @@ public class OrderController {
         OrderDto order = orderCommand.deliverOrder(id);
 
         // 監査ログ記録イベント発行
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ORDER_DELIVER", boUser.getEmail(), "/api/order/" + id + "/deliver",
-                "Delivered order: " + order.getOrderNumber()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_DELIVER",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/order/" + id + "/deliver",
+                "details", "Delivered order: " + order.getOrderNumber()));
 
         return ApiResponse.success(order);
     }
@@ -308,9 +314,11 @@ public class OrderController {
         java.util.List<OrderDto> orders = orderQuery.getAllOrders();
 
         // 監査ログ記録イベント発行
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ADMIN_ACTION", boUser.getEmail(), "/api/order",
-                "Retrieved all orders (count: " + orders.size() + ")"));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ADMIN_ACTION",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/order",
+                "details", "Retrieved all orders (count: " + orders.size() + ")"));
 
         return ApiResponse.success(orders);
     }
@@ -331,9 +339,11 @@ public class OrderController {
     private void requireAdmin(BoUser boUser, String requestPath) {
         if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
                 && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "AUTHORIZATION_ERROR", boUser.getEmail(), requestPath,
-                    "BoUser attempted to access admin resource without permission"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "AUTHORIZATION_ERROR",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", requestPath,
+                    "details", "BoUser attempted to access admin resource without permission"));
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }

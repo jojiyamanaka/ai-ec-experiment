@@ -9,12 +9,11 @@ import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.backoffice.domain.service.BoUserService;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -28,7 +27,7 @@ public class BoAuthController {
 
     private final BoUserService boUserService;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * BoUser ログイン
@@ -40,8 +39,11 @@ public class BoAuthController {
             // 1. BoUser 検証
             BoUser boUser = boUserService.findByEmail(request.getEmail());
             if (!boUserService.verifyPassword(boUser, request.getPassword())) {
-                eventPublisher.publishEvent(new OperationPerformedEvent(
-                        "LOGIN_FAILURE", request.getEmail(), "/api/bo-auth/login", "Login attempt failed"));
+                outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                        "operationType", "LOGIN_FAILURE",
+                        "performedBy", request.getEmail(),
+                        "requestPath", "/api/bo-auth/login",
+                        "details", "Login attempt failed"));
                 throw new BusinessException("INVALID_CREDENTIALS", "メールアドレスまたはパスワードが正しくありません");
             }
 
@@ -57,9 +59,11 @@ public class BoAuthController {
             boUser.setLastLoginAt(Instant.now());
 
             // 5. ログイン成功を記録
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "LOGIN_SUCCESS", boUser.getEmail(), "/api/bo-auth/login",
-                    "BoUser login successful: " + boUser.getEmail()));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "LOGIN_SUCCESS",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", "/api/bo-auth/login",
+                    "details", "BoUser login successful: " + boUser.getEmail()));
 
             // 6. レスポンス
             BoAuthResponse response = new BoAuthResponse(
@@ -71,8 +75,11 @@ public class BoAuthController {
 
         } catch (ResourceNotFoundException ex) {
             if ("BO_USER_NOT_FOUND".equals(ex.getErrorCode())) {
-                eventPublisher.publishEvent(new OperationPerformedEvent(
-                        "LOGIN_FAILURE", request.getEmail(), "/api/bo-auth/login", "Login attempt failed"));
+                outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                        "operationType", "LOGIN_FAILURE",
+                        "performedBy", request.getEmail(),
+                        "requestPath", "/api/bo-auth/login",
+                        "details", "Login attempt failed"));
                 throw new BusinessException("INVALID_CREDENTIALS", "メールアドレスまたはパスワードが正しくありません");
             }
             throw ex;

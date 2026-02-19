@@ -1,7 +1,7 @@
 package com.example.aiec.modules.inventory.application.port;
 
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
-import com.example.aiec.modules.inventory.adapter.dto.ReservationDto;
+import com.example.aiec.modules.inventory.application.port.ReservationDto;
 import com.example.aiec.modules.inventory.domain.entity.InventoryAdjustment;
 import com.example.aiec.modules.purchase.order.entity.Order;
 

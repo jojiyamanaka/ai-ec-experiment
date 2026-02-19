@@ -31,6 +31,16 @@ spring:
         format_sql: true
         show_sql: false
 
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
   # DevTools 設定
   devtools:
     restart:
@@ -65,6 +75,27 @@ app:
     allowed-methods: GET,POST,PUT,DELETE,OPTIONS
     allowed-headers: "*"
     allow-credentials: true
+  jobs:
+    env: ${APP_ENV:local}
+    enabled:
+      release-reservations: true
+      create-shipment: true
+      export-shipment-file: false
+      sftp-put: false
+    schedule:
+      release-reservations: "0 */5 * * * *"
+      create-shipment: "0 0 1 * * *"
+      export-shipment-file: "0 */10 * * * *"
+      sftp-put: "0 */15 * * * *"
+    export:
+      output-dir: ${JOB_EXPORT_OUTPUT_DIR:/tmp/aiec/shipments/out}
+      backup-dir: ${JOB_EXPORT_BACKUP_DIR:/tmp/aiec/shipments/backup}
+      file-name-pattern: ${JOB_EXPORT_FILE_NAME_PATTERN:shipment-%s.csv}
+      charset: ${JOB_EXPORT_CHARSET:UTF-8}
+      line-separator: ${JOB_EXPORT_LINE_SEPARATOR:LF}
+    sftp:
+      strategy: ${JOB_SFTP_STRATEGY:local}
+      sent-dir: ${JOB_SFTP_SENT_DIR:/tmp/aiec/shipments/sent}
 
 management:
   tracing:
@@ -78,6 +109,16 @@ management:
     metrics:
       export:
         enabled: true
+
+org:
+  jobrunr:
+    background-job-server:
+      enabled: ${JOBRUNR_WORKER_ENABLED:false}
+    dashboard:
+      enabled: true
+      port: 8000
+    database:
+      skip-create: false
 
 # OpenAPI / Swagger UI 設定
 springdoc:
@@ -102,6 +143,16 @@ spring:
     username: ec_user
     password: ec_password
 
+  mail:
+    host: mailpit
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
 # サーバー設定（内部専用）
 server:
   port: 8080
@@ -122,6 +173,27 @@ app:
     allowed-headers:
       - "*"
     allow-credentials: true
+  jobs:
+    env: ${APP_ENV:local}
+    enabled:
+      release-reservations: true
+      create-shipment: true
+      export-shipment-file: false
+      sftp-put: false
+    schedule:
+      release-reservations: "0 */5 * * * *"
+      create-shipment: "0 0 1 * * *"
+      export-shipment-file: "0 */10 * * * *"
+      sftp-put: "0 */15 * * * *"
+    export:
+      output-dir: ${JOB_EXPORT_OUTPUT_DIR:/tmp/aiec/shipments/out}
+      backup-dir: ${JOB_EXPORT_BACKUP_DIR:/tmp/aiec/shipments/backup}
+      file-name-pattern: ${JOB_EXPORT_FILE_NAME_PATTERN:shipment-%s.csv}
+      charset: ${JOB_EXPORT_CHARSET:UTF-8}
+      line-separator: ${JOB_EXPORT_LINE_SEPARATOR:LF}
+    sftp:
+      strategy: ${JOB_SFTP_STRATEGY:local}
+      sent-dir: ${JOB_SFTP_SENT_DIR:/tmp/aiec/shipments/sent}
 
 # ログ設定
 logging:

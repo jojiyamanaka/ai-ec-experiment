@@ -1,8 +1,21 @@
-export interface UserDto {
-  id: number;
-  username: string;
-  email: string;
-  fullName: string;
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class UserDto {
+  @ApiProperty()
+  id!: number;
+
+  @ApiProperty()
+  username!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty()
+  fullName!: string;
+
+  @ApiPropertyOptional()
   phoneNumber?: string;
-  createdAt: string;
+
+  @ApiProperty()
+  createdAt!: string;
 }

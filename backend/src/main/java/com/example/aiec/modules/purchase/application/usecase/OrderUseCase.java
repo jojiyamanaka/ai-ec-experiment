@@ -6,8 +6,8 @@ import io.micrometer.core.instrument.Timer;
 import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
-import com.example.aiec.modules.purchase.adapter.dto.OrderDto;
-import com.example.aiec.modules.purchase.adapter.dto.UnavailableProductDetail;
+import com.example.aiec.modules.purchase.application.port.OrderDto;
+import com.example.aiec.modules.purchase.application.port.UnavailableProductDetail;
 import com.example.aiec.modules.purchase.application.port.OrderCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderQueryPort;
 import com.example.aiec.modules.purchase.cart.entity.Cart;
@@ -20,6 +20,7 @@ import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.InsufficientStockException;
 import com.example.aiec.modules.shared.exception.ItemNotAvailableException;
 import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 注文ユースケース（Port実装）
@@ -40,6 +42,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     private final CartService cartService;
     private final InventoryCommandPort inventoryCommand;
     private final UserRepository userRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
     private final MeterRegistry meterRegistry;
 
     private Counter orderCreatedCounter;
@@ -208,18 +211,27 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
 
         order.setStatus(Order.OrderStatus.CONFIRMED);
         order = orderRepository.save(order);
+
+        // 同一トランザクションでOutboxに書き込む（コミット成功時のみイベントが残る）
+        outboxEventPublisher.publish("ORDER_CONFIRMED", String.valueOf(order.getId()), Map.of(
+            "orderId", order.getId(),
+            "orderNumber", order.getOrderNumber(),
+            "customerEmail", order.getUser() != null ? order.getUser().getEmail() : "",
+            "totalPrice", order.getTotalPrice()
+        ));
+
         return OrderDto.fromEntity(order);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderDto shipOrder(Long orderId) {
+    public OrderDto markShipped(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
 
-        if (order.getStatus() != Order.OrderStatus.CONFIRMED) {
+        if (order.getStatus() != Order.OrderStatus.PREPARING_SHIPMENT) {
             throw new BusinessException("INVALID_STATUS_TRANSITION",
-                "この注文は発送できません（現在のステータス: " + order.getStatus() + "）");
+                "この注文は発送完了にできません（現在のステータス: " + order.getStatus() + "）");
         }
 
         order.setStatus(Order.OrderStatus.SHIPPED);

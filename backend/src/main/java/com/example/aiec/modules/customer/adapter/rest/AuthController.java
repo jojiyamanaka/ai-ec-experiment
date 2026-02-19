@@ -9,12 +9,11 @@ import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.customer.domain.service.AuthService;
 import com.example.aiec.modules.customer.domain.service.UserService;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -30,7 +29,7 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * 会員登録
@@ -63,8 +62,11 @@ public class AuthController {
             // 1. ユーザー検証
             User user = userService.findByEmail(request.getEmail());
             if (!userService.verifyPassword(user, request.getPassword())) {
-                eventPublisher.publishEvent(new OperationPerformedEvent(
-                        "LOGIN_FAILURE", request.getEmail(), "/api/auth/login", "Login attempt failed"));
+                outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                        "operationType", "LOGIN_FAILURE",
+                        "performedBy", request.getEmail(),
+                        "requestPath", "/api/auth/login",
+                        "details", "Login attempt failed"));
                 throw new BusinessException("INVALID_CREDENTIALS", "メールアドレスまたはパスワードが正しくありません");
             }
 
@@ -72,8 +74,11 @@ public class AuthController {
             AuthService.TokenPair tokenPair = authService.createToken(user);
 
             // 3. ログイン成功を記録
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "LOGIN_SUCCESS", user.getEmail(), "/api/auth/login", "User logged in successfully"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "LOGIN_SUCCESS",
+                    "performedBy", user.getEmail(),
+                    "requestPath", "/api/auth/login",
+                    "details", "User logged in successfully"));
 
             // 4. レスポンス（生のトークンをクライアントに返す）
             AuthResponse response = new AuthResponse(
@@ -85,8 +90,11 @@ public class AuthController {
         } catch (BusinessException ex) {
             // USER_NOT_FOUNDもINVALID_CREDENTIALSに統一（アカウント存在判別防止）
             if ("USER_NOT_FOUND".equals(ex.getErrorCode())) {
-                eventPublisher.publishEvent(new OperationPerformedEvent(
-                        "LOGIN_FAILURE", request.getEmail(), "/api/auth/login", "Login attempt failed"));
+                outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                        "operationType", "LOGIN_FAILURE",
+                        "performedBy", request.getEmail(),
+                        "requestPath", "/api/auth/login",
+                        "details", "Login attempt failed"));
                 throw new BusinessException("INVALID_CREDENTIALS", "メールアドレスまたはパスワードが正しくありません");
             }
             throw ex;

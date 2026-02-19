@@ -1,6 +1,6 @@
 package com.example.aiec.modules.purchase.adapter.dto;
 
-import com.example.aiec.modules.product.adapter.dto.ProductDto;
+import com.example.aiec.modules.product.application.port.ProductDto;
 import com.example.aiec.modules.purchase.cart.entity.CartItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;

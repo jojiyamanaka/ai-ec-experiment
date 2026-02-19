@@ -6,10 +6,12 @@ on:
     paths:
       - 'backend/src/**'
       - 'backend/pom.xml'
+      - 'bff/**'
   pull_request:
     paths:
       - 'backend/src/**'
       - 'backend/pom.xml'
+      - 'bff/**'
 
 jobs:
   generate:
@@ -53,5 +55,44 @@ jobs:
             echo "openapi.json に変更なし"
           else
             git commit -m "chore: OpenAPI spec を自動更新"
+            git push
+          fi
+
+  generate-bff-openapi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Customer BFF OpenAPI spec
+        working-directory: bff/customer-bff
+        env:
+          OPENAPI_GENERATE: 'true'
+        run: |
+          npm ci
+          npm run generate:openapi
+
+      - name: Generate BackOffice BFF OpenAPI spec
+        working-directory: bff/backoffice-bff
+        env:
+          OPENAPI_GENERATE: 'true'
+        run: |
+          npm ci
+          npm run generate:openapi
+
+      - name: Commit updated BFF openapi specs (main branch only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/api/customer-bff-openapi.json docs/api/backoffice-bff-openapi.json
+          if git diff --staged --quiet; then
+            echo "BFF openapi specs に変更なし"
+          else
+            git commit -m "chore: BFF OpenAPI spec を自動更新"
             git push
           fi

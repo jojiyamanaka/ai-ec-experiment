@@ -13,15 +13,15 @@ import com.example.aiec.modules.purchase.order.repository.OrderRepository;
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.customer.domain.service.UserService;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,14 +33,16 @@ public class BoAdminController {
     private final OrderRepository orderRepository;
     private final UserService userService;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     private void requireAdmin(BoUser boUser, String requestPath) {
         if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
             && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "AUTHORIZATION_ERROR", boUser.getEmail(), requestPath,
-                    "BoUser attempted to access admin resource without permission"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "AUTHORIZATION_ERROR",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", requestPath,
+                    "details", "BoUser attempted to access admin resource without permission"));
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }
@@ -126,8 +128,11 @@ public class BoAdminController {
                 updated.getEmail(),
                 !request.getIsActive() ? "active" : "inactive",
                 request.getIsActive() ? "active" : "inactive");
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/members/" + id + "/status", details));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ADMIN_ACTION",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/bo/admin/members/" + id + "/status",
+                "details", details));
 
         return ApiResponse.success(UserDto.fromEntity(updated));
     }

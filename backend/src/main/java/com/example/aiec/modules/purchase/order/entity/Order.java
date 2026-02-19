@@ -113,6 +113,7 @@ public class Order {
     public enum OrderStatus {
         PENDING,      // 作成済み
         CONFIRMED,    // 確認済み
+        PREPARING_SHIPMENT, // 出荷準備中
         SHIPPED,      // 発送済み
         DELIVERED,    // 配達完了
         CANCELLED     // キャンセル

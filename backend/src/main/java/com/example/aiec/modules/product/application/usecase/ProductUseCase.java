@@ -1,8 +1,8 @@
 package com.example.aiec.modules.product.application.usecase;
 
-import com.example.aiec.modules.product.adapter.dto.ProductDto;
-import com.example.aiec.modules.product.adapter.dto.ProductListResponse;
-import com.example.aiec.modules.product.adapter.dto.UpdateProductRequest;
+import com.example.aiec.modules.product.application.port.ProductDto;
+import com.example.aiec.modules.product.application.port.ProductListResponse;
+import com.example.aiec.modules.product.application.port.UpdateProductRequest;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
 import com.example.aiec.modules.product.domain.entity.Product;

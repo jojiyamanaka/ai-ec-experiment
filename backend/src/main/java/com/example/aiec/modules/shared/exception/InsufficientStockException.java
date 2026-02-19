@@ -1,6 +1,6 @@
 package com.example.aiec.modules.shared.exception;
 
-import com.example.aiec.modules.inventory.adapter.dto.StockShortageDetail;
+import com.example.aiec.modules.inventory.application.port.StockShortageDetail;
 import lombok.Getter;
 
 import java.util.List;

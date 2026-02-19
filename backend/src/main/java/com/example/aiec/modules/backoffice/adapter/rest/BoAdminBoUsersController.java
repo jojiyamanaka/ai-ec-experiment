@@ -8,15 +8,15 @@ import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.ForbiddenException;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.backoffice.domain.service.BoUserService;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -27,7 +27,7 @@ public class BoAdminBoUsersController {
 
     private final BoUserService boUserService;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     @GetMapping
     @Operation(summary = "BoUser一覧取得", description = "全管理者ユーザーの一覧を取得")
@@ -68,9 +68,11 @@ public class BoAdminBoUsersController {
                 PermissionLevel.ADMIN
         );
 
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "BO_USER_CREATE", actor.getEmail(), "/api/bo/admin/bo-users",
-                "Created BoUser: " + created.getEmail()));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "BO_USER_CREATE",
+                "performedBy", actor.getEmail(),
+                "requestPath", "/api/bo/admin/bo-users",
+                "details", "Created BoUser: " + created.getEmail()));
 
         return ApiResponse.success(BoUserDto.fromEntity(created));
     }
@@ -85,9 +87,11 @@ public class BoAdminBoUsersController {
     private void requireAdmin(BoUser boUser, String requestPath) {
         if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
                 && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "AUTHORIZATION_ERROR", boUser.getEmail(), requestPath,
-                    "BoUser attempted to access admin resource without permission"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "AUTHORIZATION_ERROR",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", requestPath,
+                    "details", "BoUser attempted to access admin resource without permission"));
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }

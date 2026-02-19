@@ -1,10 +1,10 @@
 package com.example.aiec.modules.inventory.application.usecase;
 
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
-import com.example.aiec.modules.inventory.adapter.dto.AvailabilityDto;
-import com.example.aiec.modules.inventory.adapter.dto.InventoryStatusDto;
-import com.example.aiec.modules.inventory.adapter.dto.ReservationDto;
-import com.example.aiec.modules.inventory.adapter.dto.StockShortageDetail;
+import com.example.aiec.modules.inventory.application.port.AvailabilityDto;
+import com.example.aiec.modules.inventory.application.port.InventoryStatusDto;
+import com.example.aiec.modules.inventory.application.port.ReservationDto;
+import com.example.aiec.modules.inventory.application.port.StockShortageDetail;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
 import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.inventory.domain.entity.InventoryAdjustment;
@@ -21,8 +21,6 @@ import com.example.aiec.modules.shared.exception.ConflictException;
 import com.example.aiec.modules.shared.exception.InsufficientStockException;
 import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +36,6 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
 
     private static final int RESERVATION_EXPIRY_MINUTES = 30;
@@ -280,13 +277,6 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
         adjustment.setAdjustedAt(Instant.now());
 
         return inventoryAdjustmentRepository.save(adjustment);
-    }
-
-    @Scheduled(fixedRate = 300_000)
-    @Transactional(rollbackFor = Exception.class)
-    public void cleanupExpiredReservations() {
-        reservationRepository.deleteByTypeAndExpiresAtBefore(ReservationType.TENTATIVE, Instant.now());
-        log.debug("期限切れの仮引当をクリーンアップしました");
     }
 
 }

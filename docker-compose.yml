@@ -20,21 +20,28 @@ services:
   backend:
     build: ./backend
     container_name: ec-backend
-    # ポート公開を削除（内部ネットワークのみ）
-    # ports:
-    #   - "8080:8080"
+    ports:
+      - "8000:8000"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ec_db
       - SPRING_DATASOURCE_USERNAME=ec_user
       - SPRING_DATASOURCE_PASSWORD=ec_password
       - SPRING_PROFILES_ACTIVE=production-internal
+      - JOBRUNR_WORKER_ENABLED=true
+      - APP_JOBS_ENABLED_CREATE_SHIPMENT=${APP_JOBS_ENABLED_CREATE_SHIPMENT:-true}
+      - APP_JOBS_ENABLED_CREATESHIPMENT=${APP_JOBS_ENABLED_CREATESHIPMENT:-true}
+      - APP_JOBS_ENABLED_SFTP_PUT=${APP_JOBS_ENABLED_SFTP_PUT:-true}
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
       - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://otel-collector:4317
       - MANAGEMENT_OTLP_TRACING_TRANSPORT=grpc
     depends_on:
       - postgres
+      - mailpit
       - otel-collector
     networks:
-      - internal  # 内部ネットワークのみ
+      - internal
+      - public
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -149,6 +156,16 @@ services:
     volumes:
       - redis-data:/data
     networks:
+      - internal
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ec-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - public
       - internal
 
   otel-collector:

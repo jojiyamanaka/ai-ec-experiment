@@ -1,7 +1,7 @@
 package com.example.aiec.modules.product.application.port;
 
-import com.example.aiec.modules.product.adapter.dto.ProductDto;
-import com.example.aiec.modules.product.adapter.dto.ProductListResponse;
+import com.example.aiec.modules.product.application.port.ProductDto;
+import com.example.aiec.modules.product.application.port.ProductListResponse;
 
 /**
  * 商品クエリAPI（公開インターフェース）

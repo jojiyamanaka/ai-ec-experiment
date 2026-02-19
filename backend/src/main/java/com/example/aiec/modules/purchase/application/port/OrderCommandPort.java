@@ -1,6 +1,6 @@
 package com.example.aiec.modules.purchase.application.port;
 
-import com.example.aiec.modules.purchase.adapter.dto.OrderDto;
+import com.example.aiec.modules.purchase.application.port.OrderDto;
 
 /**
  * 注文コマンドAPI（公開インターフェース）
@@ -23,9 +23,9 @@ public interface OrderCommandPort {
     OrderDto confirmOrder(Long orderId);
 
     /**
-     * 注文を発送（CONFIRMED → SHIPPED）
+     * 注文を発送完了（PREPARING_SHIPMENT → SHIPPED）
      */
-    OrderDto shipOrder(Long orderId);
+    OrderDto markShipped(Long orderId);
 
     /**
      * 注文を配達完了（SHIPPED → DELIVERED）

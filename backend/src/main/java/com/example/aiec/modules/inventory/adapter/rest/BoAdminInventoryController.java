@@ -1,7 +1,7 @@
 package com.example.aiec.modules.inventory.adapter.rest;
 
 import com.example.aiec.modules.shared.dto.ApiResponse;
-import com.example.aiec.modules.inventory.adapter.dto.InventoryStatusDto;
+import com.example.aiec.modules.inventory.application.port.InventoryStatusDto;
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
 import com.example.aiec.modules.inventory.domain.entity.InventoryAdjustment;
 import com.example.aiec.modules.shared.domain.model.PermissionLevel;
@@ -11,14 +11,14 @@ import com.example.aiec.modules.inventory.domain.repository.InventoryAdjustmentR
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
 import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
-import com.example.aiec.modules.shared.event.OperationPerformedEvent;
+import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bo/admin/inventory")
@@ -29,7 +29,7 @@ public class BoAdminInventoryController {
     private final InventoryCommandPort inventoryCommand;
     private final InventoryAdjustmentRepository adjustmentRepository;
     private final BoAuthService boAuthService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * 認可チェック（ADMIN必須）
@@ -37,9 +37,11 @@ public class BoAdminInventoryController {
     private void requireAdmin(BoUser boUser, String requestPath) {
         if (boUser.getPermissionLevel() != PermissionLevel.ADMIN
                 && boUser.getPermissionLevel() != PermissionLevel.SUPER_ADMIN) {
-            eventPublisher.publishEvent(new OperationPerformedEvent(
-                    "AUTHORIZATION_ERROR", boUser.getEmail(), requestPath,
-                    "BoUser attempted to access admin resource without permission"));
+            outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                    "operationType", "AUTHORIZATION_ERROR",
+                    "performedBy", boUser.getEmail(),
+                    "requestPath", requestPath,
+                    "details", "BoUser attempted to access admin resource without permission"));
             throw new ForbiddenException("FORBIDDEN", "この操作を実行する権限がありません");
         }
     }
@@ -96,8 +98,11 @@ public class BoAdminInventoryController {
                 adjustment.getQuantityBefore(),
                 adjustment.getQuantityAfter(),
                 adjustment.getQuantityDelta());
-        eventPublisher.publishEvent(new OperationPerformedEvent(
-                "ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/inventory/adjust", details));
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ADMIN_ACTION",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/bo/admin/inventory/adjust",
+                "details", details));
 
         return ApiResponse.success(adjustment);
     }

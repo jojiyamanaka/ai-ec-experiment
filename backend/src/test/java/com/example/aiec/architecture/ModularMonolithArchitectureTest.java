@@ -145,6 +145,9 @@ public class ModularMonolithArchitectureTest {
                 .should().resideInAPackage("..modules.*.domain.entity..")
                 .orShould().resideInAPackage("..modules.*.cart.entity..")  // purchase.cart 例外
                 .orShould().resideInAPackage("..modules.*.order.entity..") // purchase.order 例外
+                .orShould().resideInAPackage("..modules.*.shipment.entity..") // purchase.shipment 例外
+                .orShould().resideInAPackage("..modules.*.outbox.domain.entity..") // shared.outbox 例外
+                .orShould().resideInAPackage("..modules.*.job.domain.entity..") // shared.job 例外
                 .because("エンティティはdomain.entityパッケージに配置してください");
 
         rule.check(classes);
@@ -161,6 +164,9 @@ public class ModularMonolithArchitectureTest {
                 .should().resideInAPackage("..modules.*.domain.repository..")
                 .orShould().resideInAPackage("..modules.*.cart.repository..")  // purchase.cart 例外
                 .orShould().resideInAPackage("..modules.*.order.repository..") // purchase.order 例外
+                .orShould().resideInAPackage("..modules.*.shipment.repository..") // purchase.shipment 例外
+                .orShould().resideInAPackage("..modules.*.outbox.domain.repository..") // shared.outbox 例外
+                .orShould().resideInAPackage("..modules.*.job.domain.repo..") // shared.job 例外
                 .because("リポジトリはdomain.repositoryパッケージに配置してください");
 
         rule.check(classes);
@@ -195,7 +201,66 @@ public class ModularMonolithArchitectureTest {
                 .and().areTopLevelClasses()  // inner class（Controller内定義）を除外
                 .should().resideInAPackage("..modules.*.adapter.dto..")
                 .orShould().resideInAPackage("..modules.shared.dto..")
-                .because("DTOはadapter.dtoまたはshared.dtoパッケージに配置してください");
+                .orShould().resideInAPackage("..modules.*.application.port..")
+                .because("DTOはadapter.dto / shared.dto / application.portパッケージに配置してください");
+
+        rule.check(classes);
+    }
+
+    /**
+     * ルール11: domain層はadapter層に依存してはいけない
+     */
+    @Test
+    void domainShouldNotDependOnAdapterLayer() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("..modules.*.domain..")
+                .should().dependOnClassesThat().resideInAPackage("..modules.*.adapter..")
+                .because("domain層はadapter層に依存してはいけません");
+
+        rule.check(classes);
+    }
+
+    /**
+     * ルール12: application.usecaseはadapter層に依存してはいけない
+     */
+    @Test
+    void usecaseShouldNotDependOnAdapterLayer() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("..modules.*.application.usecase..")
+                .should().dependOnClassesThat().resideInAPackage("..modules.*.adapter..")
+                .because("application.usecase層はadapter層に依存してはいけません");
+
+        rule.check(classes);
+    }
+
+    /**
+     * ルール13: domain層はapplication層に依存してはいけない
+     *
+     * エンティティがUseCaseやPortを呼び出す依存逆転を防ぐ。
+     */
+    @Test
+    void domainShouldNotDependOnApplicationLayer() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("..modules.*.domain..")
+                .should().dependOnClassesThat().resideInAPackage("..modules.*.application..")
+                .because("domain層はapplication層に依存してはいけません");
+
+        rule.check(classes);
+    }
+
+    /**
+     * ルール14: application.portはadapter層に依存してはいけない
+     *
+     * Portインターフェースの戻り値・引数型はadapter.dtoではなくapplication.port配下に置く。
+     * このルールを破るとUseCase実装がadapter.dtoを間接的に参照する構造になる。
+     */
+    @Test
+    void portShouldNotDependOnAdapterLayer() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("..modules.*.application.port..")
+                .and().areInterfaces()
+                .should().dependOnClassesThat().resideInAPackage("..modules.*.adapter..")
+                .because("Portインターフェースはadapter層に依存してはいけません（戻り値・引数型はapplication.port配下に置いてください）");
 
         rule.check(classes);
     }

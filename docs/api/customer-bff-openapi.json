@@ -1,0 +1,513 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "summary": "ヘルスチェック",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "サービスの稼働状態を返却"
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/products": {
+      "get": {
+        "operationId": "ProductsController_getProducts",
+        "summary": "商品一覧を取得",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "商品一覧を返却"
+          }
+        },
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "operationId": "ProductsController_getProductById",
+        "summary": "商品詳細を取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "商品詳細を返却"
+          }
+        },
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/products/{id}/full": {
+      "get": {
+        "operationId": "ProductsController_getProductFull",
+        "summary": "商品詳細(拡張)を取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "商品詳細(拡張)を返却"
+          }
+        },
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "operationId": "CartController_getCart",
+        "summary": "カート取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "カート情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "operationId": "CartController_addCartItem",
+        "summary": "カートへ商品追加",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "productId": {
+                    "type": "number"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "追加後カート情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/api/cart/items/{id}": {
+      "put": {
+        "operationId": "CartController_updateCartItem",
+        "summary": "カート商品更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後カート情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      },
+      "delete": {
+        "operationId": "CartController_deleteCartItem",
+        "summary": "カート商品削除",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除後カート情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "summary": "会員登録",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登録結果を返却"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "ログイン",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ログイン結果を返却"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "summary": "ログアウト",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "ログアウト完了"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "operationId": "OrdersController_createOrder",
+        "summary": "注文作成",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "cartId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "作成した注文を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_getOrders",
+        "summary": "注文一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "注文一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/orders/history": {
+      "get": {
+        "operationId": "OrdersController_getOrderHistory",
+        "summary": "注文履歴取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "注文履歴を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_getOrderById",
+        "summary": "注文詳細取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "注文詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/orders/{id}/full": {
+      "get": {
+        "operationId": "OrdersController_getOrderFull",
+        "summary": "注文詳細(拡張)取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "注文詳細(拡張)を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/orders/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancelOrder",
+        "summary": "注文キャンセル",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "キャンセル後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/members/me": {
+      "get": {
+        "operationId": "MembersController_getMe",
+        "summary": "ログインユーザー情報取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "会員情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/test/slow": {
+      "get": {
+        "operationId": "TestController_slow",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "info": {
+    "title": "Customer BFF API",
+    "description": "顧客向け BFF エンドポイント",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}

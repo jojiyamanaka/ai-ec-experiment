@@ -1,0 +1,962 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "summary": "ヘルスチェック",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "サービスの稼働状態を返却"
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/bo-auth/login": {
+      "post": {
+        "operationId": "BoAuthController_login",
+        "summary": "管理者ログイン",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ログイン結果を返却"
+          }
+        },
+        "tags": [
+          "bo-auth"
+        ]
+      }
+    },
+    "/api/bo-auth/logout": {
+      "post": {
+        "operationId": "BoAuthController_logout",
+        "summary": "管理者ログアウト",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "ログアウト完了"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "bo-auth"
+        ]
+      }
+    },
+    "/api/inventory": {
+      "get": {
+        "operationId": "InventoryController_getInventory",
+        "summary": "在庫一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "在庫一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/bo/admin/inventory": {
+      "get": {
+        "operationId": "InventoryController_getInventory",
+        "summary": "在庫一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "在庫一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/inventory/adjustments": {
+      "get": {
+        "operationId": "InventoryController_getAdjustments",
+        "summary": "在庫調整履歴取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "在庫調整履歴を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/bo/admin/inventory/adjustments": {
+      "get": {
+        "operationId": "InventoryController_getAdjustments",
+        "summary": "在庫調整履歴取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "在庫調整履歴を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/inventory/adjust": {
+      "post": {
+        "operationId": "InventoryController_adjustInventory",
+        "summary": "在庫調整",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "productId": {
+                    "type": "number"
+                  },
+                  "quantityDelta": {
+                    "type": "number"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantityDelta",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "在庫調整結果を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/bo/admin/inventory/adjust": {
+      "post": {
+        "operationId": "InventoryController_adjustInventory",
+        "summary": "在庫調整",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "productId": {
+                    "type": "number"
+                  },
+                  "quantityDelta": {
+                    "type": "number"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantityDelta",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "在庫調整結果を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/inventory/{id}": {
+      "put": {
+        "operationId": "InventoryController_updateInventory",
+        "summary": "在庫更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "stock": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "stock"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後在庫情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/bo/admin/inventory/{id}": {
+      "put": {
+        "operationId": "InventoryController_updateInventory",
+        "summary": "在庫更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "stock": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "stock"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後在庫情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/admin/orders": {
+      "get": {
+        "operationId": "OrdersController_getOrders",
+        "summary": "注文一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "注文一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order": {
+      "get": {
+        "operationId": "OrdersController_getOrders",
+        "summary": "注文一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "注文一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_getOrderById",
+        "summary": "注文詳細取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "注文詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "put": {
+        "operationId": "OrdersController_updateOrderStatus",
+        "summary": "注文ステータス更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order/{id}": {
+      "get": {
+        "operationId": "OrdersController_getOrderById",
+        "summary": "注文詳細取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "注文詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      },
+      "put": {
+        "operationId": "OrdersController_updateOrderStatus",
+        "summary": "注文ステータス更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/confirm": {
+      "post": {
+        "operationId": "OrdersController_confirmOrder",
+        "summary": "注文確定",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order/{id}/confirm": {
+      "post": {
+        "operationId": "OrdersController_confirmOrder",
+        "summary": "注文確定",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/ship": {
+      "post": {
+        "operationId": "OrdersController_shipOrder",
+        "summary": "注文出荷",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order/{id}/ship": {
+      "post": {
+        "operationId": "OrdersController_shipOrder",
+        "summary": "注文出荷",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/deliver": {
+      "post": {
+        "operationId": "OrdersController_deliverOrder",
+        "summary": "注文配送完了",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order/{id}/deliver": {
+      "post": {
+        "operationId": "OrdersController_deliverOrder",
+        "summary": "注文配送完了",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/orders/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancelOrder",
+        "summary": "注文キャンセル",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/order/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancelOrder",
+        "summary": "注文キャンセル",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後注文情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/admin/members": {
+      "get": {
+        "operationId": "MembersController_getMembers",
+        "summary": "会員一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "会員一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/bo/admin/members": {
+      "get": {
+        "operationId": "MembersController_getMembers",
+        "summary": "会員一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "会員一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/admin/members/{id}": {
+      "get": {
+        "operationId": "MembersController_getMemberById",
+        "summary": "会員詳細取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "会員詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/bo/admin/members/{id}": {
+      "get": {
+        "operationId": "MembersController_getMemberById",
+        "summary": "会員詳細取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "会員詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/admin/members/{id}/status": {
+      "put": {
+        "operationId": "MembersController_updateMemberStatus",
+        "summary": "会員有効状態更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "isActive"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後会員情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/bo/admin/members/{id}/status": {
+      "put": {
+        "operationId": "MembersController_updateMemberStatus",
+        "summary": "会員有効状態更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "isActive"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後会員情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/admin/bo-users": {
+      "get": {
+        "operationId": "BoUsersController_getBoUsers",
+        "summary": "管理ユーザー一覧取得",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "管理ユーザー一覧を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "bo-users"
+        ]
+      },
+      "post": {
+        "operationId": "BoUsersController_createBoUser",
+        "summary": "管理ユーザー作成",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password",
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "作成した管理ユーザーを返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "bo-users"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "BackOffice BFF API",
+    "description": "管理向け BFF エンドポイント",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}

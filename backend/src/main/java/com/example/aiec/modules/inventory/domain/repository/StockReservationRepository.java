@@ -75,6 +75,22 @@ public interface StockReservationRepository extends JpaRepository<StockReservati
      */
     void deleteByTypeAndExpiresAtBefore(ReservationType type, Instant now);
 
+    /**
+     * 期限切れの仮引当を取得
+     */
+    @Query("SELECT r FROM StockReservation r WHERE r.type = :type AND r.expiresAt < :now")
+    List<StockReservation> findExpiredByType(@Param("type") ReservationType type, @Param("now") Instant now);
+
+    /**
+     * 期限切れの仮引当を soft delete
+     */
+    @Modifying
+    @Query("UPDATE StockReservation r SET r.isDeleted = TRUE, r.deletedAt = CURRENT_TIMESTAMP, r.deletedByType = :deletedByType, r.deletedById = :deletedById WHERE r.type = :type AND r.expiresAt < :now AND r.isDeleted = FALSE")
+    int softDeleteExpiredByType(@Param("type") ReservationType type,
+                                @Param("now") Instant now,
+                                @Param("deletedByType") ActorType deletedByType,
+                                @Param("deletedById") Long deletedById);
+
     @Modifying
     @Query("UPDATE StockReservation r SET r.isDeleted = TRUE, r.deletedAt = CURRENT_TIMESTAMP, r.deletedByType = :deletedByType, r.deletedById = :deletedById WHERE r.id = :id")
     void softDelete(@Param("id") Long id, @Param("deletedByType") ActorType deletedByType, @Param("deletedById") Long deletedById);

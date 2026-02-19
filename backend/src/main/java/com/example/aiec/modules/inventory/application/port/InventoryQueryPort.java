@@ -1,7 +1,7 @@
 package com.example.aiec.modules.inventory.application.port;
 
-import com.example.aiec.modules.inventory.adapter.dto.AvailabilityDto;
-import com.example.aiec.modules.inventory.adapter.dto.InventoryStatusDto;
+import com.example.aiec.modules.inventory.application.port.AvailabilityDto;
+import com.example.aiec.modules.inventory.application.port.InventoryStatusDto;
 
 import java.util.List;
 

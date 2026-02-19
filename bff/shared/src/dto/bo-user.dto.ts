@@ -1,6 +1,15 @@
-export interface BoUserDto {
-  id: number;
-  username: string;
-  email: string;
-  createdAt: string;
+import { ApiProperty } from '@nestjs/swagger';
+
+export class BoUserDto {
+  @ApiProperty()
+  id!: number;
+
+  @ApiProperty()
+  username!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty()
+  createdAt!: string;
 }

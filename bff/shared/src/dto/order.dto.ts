@@ -1,17 +1,41 @@
-export interface OrderDto {
-  id: number;
-  orderNumber: string;
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class OrderDto {
+  @ApiProperty()
+  id!: number;
+
+  @ApiProperty()
+  orderNumber!: string;
+
+  @ApiPropertyOptional()
   userId?: number;
-  status: string;
-  totalAmount: number;
-  createdAt: string;
-  items: OrderItemDto[];
+
+  @ApiProperty()
+  status!: string;
+
+  @ApiProperty()
+  totalAmount!: number;
+
+  @ApiProperty()
+  createdAt!: string;
+
+  @ApiProperty({ type: () => OrderItemDto, isArray: true })
+  items!: OrderItemDto[];
 }
 
-export interface OrderItemDto {
-  id: number;
-  productId: number;
-  productName: string;
-  quantity: number;
-  price: number;
+export class OrderItemDto {
+  @ApiProperty()
+  id!: number;
+
+  @ApiProperty()
+  productId!: number;
+
+  @ApiProperty()
+  productName!: string;
+
+  @ApiProperty()
+  quantity!: number;
+
+  @ApiProperty()
+  price!: number;
 }
