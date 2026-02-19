@@ -2,6 +2,7 @@
 name: archiving
 description: 実装完了したCHG案件のドキュメントをarchiveに移動し、主要仕様書を更新する。
 argument-hint: "[CHG番号 例: CHG-011]"
+model: haiku
 ---
 
 # 完了案件のアーカイブ
@@ -44,9 +45,33 @@ mv docs/02_designs/CHG-XXX_*.md docs/archive/02_designs/
 mv docs/03_tasks/CHG-XXX_*.md docs/archive/03_tasks/
 ```
 
-### 5. ユーザーへの報告
+### 5. git commit
+
+以下の手順でコミットする:
+
+```bash
+git add docs/archive/ docs/SPEC.md docs/requirements.md docs/data-model.md \
+        docs/ui/ docs/specs/ docs/design-system.md
+git status
+```
+
+変更ファイルを確認し、コミットメッセージを作成する:
+- 形式: `{CHG番号} アーカイブ: {案件名の要約}`
+- 例: `CHG-015 アーカイブ: OpenTelemetry導入`
+
+```bash
+git commit -m "$(cat <<'EOF'
+{コミットメッセージ}
+
+Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+### 6. ユーザーへの報告
 
 以下を報告する:
 - 移動したファイル一覧
 - 更新したドキュメントと変更内容の要約
 - 更新をスキップしたドキュメントとその理由
+- コミットハッシュ

@@ -8,48 +8,66 @@
   "panels": [
     {
       "id": 1,
-      "title": "注文成功率（成功数/総数 10m）",
-      "type": "stat",
+      "title": "注文数（成功/失敗 10m）",
+      "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
       "targets": [
         {
           "datasource": "Prometheus",
-            "expr": "sum(increase(order_created_count_total[10m])) / clamp_min(sum(increase(order_created_count_total[10m])) + sum(increase(order_creation_failed_total[10m])), 1)",
+          "expr": "sum(increase(order_created_count_total[10m]))",
+          "legendFormat": "注文成功",
           "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(increase(order_creation_failed_total[10m]))",
+          "legendFormat": "注文失敗",
+          "refId": "B"
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
-      "fieldConfig": {
-        "defaults": { "unit": "percentunit", "thresholds": { "steps": [{"color": "red", "value": 0}, {"color": "green", "value": 0.9}] } }
-      }
+      "fieldConfig": { "defaults": { "unit": "none" } }
     },
     {
       "id": 2,
-      "title": "在庫引当失敗率",
+      "title": "在庫引当数（成功/失敗 10m）",
       "type": "timeseries",
       "gridPos": { "x": 6, "y": 0, "w": 9, "h": 4 },
       "targets": [
         {
           "datasource": "Prometheus",
-            "expr": "rate(inventory_reservation_failed_total[5m])",
-          "legendFormat": "在庫引当失敗",
+          "expr": "sum(increase(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/order/cart/items\",status=\"200\"}[10m]))",
+          "legendFormat": "在庫引当成功",
           "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(increase(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/order/cart/items\",status=~\"4..|5..\"}[10m]))",
+          "legendFormat": "在庫引当失敗",
+          "refId": "B"
         }
-      ]
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
     },
     {
       "id": 3,
-      "title": "認証失敗数",
+      "title": "認証数（成功/失敗 10m）",
       "type": "timeseries",
       "gridPos": { "x": 15, "y": 0, "w": 9, "h": 4 },
       "targets": [
         {
           "datasource": "Prometheus",
-            "expr": "rate(auth_login_failed_total[5m])",
-          "legendFormat": "認証失敗",
+          "expr": "sum(increase(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/auth/login\",status=\"200\"}[10m]))",
+          "legendFormat": "認証成功",
           "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(increase(http_server_requests_seconds_count{method=\"POST\",uri=\"/api/auth/login\",status=~\"4..|5..\"}[10m]))",
+          "legendFormat": "認証失敗",
+          "refId": "B"
         }
-      ]
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } }
     },
     {
       "id": 4,

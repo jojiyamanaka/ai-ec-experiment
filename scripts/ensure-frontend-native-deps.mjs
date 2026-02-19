@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
+const INSTALL_TIMEOUT_MS = Number(process.env.FRONTEND_NATIVE_DEPS_TIMEOUT_MS ?? '120000');
 
 function detectLibc() {
   if (process.platform !== 'linux') return null;
@@ -19,40 +20,112 @@ function targetKey() {
 
 const nativeDepsByTarget = {
   'darwin-arm64': {
-    esbuild: '@esbuild/darwin-arm64',
-    rollup: '@rollup/rollup-darwin-arm64',
-    tailwindOxide: '@tailwindcss/oxide-darwin-arm64',
-    lightningcss: 'lightningcss-darwin-arm64',
+    esbuild: {
+      packageName: '@esbuild/darwin-arm64',
+      installSpec: '@esbuild/darwin-arm64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-darwin-arm64',
+      installSpec: '@rollup/rollup-darwin-arm64@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-darwin-arm64',
+      installSpec: '@tailwindcss/oxide-darwin-arm64@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-darwin-arm64',
+      installSpec: 'lightningcss-darwin-arm64@1.30.2',
+    },
   },
   'darwin-x64': {
-    esbuild: '@esbuild/darwin-x64',
-    rollup: '@rollup/rollup-darwin-x64',
-    tailwindOxide: '@tailwindcss/oxide-darwin-x64',
-    lightningcss: 'lightningcss-darwin-x64',
+    esbuild: {
+      packageName: '@esbuild/darwin-x64',
+      installSpec: '@esbuild/darwin-x64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-darwin-x64',
+      installSpec: '@rollup/rollup-darwin-x64@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-darwin-x64',
+      installSpec: '@tailwindcss/oxide-darwin-x64@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-darwin-x64',
+      installSpec: 'lightningcss-darwin-x64@1.30.2',
+    },
   },
   'linux-arm64-gnu': {
-    esbuild: '@esbuild/linux-arm64',
-    rollup: '@rollup/rollup-linux-arm64-gnu',
-    tailwindOxide: '@tailwindcss/oxide-linux-arm64-gnu',
-    lightningcss: 'lightningcss-linux-arm64-gnu',
+    esbuild: {
+      packageName: '@esbuild/linux-arm64',
+      installSpec: '@esbuild/linux-arm64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-linux-arm64-gnu',
+      installSpec: '@rollup/rollup-linux-arm64-gnu@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-linux-arm64-gnu',
+      installSpec: '@tailwindcss/oxide-linux-arm64-gnu@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-linux-arm64-gnu',
+      installSpec: 'lightningcss-linux-arm64-gnu@1.30.2',
+    },
   },
   'linux-arm64-musl': {
-    esbuild: '@esbuild/linux-arm64',
-    rollup: '@rollup/rollup-linux-arm64-musl',
-    tailwindOxide: '@tailwindcss/oxide-linux-arm64-musl',
-    lightningcss: 'lightningcss-linux-arm64-musl',
+    esbuild: {
+      packageName: '@esbuild/linux-arm64',
+      installSpec: '@esbuild/linux-arm64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-linux-arm64-musl',
+      installSpec: '@rollup/rollup-linux-arm64-musl@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-linux-arm64-musl',
+      installSpec: '@tailwindcss/oxide-linux-arm64-musl@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-linux-arm64-musl',
+      installSpec: 'lightningcss-linux-arm64-musl@1.30.2',
+    },
   },
   'linux-x64-gnu': {
-    esbuild: '@esbuild/linux-x64',
-    rollup: '@rollup/rollup-linux-x64-gnu',
-    tailwindOxide: '@tailwindcss/oxide-linux-x64-gnu',
-    lightningcss: 'lightningcss-linux-x64-gnu',
+    esbuild: {
+      packageName: '@esbuild/linux-x64',
+      installSpec: '@esbuild/linux-x64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-linux-x64-gnu',
+      installSpec: '@rollup/rollup-linux-x64-gnu@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-linux-x64-gnu',
+      installSpec: '@tailwindcss/oxide-linux-x64-gnu@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-linux-x64-gnu',
+      installSpec: 'lightningcss-linux-x64-gnu@1.30.2',
+    },
   },
   'linux-x64-musl': {
-    esbuild: '@esbuild/linux-x64',
-    rollup: '@rollup/rollup-linux-x64-musl',
-    tailwindOxide: '@tailwindcss/oxide-linux-x64-musl',
-    lightningcss: 'lightningcss-linux-x64-musl',
+    esbuild: {
+      packageName: '@esbuild/linux-x64',
+      installSpec: '@esbuild/linux-x64@0.27.3',
+    },
+    rollup: {
+      packageName: '@rollup/rollup-linux-x64-musl',
+      installSpec: '@rollup/rollup-linux-x64-musl@4.57.1',
+    },
+    tailwindOxide: {
+      packageName: '@tailwindcss/oxide-linux-x64-musl',
+      installSpec: '@tailwindcss/oxide-linux-x64-musl@4.1.18',
+    },
+    lightningcss: {
+      packageName: 'lightningcss-linux-x64-musl',
+      installSpec: 'lightningcss-linux-x64-musl@1.30.2',
+    },
   },
 };
 
@@ -73,7 +146,9 @@ if (!targets) {
   process.exit(0);
 }
 
-const requiredPackages = Object.values(targets);
+const targetPackages = Object.values(targets);
+const requiredPackages = targetPackages.map((pkg) => pkg.packageName);
+const installSpecs = targetPackages.map((pkg) => pkg.installSpec);
 const missingPackages = requiredPackages.filter((pkgName) => !exists(pkgName));
 
 if (missingPackages.length === 0) {
@@ -86,9 +161,22 @@ console.log(
 );
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const result = spawnSync(npmCommand, ['i', '--no-save', ...requiredPackages], {
+const result = spawnSync(
+  npmCommand,
+  ['i', '--no-save', '--no-audit', '--no-fund', ...installSpecs],
+  {
   stdio: 'inherit',
-});
+    timeout: INSTALL_TIMEOUT_MS,
+  },
+);
+
+if (result.error?.code === 'ETIMEDOUT') {
+  console.error(
+    `[error] Timed out after ${INSTALL_TIMEOUT_MS}ms while installing native deps for ${key}.`,
+  );
+  console.error(`[hint] Try running manually: ${npmCommand} i --no-save --no-audit --no-fund ${installSpecs.join(' ')}`);
+  process.exit(1);
+}
 
 if (result.status !== 0) {
   process.exit(result.status ?? 1);
