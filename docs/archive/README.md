@@ -120,6 +120,16 @@ archive/
   - data-model.md: OutboxEvent エンティティ・スキーマ追加
   - backend/AGENTS.md: shared/outbox サブパッケージ構成追加
 
+### CHG-018: 業務ジョブ基盤（JobRunr）導入
+- **実装完了日**: 2026-02-19
+- **内容**: JobRunr を導入し、cron→統一ジョブ基盤へ移行。仮引当解除・出荷指示連携（直列3段階）を実装。Shipment ドメイン新規追加
+- **主要ドキュメント反映先**:
+  - SPEC.md: バックエンドアーキテクチャにJobRunrジョブ管理を記載
+  - data-model.md: Shipment、ShipmentItem、JobRunHistory エンティティ・スキーマ追加
+  - specs/order.md: PREPARING_SHIPMENT ステータス追加、ステータス遷移図更新
+  - ui/api-spec.md: `/api/order/:id/ship` 削除、`/api/order/:id/mark-shipped` 追加
+  - backend/AGENTS.md: shared/job と各モジュール job パッケージ構成追加
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

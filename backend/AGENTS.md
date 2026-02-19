@@ -18,6 +18,14 @@ adapter/     → controller・repository・外部サービス実装
   - domain: OutboxEvent エンティティ・リポジトリ
   - application: OutboxEventPublisher（書き込み）、OutboxProcessor（ポーリングワーカー）、OutboxEventDispatcher（個別処理）
   - handler: OutboxEventHandler インターフェース、EmailOutboxHandler（メール送信）、AuditLogOutboxHandler（監査ログ）
+- `job/`: JobRunr 業務ジョブ基盤
+  - domain: JobRunHistory エンティティ・リポジトリ
+  - application: JobRunnerBase（基底クラス）、JobProperties（設定）、JobRunrConfig（登録）
+  - transfer: TransferStrategy（SFTP転送戦略IF）、実装クラス群
+
+**各モジュールのjobパッケージ**:
+- `purchase/application/job/`: 出荷関連ジョブ（CreateShipmentJob、ExportShipmentFileJob、SftpPutJob）
+- `inventory/application/job/`: 在庫関連ジョブ（ReleaseReservationsJob）
 
 **モジュール間依存ルール**（ArchUnit で検証）:
 - 他モジュールの `domain.*` 直接参照禁止 → `application.port.*` 経由のみ

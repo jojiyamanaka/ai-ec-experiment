@@ -98,7 +98,7 @@ Core API には存在せず、BFF が複数 Core API を並列呼び出しして
 | 9 | GET | `/api/order/:id` | Session | path: `id` | Order | ORDER_NOT_FOUND |
 | 10 | POST | `/api/order/:id/cancel` | Session | path: `id` | Order (CANCELLED) | ORDER_NOT_FOUND, ORDER_NOT_CANCELLABLE, ALREADY_CANCELLED |
 | 11 | POST | `/api/order/:id/confirm` | 管理者 | path: `id` | Order (CONFIRMED) | INVALID_STATUS_TRANSITION |
-| 12 | POST | `/api/order/:id/ship` | 管理者 | path: `id` | Order (SHIPPED) | INVALID_STATUS_TRANSITION |
+| 12 | POST | `/api/order/:id/mark-shipped` | 管理者 | path: `id` | Order (SHIPPED) | INVALID_STATUS_TRANSITION |
 | 13 | POST | `/api/order/:id/deliver` | 管理者 | path: `id` | Order (DELIVERED) | INVALID_STATUS_TRANSITION |
 | 14 | GET | `/api/order` | 管理者 | — | Order[] | — |
 

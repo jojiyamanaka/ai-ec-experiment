@@ -56,6 +56,8 @@
 | CartItem | `cart_items` | カート内商品 |
 | Order | `orders` | 注文ヘッダ |
 | OrderItem | `order_items` | 注文内商品 |
+| Shipment | `shipments` | 出荷（注文の1:N） |
+| ShipmentItem | `shipment_items` | 出荷内商品 |
 | StockReservation | `stock_reservations` | 在庫引当（仮引当/本引当） |
 | User | `users` | 会員 |
 | AuthToken | `auth_tokens` | 会員認証トークン |
@@ -64,6 +66,7 @@
 | BoAuthToken | `bo_auth_tokens` | 管理者認証トークン |
 | InventoryAdjustment | `inventory_adjustments` | 在庫調整履歴 |
 | OutboxEvent | `outbox_events` | 非同期イベント（Transactional Outbox） |
+| JobRunHistory | `job_run_history` | ジョブ実行履歴（業務メトリクス） |
 
 ---
 
@@ -298,6 +301,66 @@ CREATE INDEX idx_outbox_events_status_scheduled
 
 **ルール**: Transactional Outbox パターン。メイン処理と同一トランザクション内でイベントをINSERT。ポーリングワーカーが PENDING を取得し、各ハンドラにディスパッチ。成功時 PROCESSED、失敗時は再試行（30秒指数バックオフ）→ max_retries到達で DEAD（DLQ相当）。
 
+### Shipment（出荷）
+
+```sql
+CREATE TYPE shipment_type AS ENUM ('OUTBOUND', 'RETURN');
+CREATE TYPE shipment_status AS ENUM ('READY_FOR_SHIP', 'INSTRUCTED', 'TRANSFERRED', 'DELIVERED');
+
+CREATE TABLE shipments (
+  id BIGSERIAL PRIMARY KEY,
+  order_id BIGINT NOT NULL,
+  shipment_type shipment_type NOT NULL DEFAULT 'OUTBOUND',
+  status shipment_status NOT NULL DEFAULT 'READY_FOR_SHIP',
+  instruction_number VARCHAR(50),
+  file_exported_at TIMESTAMP WITH TIME ZONE,
+  file_transferred_at TIMESTAMP WITH TIME ZONE,
+  -- 監査カラム（共通設計参照）
+  CONSTRAINT fk_shipments_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+```
+
+**ルール**: 注文 1:N 出荷。OUTBOUND は通常出荷（今回実装）。READY_FOR_SHIP → INSTRUCTED → TRANSFERRED → DELIVERED の遷移。
+
+### ShipmentItem（出荷商品）
+
+```sql
+CREATE TABLE shipment_items (
+  id BIGSERIAL PRIMARY KEY,
+  shipment_id BIGINT NOT NULL,
+  order_item_id BIGINT NOT NULL,
+  product_id BIGINT NOT NULL,
+  product_name VARCHAR(255) NOT NULL,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  -- 監査カラム（共通設計参照）
+  CONSTRAINT fk_shipment_items_shipment FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE,
+  CONSTRAINT fk_shipment_items_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE RESTRICT
+);
+```
+
+**ルール**: 出荷に含まれる商品。注文時点の情報をスナップショット保持。
+
+### JobRunHistory（ジョブ実行履歴）
+
+```sql
+CREATE TABLE job_run_history (
+  id BIGSERIAL PRIMARY KEY,
+  job_type VARCHAR(100) NOT NULL,
+  job_run_id VARCHAR(255),
+  environment VARCHAR(50) NOT NULL,
+  status VARCHAR(50) NOT NULL CHECK (status IN ('SUCCESS', 'FAILED', 'SKIPPED')),
+  processed_count INT DEFAULT 0,
+  started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  finished_at TIMESTAMP WITH TIME ZONE,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_job_run_history_job_type_env ON job_run_history(job_type, environment, created_at);
+```
+
+**ルール**: JobRunr による業務ジョブの実行履歴。SUCCESS / FAILED / SKIPPED を記録。processed_count で処理件数を管理。
+
 ---
 
 ## エンティティ関連
@@ -319,6 +382,9 @@ CREATE INDEX idx_outbox_events_status_scheduled
 ### 注文関連
 - `orders` → `order_items`: 1:N（CASCADE削除）
 - `products` → `order_items`: 1:N（RESTRICT削除）
+- `orders` → `shipments`: 1:N（CASCADE削除）
+- `shipments` → `shipment_items`: 1:N（CASCADE削除）
+- `order_items` → `shipment_items`: 1:N（RESTRICT削除）
 
 ---
 

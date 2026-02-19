@@ -125,6 +125,7 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
   - クロスモジュール JPA 関連禁止。参照は ID のみ
 - ArchUnit による境界制約テスト（10ルール）
 - 非同期処理（監査ログ・メール送信）: Transactional Outbox パターン + ポーリングワーカー（`modules/shared/outbox`）
+- ジョブ管理（業務自動化）: JobRunr ベースの統一基盤（`modules/shared/job`）+ 各モジュールのジョブ実装（`*/application/job`）
 
 ---
 

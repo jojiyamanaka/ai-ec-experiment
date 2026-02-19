@@ -13,7 +13,8 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 | ステータス | 英語表記 | 説明 |
 |-----------|---------|------|
 | 作成済み | PENDING | 注文が作成された初期状態 |
-| 確認済み | CONFIRMED | 注文内容が確認され、処理開始 |
+| 確認済み | CONFIRMED | 注文内容が確認され、在庫本引当済み |
+| 出荷準備中 | PREPARING_SHIPMENT | 出荷指示待ちの状態（JobRunr による自動処理） |
 | 発送済み | SHIPPED | 商品が発送された状態 |
 | 配達完了 | DELIVERED | 商品が配達完了した状態 |
 | キャンセル | CANCELLED | 注文がキャンセルされた状態 |
@@ -22,11 +23,12 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 
 ## 2. 状態遷移
 
-| 遷移 | API | バリデーション | 副作用 |
-|------|-----|---------------|--------|
-| PENDING → CONFIRMED | `POST /api/order/:id/confirm` | PENDING以外は不可 | updatedAt更新 |
-| CONFIRMED → SHIPPED | `POST /api/order/:id/ship` | CONFIRMED以外は不可 | updatedAt更新 |
-| SHIPPED → DELIVERED | `POST /api/order/:id/deliver` | SHIPPED以外は不可 | updatedAt更新 |
+| 遷移 | トリガー | バリデーション | 副作用 |
+|------|---------|---------------|--------|
+| PENDING → CONFIRMED | `POST /api/order/:id/confirm`（管理者） | PENDING以外は不可 | 在庫本引当、イベント発行 |
+| CONFIRMED → PREPARING_SHIPMENT | CreateShipmentJob（自動） | CONFIRMED以外は不可 | Shipment生成 |
+| PREPARING_SHIPMENT → SHIPPED | `POST /api/order/:id/mark-shipped`（管理者） | PREPARING_SHIPMENT以外は不可 | updatedAt更新 |
+| SHIPPED → DELIVERED | `POST /api/order/:id/deliver`（管理者） | SHIPPED以外は不可 | updatedAt更新 |
 | PENDING/CONFIRMED → CANCELLED | `POST /api/order/:id/cancel` | SHIPPED/DELIVERED不可 | 本引当削除、stock戻し、updatedAt更新 |
 
 **エラー**:
