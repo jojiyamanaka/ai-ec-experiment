@@ -90,6 +90,30 @@ IMPORTANT: すべてのドキュメント更新時に以下を徹底する。こ
 - **対象ファイルの判定**:
   - 在庫関連 → `specs/inventory.md`
   - 注文関連 → `specs/order.md`
-  - 認証関連 → `specs/authentication.md`
+  - 認証関連 → `specs/authentication.md`（権限レベル・トークン検証フロー含む）
   - 商品関連 → `specs/product.md`
-  - BFF関連 → `specs/bff-architecture.md`
+  - BFF関連 → `specs/bff-architecture.md`（認証キャッシュ、エンドポイント一覧含む）
+
+### docs/operations/monitoring.md
+- **更新条件**: 観測性スタック（OTel, Jaeger, Prometheus, Grafana）の変更がある場合
+- **更新内容**: 該当セクションのエンドポイント・メトリクス定義を更新
+- **スキップ例**: 観測性に影響しない機能追加
+
+## アーカイブ前の整合性チェック
+
+以下を必ず確認する:
+
+### API整合性
+- `docs/ui/api-spec.md` のエンドポイント一覧が `docs/specs/bff-architecture.md` のエンドポイント一覧と一致しているか
+- 新規エンドポイントが両ファイルに追加されているか
+
+### 認証整合性
+- `docs/specs/authentication.md` のトークンフィールド定義が実際のエンティティと一致しているか（存在しないフィールド名を記載していないか）
+- BoUser の権限レベルが実装コードと一致しているか
+
+### フロントエンドパス整合性
+- `docs/specs/*.md` の「実装クラス一覧」のフロントエンドパスが現在の FSD ディレクトリ構成と一致しているか
+- FSD 構成変更時は `specs/product.md`, `specs/inventory.md`, `specs/order.md` の実装クラス一覧を更新する
+
+### BFF キャッシュ整合性
+- Redis キャッシュが追加・変更された場合、`specs/bff-architecture.md` の認証方式セクションと `specs/authentication.md` セクション10に反映されているか

@@ -174,4 +174,4 @@ WHERE p.id = ?
 ## 実装クラス一覧
 
 **バックエンド**: `InventoryService.java`, `InventoryController.java`, `StockReservation.java`, `StockReservationRepository.java`, `CartService.java`, `OrderService.java`
-**フロントエンド**: `ProductCard.tsx`（在庫状態表示）, `ItemDetailPage.tsx`（カート追加制御）, `CartContext.tsx`（カート状態管理）
+**フロントエンド**: `widgets/ProductCard/`（在庫状態表示）, `pages/customer/ItemDetailPage/`（カート追加制御）, `features/cart/model/CartContext.tsx`（カート状態管理）

@@ -85,4 +85,4 @@ DB上は小数2桁格納可能だが、実運用では整数値（円単位）�
 ## 実装クラス一覧
 
 **バックエンド**: `Product.java`, `Cart.java`（getTotalPrice）, `OrderItem.java`, `OrderService.java`
-**フロントエンド**: `CartPage.tsx`, `OrderConfirmPage.tsx`, `OrderCompletePage.tsx`（価格表示）, `CartContext.tsx`（カート合計管理）
+**フロントエンド**: `pages/customer/CartPage/`, `pages/customer/OrderConfirmPage/`, `pages/customer/OrderCompletePage/`（価格表示）, `features/cart/model/CartContext.tsx`（カート合計管理）

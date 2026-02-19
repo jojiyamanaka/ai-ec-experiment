@@ -50,7 +50,7 @@ AI EC Experimentにおける認証・認可システムの振る舞いを定義�
 ## 3. ログアウト
 
 - `POST /api/auth/logout` — `Authorization: Bearer <token>` 必須
-- トークンの `isRevoked = true`、`revokedAt = 現在時刻` に更新（ソフトデリート）
+- トークンの `isRevoked = true` に更新（ソフトデリート）
 - 無効/失効済みトークン → エラー: UNAUTHORIZED (400)
 
 ---
@@ -79,6 +79,8 @@ AI EC Experimentにおける認証・認可システムの振る舞いを定義�
 
 ## 6. ロールベースアクセス制御（RBAC）
 
+### 顧客 RBAC
+
 | ロール | 操作 | エラー時 |
 |--------|------|---------|
 | CUSTOMER | 自分の注文履歴取得、カート操作、注文 | — |
@@ -87,6 +89,17 @@ AI EC Experimentにおける認証・認可システムの振る舞いを定義�
 
 - **デフォルトロール**: 新規登録時は `CUSTOMER`
 - **ADMIN 昇格**: 手動のみ（自動昇格機能なし）
+
+### BoUser 権限レベル（管理者）
+
+| 権限レベル | アクセス可能な操作 |
+|-----------|----------------|
+| OPERATOR | 在庫一覧・調整履歴参照 |
+| ADMIN | 在庫調整、注文管理、会員管理 |
+| SUPER_ADMIN | ADMIN の全操作 + BoUser 管理（一覧・作成） |
+
+- **顧客トークン拒否**: 顧客トークンで管理APIにアクセスした場合は `CUSTOMER_TOKEN_NOT_ALLOWED` (403)
+- BackOffice BFF の `bo-auth.guard.ts` がトークン種別を判定し拒否
 
 ---
 

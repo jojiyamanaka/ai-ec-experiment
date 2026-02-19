@@ -126,7 +126,7 @@ customer-bff/src/
 ### 認証方式
 
 - **認証ヘッダー**: `Authorization: Bearer <bo_token>`
-- **トークン検証**: `bo-auth.guard.ts` が Core API の `/api/bo-auth/me` を呼び出して BoUser トークンを検証
+- **トークン検証**: `bo-auth.guard.ts` — Redis キャッシュ確認 → MISS 時 Core API `/api/bo-auth/me` 呼び出し（Redis Key: `bo-auth:token:{tokenHash}`, TTL 60秒）
 - **顧客トークン拒否**: 顧客トークンで管理APIにアクセスした場合は `CUSTOMER_TOKEN_NOT_ALLOWED` (403) を返す
 - **キャッシュ制御**: 全レスポンスに `Cache-Control: no-store` を付与
 

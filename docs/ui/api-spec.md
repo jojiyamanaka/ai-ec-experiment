@@ -132,7 +132,10 @@ Core API には存在せず、BFF が複数 Core API を並列呼び出しして
 | 24 | GET | `/api/bo/admin/members/:id` | ADMIN+ | path: `id` | Member + orderSummary | — |
 | 25 | PUT | `/api/bo/admin/members/:id/status` | ADMIN+ | body: `{ isActive }` | Member | — |
 | 26 | GET | `/api/bo/admin/inventory` | ADMIN+ | — | InventoryItem[] | — |
-| 27 | POST | `/api/bo/admin/inventory/adjust` | ADMIN+ | body: `{ productId, adjustment, reason }` | AdjustmentResult | — |
+| 27 | GET | `/api/bo/admin/inventory/adjustments` | ADMIN+ | — | AdjustmentResult[] | — |
+| 28 | POST | `/api/bo/admin/inventory/adjust` | ADMIN+ | body: `{ productId, adjustment, reason }` | AdjustmentResult | — |
+| 29 | GET | `/api/bo/admin/bo-users` | SUPER_ADMIN | — | BoUser[] | — |
+| 30 | POST | `/api/bo/admin/bo-users` | SUPER_ADMIN | body: `{ email, displayName, password, permissionLevel }` | BoUser | EMAIL_ALREADY_EXISTS |
 
 **InventoryItem**: `{ productId, productName, physicalStock, availableStock, reservedStock, isPublished }`
 **AdjustmentResult**: `{ productId, productName, previousStock, newStock, adjustment, adjustedBy, reason, adjustedAt }`

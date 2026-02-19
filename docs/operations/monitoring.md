@@ -48,3 +48,33 @@ docker compose exec -T backoffice-bff curl -fsS http://backend:8080/actuator/hea
 # 外部から Core API 直アクセス不可の確認（失敗が正）
 curl -sS -o /dev/null -w "%{http_code}\n" http://localhost:8080/actuator/health
 ```
+
+---
+
+## 6. OTel 観測スタック
+
+| ツール | URL | 用途 |
+|--------|-----|------|
+| Jaeger | http://localhost:16686 | トレース可視化（フロント〜BFF〜CoreAPI〜DB の一気通貫） |
+| Prometheus | http://localhost:9090 | メトリクス収集・確認 |
+| Grafana | http://localhost:3000 | ダッシュボード（ビジネスメトリクス含む） |
+
+### トレース構成
+
+- Browser → OTel Collector (OTLP/HTTP `:4318`)
+- NestJS BFF / Spring Boot → OTel Collector (OTLP/gRPC `:4317`)
+- W3C `traceparent` ヘッダーでサービス間伝搬
+
+### メトリクス収集経路
+
+- **NestJS BFF**: OTLP → Collector → Prometheus pull (`:8889`)
+- **Spring Boot**: `/actuator/prometheus` を Prometheus が直接スクレイプ
+
+### ビジネスメトリクス
+
+| メトリクス | 種別 | 実装箇所 |
+|-----------|------|---------|
+| 注文成功/失敗 | Counter | `OrderUseCase` |
+| 在庫引当失敗 | Counter | `OrderUseCase` |
+| 認証失敗 | Counter | `AuthService` |
+| 注文処理時間 | Timer | `OrderUseCase` |

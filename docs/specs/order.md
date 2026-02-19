@@ -121,4 +121,4 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 ## 実装クラス一覧
 
 **バックエンド**: `OrderService.java`, `OrderController.java`, `Order.java`, `OrderItem.java`, `InventoryService.java`
-**フロントエンド**: `OrderConfirmPage.tsx`, `OrderCompletePage.tsx`, `CartContext.tsx`
+**フロントエンド**: `pages/customer/OrderConfirmPage/`, `pages/customer/OrderCompletePage/`, `features/cart/model/CartContext.tsx`
