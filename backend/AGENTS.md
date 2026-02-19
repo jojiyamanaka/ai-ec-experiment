@@ -1,17 +1,22 @@
 # Backend 規約
 
-## レイヤー構成
+## モジュラーモノリス構造
 
+パッケージ: `com.example.aiec.modules.{module}.{layer}`
+
+モジュール一覧: `product` / `inventory` / `purchase`（cart+order）/ `customer` / `backoffice` / `shared`
+
+各モジュールのレイヤー:
 ```
-controller/  → リクエスト受付、レスポンス返却
-service/     → ビジネスロジック
-repository/  → DBアクセス（Spring Data JPA）
-entity/      → DBテーブル対応
-dto/         → リクエスト・レスポンス用の型。エンティティとは分離する
-exception/   → カスタム例外
+domain/      → エンティティ・値オブジェクト・ドメインサービス
+application/ → UseCase インターフェース（port）・UseCase 実装（パッケージプライベート）
+adapter/     → controller・repository・外部サービス実装
 ```
 
-パッケージ: `com.example.aiec`
+**モジュール間依存ルール**（ArchUnit で検証）:
+- 他モジュールの `domain.*` 直接参照禁止 → `application.port.*` 経由のみ
+- UseCase 実装クラスはパッケージプライベート（`public class` 不可）
+- クロスモジュール JPA 関連禁止 → 参照は ID のみ
 
 ## Lombok
 
