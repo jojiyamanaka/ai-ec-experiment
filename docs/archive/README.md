@@ -107,6 +107,11 @@ archive/
   - ui/api-spec.md: BFF集約エンドポイントセクション追加
   - specs/authentication.md: BFF認証トークンキャッシュ仕様を追加
 
+### CHG-016: フロントエンドをFSD（Feature-Sliced Design）構成へ移行
+- **実装完了日**: 2026-02-19
+- **内容**: フロントエンドを FSD レイヤ（app/pages/widgets/features/entities/shared）に再編、依存ルール（上位→下位）を ESLint で強制
+- **主要ドキュメント反映先**: フロントエンド内部構成のみのためドキュメント影響なし
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:
