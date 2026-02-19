@@ -1,34 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git:*)",
-      "Bash(docker:*)",
-      "Bash(./mvnw:*)",
-      "Bash(npm:*)",
-      "Bash(npx:*)",
-      "Bash(~/.claude/notify.sh)",
-      "Bash(echo:*)"
-    ],
-    "deny": [
-      "Bash(sudo:*)",
-      "Bash(rm -rf:*)",
-      "Bash(dd:*)",
-      "Bash(mkfs:*)",
-      "Bash(shutdown:*)",
-      "Bash(reboot:*)",
-      "Bash(chmod 777:*)",
-      "Bash(chown:*)",
-      "Bash(curl:*)",
-      "WebFetch",
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./secrets/**)",
-      "Read(~/.ssh/**)",
-      "Read(**/*id_rsa*)",
-      "Read(**/*id_ed25519*)",
-      "Read(**/*token*)",
-      "Read(**/*secret*)",
-      "Read(**/*key*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   },
   "hooks": {
@@ -45,7 +19,7 @@
     ],
     "Notification": [
       {
-        "matcher": "",
+        "matcher": "permission_prompt",
         "hooks": [
           {
             "type": "command",
