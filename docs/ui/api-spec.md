@@ -7,6 +7,7 @@
 - [技術仕様](../SPEC.md) - 技術方針・アーキテクチャ
 - [データモデル](../data-model.md) - エンティティ定義・型定義
 - [BFFアーキテクチャ](../specs/bff-architecture.md) - BFFエンドポイント表・プロキシマッピング
+- [Core API OpenAPI仕様](../api/openapi.json) - springdoc-openapi 自動生成の機械可読仕様（正式契約）。本ファイルは手書きの参照用であり、詳細な型定義は openapi.json が正とする
 
 ---
 

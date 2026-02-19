@@ -58,7 +58,8 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 ### UI層
 - **[顧客向け画面](./ui/customer-ui.md)** - 画面一覧、画面遷移図、UI/UX設計思想
 - **[管理画面](./ui/admin-ui.md)** - 商品管理・注文管理のUI仕様
-- **[API仕様](./ui/api-spec.md)** - APIエンドポイント、リクエスト/レスポンス仕様
+- **[API仕様](./ui/api-spec.md)** - APIエンドポイント、リクエスト/レスポンス仕様（手書き参照用）
+- **[Core API OpenAPI仕様](./api/openapi.json)** - springdoc-openapi 自動生成の機械可読仕様（正式契約）
 
 ### ドメイン層
 - **[商品ドメイン](./specs/product.md)** - 商品マスタ、価格管理、公開制御

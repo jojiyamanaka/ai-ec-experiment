@@ -32,8 +32,8 @@ npm run lint
 ## コーディング規約
 
 - **コミットメッセージ**: 日本語で記述
-- **フロントエンドAPI呼び出し**: IMPORTANT: 必ず `frontend/src/lib/api.ts` の関数を使用。`fetch` を直接使わないこと
-- **フロントエンド型定義**: `frontend/src/types/api.ts` に定義
+- **フロントエンドAPI呼び出し**: IMPORTANT: `fetch` を直接使わないこと。HTTPプリミティブは `@shared/api/client`（`get`/`post`/`put`/`fetchApi`）、エンティティ固有APIは各 `@entities/*/model/api.ts` を使用
+- **フロントエンド型定義**: 共通型は `@shared/types/api`、エンティティ型は各 `@entities/*/model/types.ts` に定義（FSD構成）
 - **バックエンドDTO**: エンティティと分離し、`fromEntity()` 静的メソッドで変換
 - **バックエンド例外**: `ResourceNotFoundException` / `BusinessException` / `ConflictException` をスロー
 
