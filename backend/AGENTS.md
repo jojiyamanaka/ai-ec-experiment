@@ -51,3 +51,14 @@ ApiResponse.errorWithDetails(code, message, details) // 詳細付きエラー
 ## DTO変換
 
 エンティティ → DTO は `fromEntity()` 静的メソッドで行う。
+
+## OpenAPI アノテーション（springdoc-openapi）
+
+新規コントローラー・DTO を追加する場合は必ず付与する:
+
+- コントローラークラス: `@Tag(name = "...", description = "...")`
+- エンドポイントメソッド: `@Operation(summary = "...", description = "...")`
+- DTO クラス: `@Schema(description = "...")`
+- DTO フィールド: `@Schema(description = "...", example = "...")`
+
+生成された仕様は `docs/api/openapi.json` に反映される（Core API 起動時に自動更新）。
