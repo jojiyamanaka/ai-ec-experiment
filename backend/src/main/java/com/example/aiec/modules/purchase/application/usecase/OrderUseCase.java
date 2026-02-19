@@ -1,5 +1,8 @@
 package com.example.aiec.modules.purchase.application.usecase;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
@@ -14,8 +17,10 @@ import com.example.aiec.modules.purchase.order.entity.Order;
 import com.example.aiec.modules.purchase.order.entity.OrderItem;
 import com.example.aiec.modules.purchase.order.repository.OrderRepository;
 import com.example.aiec.modules.shared.exception.BusinessException;
+import com.example.aiec.modules.shared.exception.InsufficientStockException;
 import com.example.aiec.modules.shared.exception.ItemNotAvailableException;
 import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +40,27 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     private final CartService cartService;
     private final InventoryCommandPort inventoryCommand;
     private final UserRepository userRepository;
+    private final MeterRegistry meterRegistry;
+
+    private Counter orderCreatedCounter;
+    private Counter orderCreationFailedCounter;
+    private Counter inventoryReservationFailedCounter;
+    private Timer orderCreationTimer;
+
+    @PostConstruct
+    private void initMetrics() {
+        // `order.created` becomes `order_total` in Prometheus because `_created` is a reserved suffix.
+        this.orderCreatedCounter = Counter.builder("order.created.count")
+                .description("注文成功数").register(meterRegistry);
+        this.orderCreationFailedCounter = Counter.builder("order.creation.failed")
+                .description("注文失敗数").register(meterRegistry);
+        this.inventoryReservationFailedCounter = Counter.builder("inventory.reservation.failed")
+                .description("在庫引当失敗数").register(meterRegistry);
+        this.orderCreationTimer = Timer.builder("order.creation.duration")
+                .description("注文作成処理時間")
+                .publishPercentileHistogram(true)
+                .register(meterRegistry);
+    }
 
     /**
      * 注文を作成
@@ -42,66 +68,80 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderDto createOrder(String sessionId, String cartId, Long userId) {
-        if (!sessionId.equals(cartId)) {
-            throw new BusinessException("INVALID_REQUEST", "無効なリクエストです");
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            if (!sessionId.equals(cartId)) {
+                throw new BusinessException("INVALID_REQUEST", "無効なリクエストです");
+            }
+
+            Cart cart = cartRepository.findBySessionId(sessionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("CART_NOT_FOUND", "カートが見つかりません"));
+
+            if (cart.getItems().isEmpty()) {
+                throw new BusinessException("CART_EMPTY", "カートが空です");
+            }
+
+            List<UnavailableProductDetail> unavailableProducts = cart.getItems().stream()
+                    .filter(item -> !item.getProduct().getIsPublished())
+                    .map(item -> new UnavailableProductDetail(
+                            item.getProduct().getId(),
+                            item.getProduct().getName()))
+                    .toList();
+
+            if (!unavailableProducts.isEmpty()) {
+                throw new ItemNotAvailableException(
+                        "ITEM_NOT_AVAILABLE",
+                        "購入できない商品がカートに含まれています",
+                        unavailableProducts);
+            }
+
+            Order order = new Order();
+            order.setOrderNumber(generateOrderNumber());
+            order.setSessionId(sessionId);
+            order.setTotalPrice(cart.getTotalPrice());
+            order.setStatus(Order.OrderStatus.PENDING);
+
+            if (userId != null) {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "ユーザーが見つかりません"));
+                order.setUser(user);
+            }
+
+            cart.getItems().forEach(cartItem -> {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setProduct(cartItem.getProduct());
+                orderItem.setProductName(cartItem.getProduct().getName());
+                orderItem.setProductPrice(cartItem.getProduct().getPrice());
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setSubtotal(
+                        cartItem.getProduct().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity().longValue()))
+                );
+                order.addItem(orderItem);
+            });
+
+            Order savedOrder = orderRepository.save(order);
+
+            inventoryCommand.commitReservations(sessionId, savedOrder);
+
+            cartRepository.findBySessionId(sessionId)
+                    .ifPresent(c -> {
+                        c.getItems().clear();
+                        cartRepository.save(c);
+                    });
+
+            orderCreatedCounter.increment();
+            return OrderDto.fromEntity(savedOrder);
+
+        } catch (Exception e) {
+            if (e instanceof InsufficientStockException
+                    || e instanceof ItemNotAvailableException) {
+                inventoryReservationFailedCounter.increment();
+            }
+            orderCreationFailedCounter.increment();
+            throw e;
+        } finally {
+            sample.stop(orderCreationTimer);
         }
-
-        Cart cart = cartRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new ResourceNotFoundException("CART_NOT_FOUND", "カートが見つかりません"));
-
-        if (cart.getItems().isEmpty()) {
-            throw new BusinessException("CART_EMPTY", "カートが空です");
-        }
-
-        List<UnavailableProductDetail> unavailableProducts = cart.getItems().stream()
-                .filter(item -> !item.getProduct().getIsPublished())
-                .map(item -> new UnavailableProductDetail(
-                        item.getProduct().getId(),
-                        item.getProduct().getName()))
-                .toList();
-
-        if (!unavailableProducts.isEmpty()) {
-            throw new ItemNotAvailableException(
-                    "ITEM_NOT_AVAILABLE",
-                    "購入できない商品がカートに含まれています",
-                    unavailableProducts);
-        }
-
-        Order order = new Order();
-        order.setOrderNumber(generateOrderNumber());
-        order.setSessionId(sessionId);
-        order.setTotalPrice(cart.getTotalPrice());
-        order.setStatus(Order.OrderStatus.PENDING);
-
-        if (userId != null) {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "ユーザーが見つかりません"));
-            order.setUser(user);
-        }
-
-        cart.getItems().forEach(cartItem -> {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setProductName(cartItem.getProduct().getName());
-            orderItem.setProductPrice(cartItem.getProduct().getPrice());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setSubtotal(
-                    cartItem.getProduct().getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity().longValue()))
-            );
-            order.addItem(orderItem);
-        });
-
-        Order savedOrder = orderRepository.save(order);
-
-        inventoryCommand.commitReservations(sessionId, savedOrder);
-
-        cartRepository.findBySessionId(sessionId)
-                .ifPresent(c -> {
-                    c.getItems().clear();
-                    cartRepository.save(c);
-                });
-
-        return OrderDto.fromEntity(savedOrder);
     }
 
     /**

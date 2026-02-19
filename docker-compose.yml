@@ -28,8 +28,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=ec_user
       - SPRING_DATASOURCE_PASSWORD=ec_password
       - SPRING_PROFILES_ACTIVE=production-internal
+      - MANAGEMENT_OTLP_TRACING_ENDPOINT=http://otel-collector:4317
+      - MANAGEMENT_OTLP_TRACING_TRANSPORT=grpc
     depends_on:
       - postgres
+      - otel-collector
     networks:
       - internal  # 内部ネットワークのみ
     healthcheck:
@@ -56,9 +59,12 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_TIMEOUT=5000
+      - OTEL_EXPORTER_OTLP_GRPC_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=customer-bff
     depends_on:
       - backend
       - redis
+      - otel-collector
     networks:
       - public    # 外部公開
       - internal  # Core API接続
@@ -86,9 +92,12 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_TIMEOUT=5000
+      - OTEL_EXPORTER_OTLP_GRPC_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=backoffice-bff
     depends_on:
       - backend
       - redis
+      - otel-collector
     networks:
       - public
       - internal
@@ -109,6 +118,7 @@ services:
     environment:
       - VITE_APP_MODE=customer
       - VITE_API_URL=http://localhost:3001
+      - VITE_OTEL_ENDPOINT=http://localhost:4318
     command: npm run dev:customer
     depends_on:
       - customer-bff
@@ -125,6 +135,7 @@ services:
     environment:
       - VITE_APP_MODE=admin
       - VITE_API_URL=http://localhost:3002
+      - VITE_OTEL_ENDPOINT=http://localhost:4318
     command: npm run dev:admin
     depends_on:
       - backoffice-bff
@@ -140,6 +151,60 @@ services:
     networks:
       - internal
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    container_name: ec-otel-collector
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otel/config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - public
+      - internal
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.63.0
+    container_name: ec-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+    networks:
+      - internal
+      - public
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: ec-prometheus
+    volumes:
+      - ./otel/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - internal
+      - public
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: ec-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./otel/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - jaeger
+    networks:
+      - internal
+      - public
+
 networks:
   public:
     driver: bridge
@@ -150,3 +215,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  grafana-data:

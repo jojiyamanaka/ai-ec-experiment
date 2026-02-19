@@ -91,6 +91,13 @@ archive/
 - **内容**: springdoc-openapi導入、全コントローラ/DTOにOpenAPIアノテーション付与、Swagger UI公開
 - **主要ドキュメント反映先**: ツーリング追加のみのためドキュメント影響なし
 
+### CHG-015: OpenTelemetry 導入
+- **実装完了日**: 2026-02-19
+- **内容**: OTel Collector / Jaeger / Prometheus / Grafana 導入、全レイヤの分散トレーシング・ビジネスメトリクス計測基盤を構築
+- **主要ドキュメント反映先**:
+  - SPEC.md: アーキテクチャ変更履歴にOTel観測スタックと既存変更を追加
+  - specs/bff-architecture.md: 共通機能セクションにOTel SDK統合・インターセプタ変更を反映
+
 ### CHG-014: Redis導入とBFF機能拡張
 - **実装完了日**: 2026-02-18
 - **内容**: Redis 7.2導入、BFFにキャッシュ層・セッション管理・レート制限・レスポンス集約エンドポイントを実装

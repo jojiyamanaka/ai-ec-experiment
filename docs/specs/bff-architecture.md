@@ -160,8 +160,9 @@ backoffice-bff/src/
 
 ## 5. 共通機能
 
-- **ログインターセプター**: 全リクエストのメソッド・パス・ステータスコード・処理時間を記録
-- **トレースインターセプター**: リクエストごとにトレースIDを生成し、Core API への転送時にヘッダーに付与
+- **ログインターセプター**: 全リクエストのメソッド・パス・ステータスコード・処理時間を記録。OTel API から traceId/spanId を取得してログに付与（OTel未初期化時は空文字）
+- **トレースインターセプター**: OTel SDK が `traceparent` ヘッダを自動処理。trace_id を `request.traceId` に転写し `X-Trace-Id` ヘッダとして返却（UUID生成は廃止）
+- **OTel SDK 初期化**: `tracing.ts` を `--require ./dist/tracing` で main.ts より先にロード。OTLP/gRPC でコレクターへエクスポート
 
 ---
 

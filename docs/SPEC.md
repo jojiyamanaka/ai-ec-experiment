@@ -84,51 +84,55 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 
 ---
 
-## アーキテクチャ変更履歴
+## インフラ構成詳細
 
-### CHG-014: Redis導入とBFF機能拡張
+### サービス一覧
 
-**変更内容**:
-- Redis 7.2 をインフラに追加（キャッシュ・セッション・レート制限基盤）
-- BFF にキャッシュ層・セッション管理・レート制限・レスポンス集約を実装
+| サービス | 技術 | ポート | 備考 |
+|---|---|---|---|
+| Frontend (Customer) | React 19 + Vite | 5173 | |
+| Frontend (Admin) | React 19 + Vite | 5174 | |
+| Customer BFF | NestJS | 3001 | |
+| BackOffice BFF | NestJS | 3002 | |
+| Core API | Spring Boot 3.4.2 | 8080 | 内部ネットワークのみ |
+| PostgreSQL | 16 | 5432 | 永続データ |
+| Redis | 7.2 | 6379 | キャッシュ/セッション/レート制限（揮発可能） |
+| OTel Collector | otel/opentelemetry-collector-contrib | 4317(gRPC) / 4318(HTTP) | |
+| Jaeger | jaegertracing/all-in-one | 16686 | トレース UI |
+| Prometheus | prom/prometheus | 9090 | メトリクス収集 |
+| Grafana | grafana/grafana | 3000 | ダッシュボード |
 
-**データ配置原則**:
+### データ配置原則
+
 - **PostgreSQL**: 真実のソース（全永続データ）
 - **Redis**: Read-Through Cache + セッション + レート制限カウンター（揮発可能）
-
-**主なキャッシュTTL**: 商品一覧3分・商品詳細10分・在庫1分・認証トークン1分・セッション30分アイドル
-
-**Redis障害時**: Core API から直接取得（性能劣化のみ、機能は維持）
+  - キャッシュTTL: 商品一覧3分・商品詳細10分・在庫1分・認証トークン1分・セッション30分アイドル
+  - Redis障害時: Core API から直接取得（性能劣化のみ）
 
 ---
 
-### CHG-013: モジュラーモノリス設計（Phase 1〜4完了）
+## バックエンドアーキテクチャ
 
-**変更内容**:
-- パッケージ構造を横割り→モジュール別に再編（`modules/{module}/domain|adapter|application`）
-- Port/UseCase パターン導入（モジュール間連携はインターフェース経由）
-- ArchUnit によるモジュール境界制約テスト追加（10ルール）
-- 監査ログをイベント駆動（`OperationPerformedEvent` + REQUIRES_NEW）に移行
+### モジュラーモノリス構造
 
-**制約**:
-- 他モジュールの `domain.*` 直接参照禁止。`application.port.*` 経由のみ
-- UseCase 実装クラスはパッケージプライベート（`class`、`public` 不可）
-- クロスモジュール JPA 関連禁止。参照は ID のみ
-
-**主要モジュール**: product / inventory / purchase（cart+order）/ customer / backoffice / shared
+- パッケージ: `modules/{module}/domain|adapter|application`
+- 主要モジュール: product / inventory / purchase（cart+order）/ customer / backoffice / shared
+- **制約**:
+  - 他モジュールの `domain.*` 直接参照禁止。`application.port.*` 経由のみ
+  - UseCase 実装クラスはパッケージプライベート（`class`、`public` 不可）
+  - クロスモジュール JPA 関連禁止。参照は ID のみ
+- ArchUnit による境界制約テスト（10ルール）
+- 監査ログはイベント駆動（`OperationPerformedEvent` + REQUIRES_NEW）
 
 ---
 
-### CHG-010: BFF構成への移行（Phase 3完了）
+## 観測性（Observability）
 
-**変更内容**:
-- Customer BFF導入（顧客向けAPI）
-- BackOffice BFF導入（管理向けAPI）
-- Core APIの内部ネットワーク化
-
-**影響**:
-- Core APIへの直接アクセスは不可
-- すべてのAPI呼び出しはBFF経由
-- 顧客トークンと管理トークンの境界を明確化
-
-**ロールバック手順**: `docs/operations/rollback-procedure.md` 参照
+- **トレース**: W3C `traceparent` でフロント〜BFF〜CoreAPI〜DBまで一気通貫。Jaeger UI (localhost:16686) で確認
+  - Browser → OTel Collector (OTLP/HTTP:4318)
+  - NestJS BFF / Spring Boot → OTel Collector (OTLP/gRPC:4317)
+- **メトリクス**: Prometheus (localhost:9090) + Grafana (localhost:3000)
+  - NestJS BFF: OTLP → Collector → Prometheus pull (:8889)
+  - Spring Boot: `/actuator/prometheus` を Prometheus が直接スクレイプ
+- **ビジネスメトリクス**: 注文成功/失敗 Counter、在庫引当失敗 Counter、認証失敗 Counter、注文処理時間 Timer（`OrderUseCase` / `AuthService`）
+- **ログ相関**: traceId/spanId をログに付与（NestJS: OTel API、Spring: Micrometer Tracing → MDC）

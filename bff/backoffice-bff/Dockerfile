@@ -31,4 +31,4 @@ COPY --from=builder /app/bff/backoffice-bff/package.json ./
 
 EXPOSE 3002
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "--require", "./dist/tracing", "dist/main"]

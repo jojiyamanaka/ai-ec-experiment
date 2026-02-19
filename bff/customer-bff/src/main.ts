@@ -20,6 +20,10 @@ async function bootstrap() {
   app.enableCors({
     origin: 'http://localhost:5173',
     credentials: true,
+    allowedHeaders: [
+      'Content-Type', 'Authorization', 'X-Session-Id',
+      'traceparent', 'tracestate',
+    ],
   });
 
   const port = configService.get<number>('server.port');

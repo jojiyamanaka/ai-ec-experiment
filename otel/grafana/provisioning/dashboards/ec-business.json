@@ -1,0 +1,97 @@
+{
+  "title": "EC ビジネスメトリクス",
+  "uid": "ec-business",
+  "version": 1,
+  "schemaVersion": 37,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "注文成功率（成功数/総数 10m）",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+            "expr": "sum(increase(order_created_count_total[10m])) / clamp_min(sum(increase(order_created_count_total[10m])) + sum(increase(order_creation_failed_total[10m])), 1)",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "thresholds": { "steps": [{"color": "red", "value": 0}, {"color": "green", "value": 0.9}] } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "在庫引当失敗率",
+      "type": "timeseries",
+      "gridPos": { "x": 6, "y": 0, "w": 9, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+            "expr": "rate(inventory_reservation_failed_total[5m])",
+          "legendFormat": "在庫引当失敗",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "認証失敗数",
+      "type": "timeseries",
+      "gridPos": { "x": 15, "y": 0, "w": 9, "h": 4 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+            "expr": "rate(auth_login_failed_total[5m])",
+          "legendFormat": "認証失敗",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "注文処理レイテンシ (p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+            "expr": "histogram_quantile(0.95, rate(order_creation_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+            "expr": "histogram_quantile(0.99, rate(order_creation_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 5,
+      "title": "HTTP p95 レイテンシ (BFF)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ec_http_server_duration_milliseconds_bucket{exported_job=\"customer-bff\"}[5m])))",
+          "legendFormat": "customer-bff p95",
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ec_http_server_duration_milliseconds_bucket{exported_job=\"backoffice-bff\"}[5m])))",
+          "legendFormat": "backoffice-bff p95",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    }
+  ]
+}

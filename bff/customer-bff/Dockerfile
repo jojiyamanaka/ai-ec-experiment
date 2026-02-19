@@ -34,4 +34,4 @@ COPY --from=builder /app/bff/customer-bff/package.json ./
 
 EXPOSE 3001
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "--require", "./dist/tracing", "dist/main"]

@@ -1,9 +1,12 @@
 package com.example.aiec.modules.customer.domain.service;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.example.aiec.modules.customer.domain.entity.AuthToken;
 import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.customer.domain.repository.AuthTokenRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,17 @@ import java.util.UUID;
 public class AuthService {
 
     private final AuthTokenRepository authTokenRepository;
+    private final MeterRegistry meterRegistry;
     private static final int TOKEN_EXPIRATION_DAYS = 7;
+
+    private Counter loginFailedCounter;
+
+    @PostConstruct
+    private void initMetrics() {
+        this.loginFailedCounter = Counter.builder("auth.login.failed")
+                .tag("type", "customer")
+                .register(meterRegistry);
+    }
 
     /**
      * トークン生成
@@ -59,10 +72,14 @@ public class AuthService {
 
         // 2. ハッシュ値でDB検索
         AuthToken authToken = authTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new BusinessException("UNAUTHORIZED", "認証が必要です"));
+                .orElseThrow(() -> {
+                    loginFailedCounter.increment();
+                    return new BusinessException("UNAUTHORIZED", "認証が必要です");
+                });
 
         // 3. 有効性チェック（期限切れ・失効）
         if (!authToken.isValid()) {
+            loginFailedCounter.increment();
             throw new BusinessException("UNAUTHORIZED",
                     authToken.getIsRevoked() ? "トークンが失効しています" : "トークンの有効期限が切れています");
         }

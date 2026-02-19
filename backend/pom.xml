@@ -106,6 +106,24 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.8.4</version>
         </dependency>
+
+        <!-- Micrometer Tracing → OTel Bridge -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+
+        <!-- OTel OTLP Exporter（gRPC版） -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+        </dependency>
+
+        <!-- Prometheus メトリクス（Actuator 経由のスクレイプ） -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -139,7 +157,22 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <jvmArguments>
+                        -Dspring.datasource.url=jdbc:postgresql://localhost:5432/ec_db
+                        -Dspring.datasource.username=ec_user
+                        -Dspring.datasource.password=ec_password
+                    </jvmArguments>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <goals><goal>start</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <goals><goal>stop</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springdoc</groupId>
@@ -157,7 +190,7 @@
                 <configuration>
                     <apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
                     <outputFileName>openapi.json</outputFileName>
-                    <outputDir>${project.build.directory}</outputDir>
+                    <outputDir>${project.basedir}/../docs/api</outputDir>
                 </configuration>
             </plugin>
         </plugins>
