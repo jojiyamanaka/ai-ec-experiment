@@ -9,18 +9,25 @@ import com.example.aiec.modules.purchase.application.port.OrderQueryPort;
 import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.shared.domain.model.PermissionLevel;
 import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
+import com.example.aiec.modules.purchase.adapter.dto.CartDto;
+import com.example.aiec.modules.shared.exception.BusinessException;
+import com.example.aiec.modules.shared.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +55,7 @@ class OrderControllerContractTest {
                         boAuthService,
                         outboxEventPublisher
                 ))
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -79,11 +87,76 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.data.committedQuantity").value(2));
     }
 
+    @Test
+    void createOrder_withInvalidToken_shouldFallbackToGuestOrder() throws Exception {
+        when(authService.verifyToken("invalid-token"))
+                .thenThrow(new BusinessException("UNAUTHORIZED", "認証が必要です"));
+        when(orderCommand.createOrder("session-1", "10", null))
+                .thenReturn(buildOrderDto(20L, "PENDING", 2, 0));
+
+        mockMvc.perform(post("/api/order")
+                        .header("X-Session-Id", "session-1")
+                        .header("Authorization", "Bearer invalid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "cartId": "10"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.orderId").value(20));
+
+        verify(orderCommand).createOrder("session-1", "10", null);
+    }
+
+    @Test
+    void getOrderHistory_withoutAuthorizationHeader_shouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/order/history"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void confirmOrder_withOperator_shouldReturnForbidden() throws Exception {
+        when(boAuthService.verifyToken("operator-token")).thenReturn(operatorUser());
+
+        mockMvc.perform(post("/api/order/3/confirm")
+                        .header("Authorization", "Bearer operator-token"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void getCart_shouldReturnCart() throws Exception {
+        when(cartService.getOrCreateCart("session-1"))
+                .thenReturn(new CartDto(List.of(), 0, BigDecimal.ZERO));
+
+        mockMvc.perform(get("/api/order/cart")
+                        .header("X-Session-Id", "session-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalQuantity").value(0));
+
+        verify(cartService).getOrCreateCart(eq("session-1"));
+    }
+
     private BoUser adminUser() {
         BoUser boUser = new BoUser();
         boUser.setId(1L);
         boUser.setEmail("admin@example.com");
         boUser.setPermissionLevel(PermissionLevel.ADMIN);
+        boUser.setIsActive(true);
+        return boUser;
+    }
+
+    private BoUser operatorUser() {
+        BoUser boUser = new BoUser();
+        boUser.setId(2L);
+        boUser.setEmail("operator@example.com");
+        boUser.setPermissionLevel(PermissionLevel.OPERATOR);
         boUser.setIsActive(true);
         return boUser;
     }

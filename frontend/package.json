@@ -12,8 +12,16 @@
     "dev:customer": "vite --mode customer",
     "dev:admin": "vite --mode admin",
     "build": "tsc -b && vite build",
-    "test:e2e": "bash ./e2e/customer-smoke.sh",
-    "test:e2e:admin": "bash ./e2e/admin-smoke.sh",
+    "pretest:regression": "node ../scripts/ensure-frontend-native-deps.mjs",
+    "pretest:regression:watch": "node ../scripts/ensure-frontend-native-deps.mjs",
+    "test:regression": "vitest run",
+    "test:regression:watch": "vitest",
+    "test:smoke:customer": "bash ./e2e/customer-smoke.sh",
+    "test:smoke:admin": "bash ./e2e/admin-smoke.sh",
+    "test:smoke": "npm run test:smoke:customer && npm run test:smoke:admin",
+    "test:ci": "npm run build && npm run test:regression && npm run test:smoke",
+    "test:e2e": "npm run test:smoke:customer",
+    "test:e2e:admin": "npm run test:smoke:admin",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -39,14 +47,18 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
     "eslint": "^9.39.1",
     "eslint-plugin-boundaries": "^5.4.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "jsdom": "^26.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^3.2.4"
   }
 }

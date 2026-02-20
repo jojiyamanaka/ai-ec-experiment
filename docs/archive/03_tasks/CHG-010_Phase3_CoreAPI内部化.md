@@ -693,7 +693,6 @@ USER_TOKEN="..." k6 run authenticated-test.js
 
 #### 6.1 ロールバック手順書作成
 
-**ファイル**: `docs/operations/rollback-procedure.md`
 
 ```markdown
 # BFF構成ロールバック手順
@@ -934,7 +933,6 @@ curl http://localhost:3002/health
 
 #### 7.4 監視項目一覧
 
-**ファイル**: `docs/operations/monitoring.md`
 
 ```markdown
 # BFF構成 監視項目
@@ -1070,7 +1068,6 @@ docker compose logs -f backend         # Core APIログ
 - すべてのAPI呼び出しはBFF経由
 - 顧客トークンと管理トークンの境界を明確化
 
-**ロールバック手順**: `docs/operations/rollback-procedure.md` 参照
 ```
 
 #### 8.3 api-spec.md 更新
@@ -1173,5 +1170,3 @@ docker compose up -d
 - [技術設計ドキュメント](../02_designs/CHG-010_BFF構成への移行.md)
 - [Phase 1実装タスク](./CHG-010_BFF構成への移行.md)
 - [Phase 2実装タスク](./CHG-010_Phase2_BackOfficeBFF導入.md)
-- [ロールバック手順](../operations/rollback-procedure.md)
-- [監視項目](../operations/monitoring.md)

@@ -100,5 +100,7 @@ docker compose up -d
 
 ## テスト手順
 
+※ UI確認が必要な項目は、MCP Playwright によるE2E確認を記載する。
+
 1. （シナリオ → 期待結果）
 2. ...

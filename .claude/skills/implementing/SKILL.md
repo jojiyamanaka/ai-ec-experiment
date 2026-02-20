@@ -26,18 +26,20 @@ T-1 → T-N の順に1タスクずつ実装する。
 
 **[SAFE]**: 通常の実装のみ。
 
-**[CONTRACT] / [ARCH]**: 実装後に `docs/04_review-note/$ARGUMENTS.md` の `## T-N` に review-note を追記する。設計書の繰り返しは不要 — 設計書にない実装判断（バージョン選択・例外方針・テストデータ・非自明な選択）のみ記録する。
+**[CONTRACT] / [ARCH]**: 実装後に `docs/04_review-note/CHG-XXX.md` の `## T-N` に review-note を追記する。設計書の繰り返しは不要 — 設計書にない実装判断（バージョン選択・例外方針・テストデータ・非自明な選択）のみ記録する。
 
 ### 3. Final Gate
 
 タスクファイルの「Final Gate」コマンドをすべて実行する。
 UI 手動確認が必要な場合は MCP Playwright で必ず実施する。Docker Playwright は再現スクリプト化（CI連携・共有）が必要な場合のみ使う。
-結果の要約を `docs/04_review-note/$ARGUMENTS.md` の `## Final Gate 結果` に追記する。
+機能改修が破壊的変更に当たる場合は、関連する回帰テストの追加・修正を必須とする。機能追加時も対象機能の回帰テストを追加する。
+テストを追加・修正した場合は、その内容を `docs/04_review-note/CHG-XXX.md` に記録する。
+結果の要約を `docs/04_review-note/CHG-XXX.md` の `## Final Gate 結果` に追記する。
 失敗した場合は下記「自己修正ルール」に従う。
 
 ### 4. Review Packet
 
-`docs/04_review-note/$ARGUMENTS.md` に追記する:
+`docs/04_review-note/CHG-XXX.md` に追記する:
 
 ```markdown
 ## CHG-XXX review-note

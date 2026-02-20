@@ -25,13 +25,6 @@ docker compose logs -f backend # 特定サービスのログ確認
 # フロントエンド（cd frontend）
 npm run dev:customer  # 顧客画面（:5173）
 npm run dev:admin     # 管理画面（:5174）
-npm run build         # 型チェック + ビルド
-npm run lint
-
-# バックエンド（cd backend）
-./mvnw test                               # 全テスト
-./mvnw test -Dtest=ClassName#methodName   # 特定テスト
-./mvnw compile                            # コンパイルのみ
 ```
 
 ### アクセスURL
@@ -73,13 +66,8 @@ npm run lint
 
 ## エージェント運用ドキュメント
 
-- `docs/agent-rules/dev-commands.md` — 開発・検証コマンド集
 - `docs/agent-rules/implementation-policy.md` — 実装/レビュー/テスト運用ポリシー
 - `docs/agent-rules/testing-operations.md` — テスト実施手順
-- `docs/agent-rules/playwright-runbook.md` — Playwright 実行手順
-- `docs/agent-rules/environment-config.md` — 環境設定ルール
-- `docs/agent-rules/monitoring.md` — 監視項目
-- `docs/agent-rules/rollback-procedure.md` — ロールバック手順
 
 ## Codex 実行ルール
 
