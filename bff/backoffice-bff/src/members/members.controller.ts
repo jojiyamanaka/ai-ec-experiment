@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { BoAuthGuard } from '../auth/bo-auth.guard';
 import { MembersService } from './members.service';
 import { ApiResponse } from '@app/shared';
@@ -28,6 +28,101 @@ export class MembersController {
     @Req() req: any,
   ): Promise<ApiResponse<any>> {
     return this.membersService.getMemberById(parseInt(id, 10), req.token, req.traceId);
+  }
+
+  @Post()
+  @ApiOperation({ summary: '会員新規作成' })
+  @ApiBody({
+    schema: {
+      properties: {
+        email: { type: 'string' },
+        displayName: { type: 'string' },
+        password: { type: 'string' },
+        fullName: { type: 'string' },
+        phoneNumber: { type: 'string' },
+        birthDate: { type: 'string', format: 'date' },
+        newsletterOptIn: { type: 'boolean' },
+        memberRank: { type: 'string' },
+        loyaltyPoints: { type: 'number' },
+        isActive: { type: 'boolean' },
+        deactivationReason: { type: 'string' },
+        addresses: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              label: { type: 'string' },
+              recipientName: { type: 'string' },
+              recipientPhoneNumber: { type: 'string' },
+              postalCode: { type: 'string' },
+              prefecture: { type: 'string' },
+              city: { type: 'string' },
+              addressLine1: { type: 'string' },
+              addressLine2: { type: 'string' },
+              isDefault: { type: 'boolean' },
+              addressOrder: { type: 'number' },
+            },
+          },
+        },
+      },
+      required: ['email', 'displayName', 'password'],
+    },
+  })
+  @ApiOkResponse({ description: '作成後会員情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async createMember(
+    @Body() body: Record<string, unknown>,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.membersService.createMember(body, req.token, req.traceId);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '会員情報更新' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({
+    schema: {
+      properties: {
+        displayName: { type: 'string' },
+        fullName: { type: 'string' },
+        phoneNumber: { type: 'string' },
+        birthDate: { type: 'string', format: 'date' },
+        newsletterOptIn: { type: 'boolean' },
+        memberRank: { type: 'string' },
+        loyaltyPoints: { type: 'number' },
+        deactivationReason: { type: 'string' },
+        isActive: { type: 'boolean' },
+        addresses: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              label: { type: 'string' },
+              recipientName: { type: 'string' },
+              recipientPhoneNumber: { type: 'string' },
+              postalCode: { type: 'string' },
+              prefecture: { type: 'string' },
+              city: { type: 'string' },
+              addressLine1: { type: 'string' },
+              addressLine2: { type: 'string' },
+              isDefault: { type: 'boolean' },
+              addressOrder: { type: 'number' },
+              deleted: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiOkResponse({ description: '更新後会員情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async updateMember(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.membersService.updateMember(parseInt(id, 10), body, req.token, req.traceId);
   }
 
   @Put(':id/status')

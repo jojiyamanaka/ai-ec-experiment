@@ -6,9 +6,10 @@
 `AGENTS.md` にあったテスト実施手順と操作ルールをまとめる。
 
 ## 基本方針
-1. テスト・検証は Docker 経由で実行する
+1. 自動テスト・ビルド検証は Docker 経由で実行する
 2. 機能開発時は `docs/03_tasks/CHG-XXX_*.md` の検証コマンドを優先する
 3. 受け入れ条件は `docs/01_requirements/CHG-XXX_*.md` を基準に判定する
+4. UI の手動検証は MCP Playwright を標準とし、再現スクリプトが必要な場合のみ Docker フォールバックを使う
 
 ## 共通検証コマンド
 ローカルに JDK / Node がない前提で実行する。
@@ -137,4 +138,4 @@ bash scripts/repair_flyway_checksum.sh
 ```
 
 ## 関連ドキュメント
-- Playwright 利用方法: `docs/test/playwright-runbook.md`
+- Playwright 利用方法: `docs/agent-rules/playwright-runbook.md`

@@ -58,7 +58,8 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 ### UI層
 - **[顧客向け画面](./ui/customer-ui.md)** - 画面一覧、画面遷移図、UI/UX設計思想
 - **[管理画面](./ui/admin-ui.md)** - 商品管理・注文管理のUI仕様
-- **[API仕様](./ui/api-spec.md)** - APIエンドポイント、リクエスト/レスポンス仕様（手書き参照用）
+- **[Customer BFF OpenAPI仕様](./api/customer-bff-openapi.json)** - Customer BFF の機械可読仕様（正式契約）
+- **[BackOffice BFF OpenAPI仕様](./api/backoffice-bff-openapi.json)** - BackOffice BFF の機械可読仕様（正式契約）
 - **[Core API OpenAPI仕様](./api/openapi.json)** - springdoc-openapi 自動生成の機械可読仕様（正式契約）
 
 ### ドメイン層
@@ -72,9 +73,9 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
 
 | 作業内容 | 参照すべきドキュメント |
 |---------|---------------------|
-| フロントエンド（顧客画面） | customer-ui.md, api-spec.md |
-| フロントエンド（管理画面） | admin-ui.md, api-spec.md |
-| バックエンドAPI変更 | api-spec.md, data-model.md |
+| フロントエンド（顧客画面） | customer-ui.md, api/customer-bff-openapi.json |
+| フロントエンド（管理画面） | admin-ui.md, api/backoffice-bff-openapi.json |
+| バックエンドAPI変更 | api/openapi.json, data-model.md |
 | 在庫・引当 | specs/inventory.md |
 | 注文フロー | specs/order.md |
 | 認証・認可 | specs/authentication.md |

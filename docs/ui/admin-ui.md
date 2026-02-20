@@ -3,7 +3,7 @@
 **目的**: AIを活用したECサイトの管理画面のUI/UX仕様を定義する
 
 **関連ドキュメント**:
-- [API仕様](./api-spec.md) - APIエンドポイント
+- [BackOffice BFF OpenAPI仕様](../api/backoffice-bff-openapi.json) - 管理向けAPIエンドポイント
 - [商品ドメイン](../specs/product.md) - 商品管理のビジネスロジック
 - [注文ドメイン](../specs/order.md) - 注文管理のビジネスロジック
 
@@ -17,7 +17,7 @@
 | 商品管理 | /bo/item | 価格・在庫・公開状態の編集 |
 | 注文管理 | /bo/order | 注文一覧・ステータス変更・キャンセル |
 | 在庫管理 | /bo/inventory | 在庫一覧・在庫調整・調整履歴 |
-| 会員管理 | /bo/members | 会員一覧・詳細・有効/無効切替 |
+| 会員管理 | /bo/members | 会員一覧・新規登録・詳細/FULL更新・住所管理・有効/無効切替 |
 
 すべての変更は**即時反映**（バッチ処理なし）。
 
@@ -124,8 +124,17 @@ PENDING(グレー), CONFIRMED(ブルー), SHIPPED(パープル), DELIVERED(グ�
 ## 7. 会員管理画面（/bo/members）
 
 - 会員一覧: 会員ID, メールアドレス, 表示名, 有効/無効状態, 登録日時（ADMIN/SUPER_ADMIN権限）
-- 会員詳細: 会員情報 + 注文サマリー（注文件数, 合計金額）
+- 会員新規登録: `email`, `displayName`, `password` を必須に、`memberRank`, `loyaltyPoints`, `deactivationReason`, 住所を任意入力
+- 会員詳細/FULL更新: `displayName`, `fullName`, `phoneNumber`, `birthDate`, `newsletterOptIn`, `memberRank`, `loyaltyPoints`, `deactivationReason`, `isActive`, 住所配列を更新
+- 住所管理: 追加/更新/削除、デフォルト住所切替（会員内 `isDefault` は最大1件）
 - 会員状態変更: 有効/無効切替（無効化で会員のログイン不可）
+- 利用API:
+  - `POST /api/admin/members`
+  - `GET /api/admin/members`
+  - `GET /api/admin/members/{id}`
+  - `PUT /api/admin/members/{id}`
+  - `PUT /api/admin/members/{id}/status`
+- 更新禁止項目: `passwordHash`, トークン関連, 監査項目, `lastLoginAt`, `termsAgreedAt`
 
 ---
 

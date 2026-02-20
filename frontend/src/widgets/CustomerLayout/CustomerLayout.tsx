@@ -42,6 +42,9 @@ export default function Layout() {
                 <Link to="/order/history" className="hover:text-zinc-600 transition-colors">
                   Orders
                 </Link>
+                <Link to="/mypage" className="hover:text-zinc-600 transition-colors">
+                  My Page
+                </Link>
                 <span className="text-xs text-zinc-700">
                   {user?.displayName}
                 </span>

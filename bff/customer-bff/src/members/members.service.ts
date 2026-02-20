@@ -13,4 +13,44 @@ export class MembersService {
       traceId,
     );
   }
+
+  async updateMe(payload: Record<string, unknown>, token: string, traceId?: string): Promise<ApiResponse<any>> {
+    return this.coreApiService.put<ApiResponse<any>>(
+      '/api/auth/me',
+      payload,
+      token,
+      traceId,
+    );
+  }
+
+  async addMyAddress(payload: Record<string, unknown>, token: string, traceId?: string): Promise<ApiResponse<any>> {
+    return this.coreApiService.post<ApiResponse<any>>(
+      '/api/auth/me/addresses',
+      payload,
+      token,
+      traceId,
+    );
+  }
+
+  async updateMyAddress(
+    addressId: number,
+    payload: Record<string, unknown>,
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    return this.coreApiService.put<ApiResponse<any>>(
+      `/api/auth/me/addresses/${addressId}`,
+      payload,
+      token,
+      traceId,
+    );
+  }
+
+  async deleteMyAddress(addressId: number, token: string, traceId?: string): Promise<ApiResponse<any>> {
+    return this.coreApiService.delete<ApiResponse<any>>(
+      `/api/auth/me/addresses/${addressId}`,
+      token,
+      traceId,
+    );
+  }
 }

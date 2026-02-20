@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { get, post } from '@shared/api/client'
+import {
+  AdminModalBase,
+  AdminPageContainer,
+  AdminPageHeader,
+  AdminSearchBar,
+  AdminTableShell,
+} from '@shared/ui/admin'
 
 interface InventoryItem {
   productId: number
@@ -121,18 +128,17 @@ export default function AdminInventoryPage() {
   }, [])
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-zinc-900">在庫管理</h1>
-      </div>
+    <AdminPageContainer>
+      <AdminPageHeader title="在庫管理" />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <input
-          type="text"
-          placeholder="商品名で検索"
+        <AdminSearchBar
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="px-4 py-2 border rounded-lg w-full max-w-md"
+          onChange={setSearchQuery}
+          onSearch={setSearchQuery}
+          placeholder="商品名で検索"
+          mode="instant"
+          className="mb-0"
         />
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-700">しきい値</label>
@@ -155,7 +161,7 @@ export default function AdminInventoryPage() {
         </button>
       </div>
 
-      <div className="mb-8 bg-white rounded-lg shadow overflow-hidden">
+      <AdminTableShell className="mb-8">
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -188,7 +194,7 @@ export default function AdminInventoryPage() {
                 <td className="px-6 py-4">
                   <button
                     onClick={() => openAdjustModal(item.productId)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    className="px-3 py-1 bg-zinc-900 text-white rounded hover:bg-zinc-700 text-sm"
                   >
                     調整
                   </button>
@@ -197,9 +203,9 @@ export default function AdminInventoryPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <AdminTableShell>
         <div className="px-6 py-4 border-b">
           <h2 className="text-xl font-bold text-zinc-900">在庫調整履歴</h2>
         </div>
@@ -237,70 +243,75 @@ export default function AdminInventoryPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
 
-      {showAdjustModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-4">在庫調整</h2>
-            <div className="space-y-3 mb-6">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">商品:</span> {selectedProduct.productName}
-              </p>
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">現在在庫:</span>{' '}
-                <span className="tabular-nums">{selectedProduct.physicalStock}</span>
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">増減量（正: 増加 / 負: 減少）</label>
-                <input
-                  type="number"
-                  value={adjustForm.quantityDelta}
-                  onChange={(e) =>
-                    setAdjustForm((prev) => ({
-                      ...prev,
-                      quantityDelta: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border rounded"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">調整理由</label>
-                <input
-                  type="text"
-                  value={adjustForm.reason}
-                  onChange={(e) =>
-                    setAdjustForm((prev) => ({
-                      ...prev,
-                      reason: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="例: 棚卸調整"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleAdjust}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  調整実行
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAdjustModal(false)
-                    setAdjustForm({ quantityDelta: 0, reason: '' })
-                  }}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                >
-                  キャンセル
-                </button>
-              </div>
+      <AdminModalBase
+        isOpen={showAdjustModal && Boolean(selectedProduct)}
+        onClose={() => {
+          setShowAdjustModal(false)
+          setAdjustForm({ quantityDelta: 0, reason: '' })
+        }}
+        title="在庫調整"
+        maxWidthClass="max-w-lg"
+      >
+        {selectedProduct ? (
+          <div className="space-y-3 mb-6">
+            <p className="text-sm text-gray-700">
+              <span className="font-medium text-gray-900">商品:</span> {selectedProduct.productName}
+            </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-medium text-gray-900">現在在庫:</span>{' '}
+              <span className="tabular-nums">{selectedProduct.physicalStock}</span>
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">増減量（正: 増加 / 負: 減少）</label>
+              <input
+                type="number"
+                value={adjustForm.quantityDelta}
+                onChange={(e) =>
+                  setAdjustForm((prev) => ({
+                    ...prev,
+                    quantityDelta: parseInt(e.target.value) || 0,
+                  }))
+                }
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">調整理由</label>
+              <input
+                type="text"
+                value={adjustForm.reason}
+                onChange={(e) =>
+                  setAdjustForm((prev) => ({
+                    ...prev,
+                    reason: e.target.value,
+                  }))
+                }
+                className="w-full px-3 py-2 border rounded"
+                placeholder="例: 棚卸調整"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAdjust}
+                className="flex-1 px-4 py-2 bg-zinc-900 text-white rounded hover:bg-zinc-700"
+              >
+                調整実行
+              </button>
+              <button
+                onClick={() => {
+                  setShowAdjustModal(false)
+                  setAdjustForm({ quantityDelta: 0, reason: '' })
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                キャンセル
+              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        ) : null}
+      </AdminModalBase>
+    </AdminPageContainer>
   )
 }

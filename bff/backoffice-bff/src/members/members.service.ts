@@ -44,4 +44,31 @@ export class MembersService {
       traceId,
     );
   }
+
+  async createMember(
+    payload: Record<string, unknown>,
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    return this.coreApiService.post<ApiResponse<any>>(
+      '/api/bo/admin/members',
+      payload,
+      token,
+      traceId,
+    );
+  }
+
+  async updateMember(
+    id: number,
+    payload: Record<string, unknown>,
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    return this.coreApiService.put<ApiResponse<any>>(
+      `/api/bo/admin/members/${id}`,
+      payload,
+      token,
+      traceId,
+    );
+  }
 }

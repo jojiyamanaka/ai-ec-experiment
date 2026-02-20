@@ -485,6 +485,24 @@
         "tags": [
           "members"
         ]
+      },
+      "put": {
+        "operationId": "MembersController_updateMe",
+        "summary": "ログインユーザー情報更新",
+        "responses": {
+          "200": {
+            "description": "更新後会員情報を返却"
+          },
+          "400": {
+            "description": "更新対象外項目（memberRank 等）を拒否"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
       }
     },
     "/api/test/slow": {
@@ -496,6 +514,81 @@
             "description": ""
           }
         }
+      }
+    },
+    "/api/members/me/addresses": {
+      "post": {
+        "operationId": "MembersController_addMyAddress",
+        "summary": "ログインユーザー住所追加",
+        "responses": {
+          "200": {
+            "description": "追加後住所を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/members/me/addresses/{addressId}": {
+      "put": {
+        "operationId": "MembersController_updateMyAddress",
+        "summary": "ログインユーザー住所更新",
+        "parameters": [
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後住所を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          },
+          "403": {
+            "description": "他会員住所の更新拒否"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      },
+      "delete": {
+        "operationId": "MembersController_deleteMyAddress",
+        "summary": "ログインユーザー住所削除",
+        "parameters": [
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除結果を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          },
+          "403": {
+            "description": "他会員住所の削除拒否"
+          }
+        },
+        "tags": [
+          "members"
+        ]
       }
     }
   },
@@ -509,5 +602,8 @@
   "servers": [],
   "components": {
     "schemas": {}
+  },
+  "x-chg-020": {
+    "note": "User profile extension includes memberRank (read only for customer) and address CRUD."
   }
 }

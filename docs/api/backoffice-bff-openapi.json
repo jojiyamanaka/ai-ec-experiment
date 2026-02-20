@@ -724,6 +724,24 @@
         "tags": [
           "members"
         ]
+      },
+      "post": {
+        "operationId": "MembersController_createMember",
+        "summary": "会員新規作成",
+        "responses": {
+          "200": {
+            "description": "作成後会員情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          },
+          "409": {
+            "description": "EMAIL_ALREADY_EXISTS"
+          }
+        },
+        "tags": [
+          "members"
+        ]
       }
     },
     "/api/bo/admin/members": {
@@ -761,6 +779,34 @@
         "responses": {
           "200": {
             "description": "会員詳細を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "members"
+        ]
+      },
+      "put": {
+        "operationId": "MembersController_updateMember",
+        "summary": "会員情報更新",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後会員情報を返却（memberRank/deactivationReason 含む）"
+          },
+          "400": {
+            "description": "更新禁止項目を拒否"
           },
           "401": {
             "description": "認証エラー"
@@ -958,5 +1004,12 @@
   "servers": [],
   "components": {
     "schemas": {}
+  },
+  "x-chg-020": {
+    "fields": [
+      "memberRank",
+      "deactivationReason"
+    ],
+    "note": "Backoffice can create and fully update members including addresses."
   }
 }

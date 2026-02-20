@@ -5,7 +5,7 @@
 **関連ドキュメント**:
 - [技術仕様](../SPEC.md) - 技術方針・アーキテクチャ
 - [業務要件](../requirements.md) - ビジネスルール
-- [API仕様](./api-spec.md) - APIエンドポイント
+- [Customer BFF OpenAPI仕様](../api/customer-bff-openapi.json) - 顧客向けAPIエンドポイント
 - [デザインシステム](../design-system.md) - UI設計方針・コンポーネント規約
 
 ---
@@ -22,6 +22,7 @@
 | 注文完了画面 | `/order/complete` | 注文完了の通知 |
 | 注文詳細画面 | `/order/:id` | 注文の詳細情報表示 |
 | 注文履歴画面 | `/order/history` | 会員の過去の注文一覧 |
+| マイページ | `/mypage` | 会員情報の更新・住所管理 |
 | ログイン画面 | `/auth/login` | 会員ログイン |
 | 会員登録画面 | `/auth/register` | 新規会員登録 |
 
@@ -124,6 +125,19 @@
 - 認証必須（未ログイン時はログイン画面へリダイレクト）
 - 自分の注文のみ表示、作成日時降順
 - 注文番号クリック → `/order/:id`
+
+### 11. マイページ（/mypage）
+
+- 認証必須（未ログイン時はログイン導線を表示）
+- プロフィール更新: `displayName`, `fullName`, `phoneNumber`, `birthDate`, `newsletterOptIn`
+- 住所管理: 住所の追加・更新・削除、デフォルト住所切替
+- 利用API:
+  - `GET /api/members/me`
+  - `PUT /api/members/me`
+  - `POST /api/members/me/addresses`
+  - `PUT /api/members/me/addresses/{addressId}`
+  - `DELETE /api/members/me/addresses/{addressId}`
+- 非許可項目（`memberRank`, `loyaltyPoints` など）を更新しようとした場合はエラー表示
 
 ---
 

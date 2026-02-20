@@ -5,7 +5,7 @@
 AI EC Experimentにおける認証・認可システムの振る舞いを定義する。
 トークンベース認証、ロールベースアクセス制御（RBAC）、操作履歴の記録について明文化する。
 
-**関連ドキュメント**: [API仕様](../ui/api-spec.md), [データモデル](../data-model.md), [BFFアーキテクチャ](./bff-architecture.md)
+**関連ドキュメント**: [Customer BFF OpenAPI仕様](../api/customer-bff-openapi.json), [BackOffice BFF OpenAPI仕様](../api/backoffice-bff-openapi.json), [Core API OpenAPI仕様](../api/openapi.json), [データモデル](../data-model.md), [BFFアーキテクチャ](./bff-architecture.md)
 
 ---
 

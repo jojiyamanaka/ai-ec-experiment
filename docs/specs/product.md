@@ -2,7 +2,7 @@
 
 **目的**: 商品マスタ、価格管理、公開制御の詳細仕様を定義する
 
-**関連ドキュメント**: [データモデル](../data-model.md), [API仕様](../ui/api-spec.md), [在庫管理](./inventory.md)
+**関連ドキュメント**: [データモデル](../data-model.md), [Customer BFF OpenAPI仕様](../api/customer-bff-openapi.json), [BackOffice BFF OpenAPI仕様](../api/backoffice-bff-openapi.json), [Core API OpenAPI仕様](../api/openapi.json), [在庫管理](./inventory.md)
 
 ---
 

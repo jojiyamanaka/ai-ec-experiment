@@ -5,7 +5,9 @@
 **関連ドキュメント**:
 - [技術仕様](./SPEC.md) - 技術方針・アーキテクチャ
 - [業務要件](./requirements.md) - ビジネスルール
-- [API仕様](./ui/api-spec.md) - APIリクエスト/レスポンス型
+- [Customer BFF OpenAPI仕様](./api/customer-bff-openapi.json) - 顧客向けAPIの契約
+- [BackOffice BFF OpenAPI仕様](./api/backoffice-bff-openapi.json) - 管理向けAPIの契約
+- [Core API OpenAPI仕様](./api/openapi.json) - Core APIの契約
 
 ---
 
@@ -14,7 +16,7 @@
 - **DBMS**: PostgreSQL 16
 - **ORM**: Hibernate（Spring Boot 3.4.2）
 - **マイグレーション**: Flyway
-- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql`
+- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql`（CHG-020 で `V9__extend_user_profile_and_addresses.sql` を追加）
 
 ---
 
@@ -37,7 +39,7 @@
 | `deleted_by_type` | `VARCHAR(50)` | 削除者種別 |
 | `deleted_by_id` | `BIGINT` | 削除者ID |
 
-**適用テーブル**: `users`, `auth_tokens`, `products`, `stock_reservations`, `orders`, `order_items`, `operation_histories`, `bo_users`, `bo_auth_tokens`, `inventory_adjustments`
+**適用テーブル**: `users`, `user_addresses`, `auth_tokens`, `products`, `stock_reservations`, `orders`, `order_items`, `operation_histories`, `bo_users`, `bo_auth_tokens`, `inventory_adjustments`
 
 **非適用テーブル**: `carts`, `cart_items`（`created_at` / `updated_at` のみ）
 
@@ -60,6 +62,7 @@
 | ShipmentItem | `shipment_items` | 出荷内商品 |
 | StockReservation | `stock_reservations` | 在庫引当（仮引当/本引当） |
 | User | `users` | 会員 |
+| UserAddress | `user_addresses` | 会員住所（複数管理） |
 | AuthToken | `auth_tokens` | 会員認証トークン |
 | OperationHistory | `operation_histories` | 操作履歴（監査ログ） |
 | BoUser | `bo_users` | 管理者ユーザー |
@@ -187,13 +190,46 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   display_name VARCHAR(100) NOT NULL,
+  full_name VARCHAR(100),
+  phone_number VARCHAR(30),
+  birth_date DATE,
+  newsletter_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
+  member_rank VARCHAR(50) NOT NULL DEFAULT 'STANDARD',
+  loyalty_points INTEGER NOT NULL DEFAULT 0,
+  deactivation_reason VARCHAR(500),
+  last_login_at TIMESTAMP WITH TIME ZONE,
+  terms_agreed_at TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   -- 監査カラム（共通設計参照）
 );
 ```
 
-**制約**: email必須(ユニーク), password_hash必須(BCrypt 60文字), display_name必須(100字), is_active必須(デフォルトTRUE)
+**制約**: email必須(ユニーク), password_hash必須(BCrypt 60文字), display_name必須(100字), member_rank必須（`STANDARD/SILVER/GOLD/PLATINUM`）, loyalty_pointsは0以上, is_active必須(デフォルトTRUE)
 **ルール**: `role` カラムは存在しない（BoUser と分離）。メールアドレスは一意。
+
+### UserAddress（会員住所）
+
+```sql
+CREATE TABLE user_addresses (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  label VARCHAR(100),
+  recipient_name VARCHAR(100) NOT NULL,
+  recipient_phone_number VARCHAR(30),
+  postal_code VARCHAR(20) NOT NULL,
+  prefecture VARCHAR(100) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  address_line1 VARCHAR(255) NOT NULL,
+  address_line2 VARCHAR(255),
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  address_order INTEGER NOT NULL DEFAULT 0,
+  -- 監査カラム（共通設計参照）
+  CONSTRAINT fk_user_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**制約**: `is_default = true` は会員ごとに最大1件（`uk_user_addresses_user_default` の部分一意インデックス）
+**ルール**: 顧客マイページ・管理画面の両方で CRUD。論理削除を保持。
 
 ### AuthToken（認証トークン）
 
@@ -367,6 +403,7 @@ CREATE INDEX idx_job_run_history_job_type_env ON job_run_history(job_type, envir
 
 ### 会員関連
 - `users` → `auth_tokens`: 1:N（CASCADE削除）
+- `users` → `user_addresses`: 1:N（CASCADE削除）
 - `users` → `carts`: 1:1（SET NULL削除）
 - `users` → `orders`: 1:N（SET NULL削除）
 

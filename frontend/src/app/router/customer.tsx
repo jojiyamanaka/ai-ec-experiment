@@ -11,6 +11,7 @@ import OrderConfirmPage from '@pages/customer/OrderConfirmPage'
 import OrderCompletePage from '@pages/customer/OrderCompletePage'
 import OrderDetailPage from '@pages/customer/OrderDetailPage'
 import OrderHistoryPage from '@pages/customer/OrderHistoryPage'
+import MyPagePage from '@pages/customer/MyPagePage'
 import LoginPage from '@pages/customer/LoginPage'
 import RegisterPage from '@pages/customer/RegisterPage'
 
@@ -30,6 +31,7 @@ export function CustomerRouter() {
                 <Route path="/order/complete" element={<OrderCompletePage />} />
                 <Route path="/order/:id" element={<OrderDetailPage />} />
                 <Route path="/order/history" element={<OrderHistoryPage />} />
+                <Route path="/mypage" element={<MyPagePage />} />
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
               </Route>

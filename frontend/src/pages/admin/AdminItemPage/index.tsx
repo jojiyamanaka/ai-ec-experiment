@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useProducts } from '@entities/product'
 import type { UpdateProductRequest } from '@entities/product'
+import {
+  AdminFilterChips,
+  AdminModalBase,
+  AdminPageContainer,
+  AdminPageHeader,
+  AdminSearchBar,
+  AdminTableShell,
+} from '@shared/ui/admin'
 
 export default function AdminItemPage() {
   const { products, updateProduct } = useProducts()
@@ -72,10 +80,6 @@ export default function AdminItemPage() {
     return getValue(productId, field, defaultValue) as boolean
   }
 
-  const handleSearch = () => {
-    setSearchQuery(searchInput.trim())
-  }
-
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) =>
@@ -95,78 +99,39 @@ export default function AdminItemPage() {
   const hasChanges = Object.keys(editedProducts).length > 0
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <AdminPageContainer>
       {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-zinc-900">商品管理</h1>
-          {savedMessage && (
-            <p className="mt-2 text-sm font-medium text-emerald-700">保存しました</p>
-          )}
-        </div>
-        <button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-          新規登録
-        </button>
-      </div>
+      <AdminPageHeader
+        title="商品管理"
+        subMessage={savedMessage ? <p className="text-sm font-medium text-emerald-700">保存しました</p> : null}
+        actions={(
+          <button className="rounded-lg bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-700">
+            新規登録
+          </button>
+        )}
+      />
 
       {/* 検索エリア */}
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSearch()
-            }
-          }}
-          placeholder="商品名で検索"
-          className="w-full max-w-md rounded-lg border px-4 py-2"
-        />
-        <button
-          onClick={handleSearch}
-          className="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
-        >
-          検索
-        </button>
-      </div>
+      <AdminSearchBar
+        value={searchInput}
+        onChange={setSearchInput}
+        onSearch={(value) => setSearchQuery(value.trim())}
+        placeholder="商品名で検索"
+      />
 
       {/* フィルタエリア */}
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setPublishFilter('ALL')}
-          className={`rounded-lg px-4 py-2 font-medium ${
-            publishFilter === 'ALL'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          すべて
-        </button>
-        <button
-          onClick={() => setPublishFilter('PUBLISHED')}
-          className={`rounded-lg px-4 py-2 font-medium ${
-            publishFilter === 'PUBLISHED'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          公開
-        </button>
-        <button
-          onClick={() => setPublishFilter('UNPUBLISHED')}
-          className={`rounded-lg px-4 py-2 font-medium ${
-            publishFilter === 'UNPUBLISHED'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          非公開
-        </button>
-      </div>
+      <AdminFilterChips
+        items={[
+          { key: 'ALL', label: 'すべて' },
+          { key: 'PUBLISHED', label: '公開' },
+          { key: 'UNPUBLISHED', label: '非公開' },
+        ]}
+        selectedKey={publishFilter}
+        onSelect={(key) => setPublishFilter(key as 'ALL' | 'PUBLISHED' | 'UNPUBLISHED')}
+      />
 
       {/* テーブル */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+      <AdminTableShell className="shadow-sm">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -272,7 +237,7 @@ export default function AdminItemPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
 
       <div className="mt-6 flex justify-end">
         <button
@@ -280,7 +245,7 @@ export default function AdminItemPage() {
           disabled={!hasChanges || isSaving}
           className={`rounded-lg px-6 py-3 font-medium text-white ${
             hasChanges && !isSaving
-              ? 'bg-blue-600 hover:bg-blue-700'
+              ? 'bg-zinc-900 hover:bg-zinc-700'
               : 'cursor-not-allowed bg-gray-400'
           }`}
         >
@@ -288,44 +253,38 @@ export default function AdminItemPage() {
         </button>
       </div>
 
-      {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-zinc-900">商品詳細</h2>
-              <button
-                onClick={() => setSelectedProductId(null)}
-                className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-              >
-                閉じる
-              </button>
-            </div>
-            <div className="space-y-2 text-sm text-gray-700">
-              <p>
-                <span className="font-medium text-gray-900">商品ID:</span>{' '}
-                <span className="font-mono">{selectedProduct.id}</span>
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">商品名:</span> {selectedProduct.name}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">説明:</span> {selectedProduct.description}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">価格:</span>{' '}
-                {selectedProduct.price.toLocaleString()}円
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">在庫:</span> {selectedProduct.stock}
-              </p>
-              <p>
-                <span className="font-medium text-gray-900">公開状態:</span>{' '}
-                {selectedProduct.isPublished ? '公開' : '非公開'}
-              </p>
-            </div>
+      <AdminModalBase
+        isOpen={Boolean(selectedProduct)}
+        onClose={() => setSelectedProductId(null)}
+        title="商品詳細"
+        maxWidthClass="max-w-2xl"
+      >
+        {selectedProduct ? (
+          <div className="space-y-2 text-sm text-gray-700">
+            <p>
+              <span className="font-medium text-gray-900">商品ID:</span>{' '}
+              <span className="font-mono">{selectedProduct.id}</span>
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">商品名:</span> {selectedProduct.name}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">説明:</span> {selectedProduct.description}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">価格:</span>{' '}
+              {selectedProduct.price.toLocaleString()}円
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">在庫:</span> {selectedProduct.stock}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">公開状態:</span>{' '}
+              {selectedProduct.isPublished ? '公開' : '非公開'}
+            </p>
           </div>
-        </div>
-      )}
-    </div>
+        ) : null}
+      </AdminModalBase>
+    </AdminPageContainer>
   )
 }

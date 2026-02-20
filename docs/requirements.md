@@ -2,7 +2,7 @@
 
 **目的**: AIを活用したECサイトの業務要件とビジネスルールを定義する
 
-**関連ドキュメント**: [技術仕様](./SPEC.md), [データモデル](./data-model.md), [顧客画面](./ui/customer-ui.md), [API仕様](./ui/api-spec.md)
+**関連ドキュメント**: [技術仕様](./SPEC.md), [データモデル](./data-model.md), [顧客画面](./ui/customer-ui.md), [Customer BFF OpenAPI仕様](./api/customer-bff-openapi.json), [BackOffice BFF OpenAPI仕様](./api/backoffice-bff-openapi.json), [Core API OpenAPI仕様](./api/openapi.json)
 
 ---
 
@@ -39,6 +39,17 @@
 - 変更は「保存」ボタンクリック時に即時反映
 - 対象画面: /bo/item, /bo/order
 - 詳細: [管理画面](./ui/admin-ui.md)
+
+### 5. 会員・住所管理機能
+
+| ルール | 内容 |
+|--------|------|
+| 会員プロフィール更新（顧客） | `displayName`, `fullName`, `phoneNumber`, `birthDate`, `newsletterOptIn` のみ更新可能 |
+| 会員運用項目（管理） | `memberRank`, `loyaltyPoints`, `deactivationReason`, `isActive` は管理画面で更新可能 |
+| 更新禁止項目 | `passwordHash`, トークン関連, 監査項目, `lastLoginAt`, `termsAgreedAt` は顧客・管理とも更新不可 |
+| 住所管理 | `user_addresses` で複数住所を保持。顧客/管理画面の両方で CRUD |
+| デフォルト住所制約 | `isDefault=true` は会員ごとに最大1件 |
+| 重複メール | 管理画面の会員新規登録で重複メールは `EMAIL_ALREADY_EXISTS` で拒否 |
 
 ---
 

@@ -1,2 +1,27 @@
-export type { User, AuthResponse, RegisterRequest, LoginRequest } from './model/types'
-export { register, login, logout, getCurrentUser } from './model/api'
+export type {
+  User,
+  UserAddress,
+  MemberRank,
+  AuthResponse,
+  RegisterRequest,
+  LoginRequest,
+  UpdateMyProfileRequest,
+  UpsertAddressRequest,
+  CreateMemberRequest,
+  UpdateMemberRequest,
+} from './model/types'
+export {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+  updateMyProfile,
+  addMyAddress,
+  updateMyAddress,
+  deleteMyAddress,
+  getAdminMembers,
+  getAdminMemberById,
+  createAdminMember,
+  updateAdminMember,
+  updateAdminMemberStatus,
+} from './model/api'

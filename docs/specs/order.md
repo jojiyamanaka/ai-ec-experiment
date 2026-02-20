@@ -4,7 +4,7 @@
 
 AI EC Experimentにおける注文管理の振る舞いを定義する。
 
-**関連ドキュメント**: [API仕様](../ui/api-spec.md), [データモデル](../data-model.md), [在庫管理](./inventory.md)
+**関連ドキュメント**: [Customer BFF OpenAPI仕様](../api/customer-bff-openapi.json), [BackOffice BFF OpenAPI仕様](../api/backoffice-bff-openapi.json), [Core API OpenAPI仕様](../api/openapi.json), [データモデル](../data-model.md), [在庫管理](./inventory.md)
 
 ---
 

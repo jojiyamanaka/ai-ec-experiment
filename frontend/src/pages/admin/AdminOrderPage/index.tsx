@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getAllOrders, confirmOrder, shipOrder, deliverOrder, cancelOrder } from '@entities/order'
 import type { Order } from '@entities/order'
+import {
+  AdminFilterChips,
+  AdminModalBase,
+  AdminPageContainer,
+  AdminPageHeader,
+  AdminSearchBar,
+  AdminTableShell,
+} from '@shared/ui/admin'
 
 const STATUS_LABELS: Record<string, string> = {
   ALL: 'すべて',
@@ -81,10 +89,6 @@ export default function AdminOrderPage() {
     }
   }
 
-  const handleSearch = () => {
-    setSearchQuery(searchInput.trim())
-  }
-
   const handleOrderClick = (orderId: number) => {
     setSelectedOrderId(orderId)
     setShowDetailModal(true)
@@ -104,60 +108,37 @@ export default function AdminOrderPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <AdminPageContainer>
         <div className="text-center text-gray-600">読み込み中...</div>
-      </div>
+      </AdminPageContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <AdminPageContainer>
       {/* ヘッダー */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-zinc-900">注文管理</h1>
-      </div>
+      <AdminPageHeader title="注文管理" />
 
       {/* 検索エリア */}
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSearch()
-            }
-          }}
-          placeholder="注文番号で検索"
-          className="w-full max-w-md rounded-lg border px-4 py-2"
-        />
-        <button
-          onClick={handleSearch}
-          className="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
-        >
-          検索
-        </button>
-      </div>
+      <AdminSearchBar
+        value={searchInput}
+        onChange={setSearchInput}
+        onSearch={(value) => setSearchQuery(value.trim())}
+        placeholder="注文番号で検索"
+      />
 
       {/* フィルタエリア */}
-      <div className="mb-6 flex gap-2">
-        {['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={`rounded-lg px-4 py-2 font-medium ${
-              filter === status
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {getStatusLabel(status)}
-          </button>
-        ))}
-      </div>
+      <AdminFilterChips
+        items={['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => ({
+          key: status,
+          label: getStatusLabel(status),
+        }))}
+        selectedKey={filter}
+        onSelect={setFilter}
+      />
 
       {/* テーブル */}
-      <div className="overflow-hidden rounded-lg bg-white shadow">
+      <AdminTableShell>
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -207,21 +188,15 @@ export default function AdminOrderPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
 
-      {showDetailModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-3xl rounded-lg bg-white p-6 max-h-[90vh] overflow-y-auto">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-zinc-900">注文詳細</h2>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-              >
-                閉じる
-              </button>
-            </div>
-
+      <AdminModalBase
+        isOpen={showDetailModal && Boolean(selectedOrder)}
+        onClose={() => setShowDetailModal(false)}
+        title="注文詳細"
+      >
+        {selectedOrder ? (
+          <>
             <div className="mb-6 grid gap-2 text-sm text-gray-700">
               <p>
                 <span className="font-medium text-gray-900">注文番号:</span>{' '}
@@ -274,7 +249,7 @@ export default function AdminOrderPage() {
                 <>
                   <button
                     onClick={() => handleStatusChange(selectedOrder.orderId, 'confirm')}
-                    className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+                    className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700"
                   >
                     確認
                   </button>
@@ -290,7 +265,7 @@ export default function AdminOrderPage() {
                 <>
                   <button
                     onClick={() => handleStatusChange(selectedOrder.orderId, 'ship')}
-                    className="rounded bg-purple-600 px-4 py-2 text-sm text-white hover:bg-purple-700"
+                    className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700"
                   >
                     発送
                   </button>
@@ -311,9 +286,9 @@ export default function AdminOrderPage() {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+          </>
+        ) : null}
+      </AdminModalBase>
+    </AdminPageContainer>
   )
 }

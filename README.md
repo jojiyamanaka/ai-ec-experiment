@@ -23,5 +23,5 @@ docker compose up -d
 - [技術仕様書](./docs/SPEC.md) — アーキテクチャ・インフラ構成・設計方針
 - [業務要件](./docs/requirements.md) — ビジネスルール・機能仕様
 - [データモデル](./docs/data-model.md) — エンティティ定義・DB スキーマ
-- [API 仕様](./docs/ui/api-spec.md) — エンドポイント一覧
+- [API 仕様](./docs/api/) — OpenAPI JSON（Customer BFF / BackOffice BFF / Core API）
 - [開発ガイド](./CLAUDE.md) — コーディング規約・開発コマンド・機能開発プロセス
