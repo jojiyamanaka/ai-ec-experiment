@@ -489,12 +489,37 @@
       "put": {
         "operationId": "MembersController_updateMe",
         "summary": "ログインユーザー情報更新",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "birthDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "newsletterOptIn": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "更新後会員情報を返却"
-          },
-          "400": {
-            "description": "更新対象外項目（memberRank 等）を拒否"
           },
           "401": {
             "description": "認証エラー"
@@ -505,21 +530,59 @@
         ]
       }
     },
-    "/api/test/slow": {
-      "get": {
-        "operationId": "TestController_slow",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        }
-      }
-    },
     "/api/members/me/addresses": {
       "post": {
         "operationId": "MembersController_addMyAddress",
         "summary": "ログインユーザー住所追加",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "recipientName": {
+                    "type": "string"
+                  },
+                  "recipientPhoneNumber": {
+                    "type": "string"
+                  },
+                  "postalCode": {
+                    "type": "string"
+                  },
+                  "prefecture": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "addressLine1": {
+                    "type": "string"
+                  },
+                  "addressLine2": {
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
+                  "addressOrder": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "recipientName",
+                  "postalCode",
+                  "prefecture",
+                  "city",
+                  "addressLine1"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "追加後住所を返却"
@@ -547,15 +610,60 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "recipientName": {
+                    "type": "string"
+                  },
+                  "recipientPhoneNumber": {
+                    "type": "string"
+                  },
+                  "postalCode": {
+                    "type": "string"
+                  },
+                  "prefecture": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "addressLine1": {
+                    "type": "string"
+                  },
+                  "addressLine2": {
+                    "type": "string"
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  },
+                  "addressOrder": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "recipientName",
+                  "postalCode",
+                  "prefecture",
+                  "city",
+                  "addressLine1"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "更新後住所を返却"
           },
           "401": {
             "description": "認証エラー"
-          },
-          "403": {
-            "description": "他会員住所の更新拒否"
           }
         },
         "tags": [
@@ -581,14 +689,22 @@
           },
           "401": {
             "description": "認証エラー"
-          },
-          "403": {
-            "description": "他会員住所の削除拒否"
           }
         },
         "tags": [
           "members"
         ]
+      }
+    },
+    "/api/test/slow": {
+      "get": {
+        "operationId": "TestController_slow",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
       }
     }
   },
@@ -602,8 +718,5 @@
   "servers": [],
   "components": {
     "schemas": {}
-  },
-  "x-chg-020": {
-    "note": "User profile extension includes memberRank (read only for customer) and address CRUD."
   }
 }

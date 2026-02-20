@@ -10,7 +10,7 @@
 
 ### 1. 商品閲覧機能
 
-- 公開商品（`isPublished = true`）のみ表示
+- 公開表示条件を満たす商品（`products.is_published = true` かつ `product_categories.is_published = true` かつ公開期間内）のみ表示
 - 在庫状態は在庫数に応じて自動判定（後述）
 - 商品画像はプレースホルダー使用（Phase 1）
 - 対象画面: TOP画面、商品一覧、商品詳細
@@ -22,7 +22,7 @@
 | 追加制限 | 売り切れ商品はカート追加不可 |
 | 数量制限 | 最小1個、最大9個 |
 | 0個時 | 自動削除 |
-| 非公開商品 | カートから自動除外 |
+| 非購入可能商品 | 商品/カテゴリ非公開、公開期間外、販売期間外はカートから自動除外。追加/数量変更も拒否 |
 | 合計金額 | リアルタイム再計算 |
 | 配送料・手数料 | ¥0 固定（Phase 1） |
 
@@ -35,10 +35,20 @@
 
 ### 4. 商品管理機能（管理画面）
 
-- 商品情報の一括編集、在庫数管理、公開/非公開切替
+- 商品情報の一括編集、商品新規登録、カテゴリ管理、在庫数管理、公開/非公開切替、公開/販売日時設定
 - 変更は「保存」ボタンクリック時に即時反映
 - 対象画面: /bo/item, /bo/order
 - 詳細: [管理画面](./ui/admin-ui.md)
+
+### 4.1 公開/販売期間ルール
+
+| ルール | 内容 |
+|--------|------|
+| 表示可否 | `product.isPublished && category.isPublished && now ∈ [publishStartAt, publishEndAt]` |
+| 購入可否 | `表示可否 && now ∈ [saleStartAt, saleEndAt] && stock > 0` |
+| 整合制約 | `publishStartAt <= publishEndAt`、`saleStartAt <= saleEndAt`、販売期間は公開期間内 |
+| バリデーションエラー | 期間制約違反は `INVALID_SCHEDULE` |
+| カテゴリ選択制約 | `is_published = false` のカテゴリは商品登録/更新で指定不可（`CATEGORY_INACTIVE`） |
 
 ### 5. 会員・住所管理機能
 

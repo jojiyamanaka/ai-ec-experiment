@@ -80,18 +80,39 @@
 ```sql
 CREATE TABLE products (
   id BIGSERIAL PRIMARY KEY,
+  product_code VARCHAR(100) NOT NULL UNIQUE,
   name VARCHAR(255) NOT NULL,
   description VARCHAR(2000),
   price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  category_id BIGINT NOT NULL,
   image VARCHAR(500),
+  is_published BOOLEAN NOT NULL DEFAULT TRUE,
+  publish_start_at TIMESTAMP WITH TIME ZONE,
+  publish_end_at TIMESTAMP WITH TIME ZONE,
+  sale_start_at TIMESTAMP WITH TIME ZONE,
+  sale_end_at TIMESTAMP WITH TIME ZONE,
+  -- 監査カラム（共通設計参照）
+);
+```
+
+**制約**: product_code必須(ユニーク), category_id必須(FK), name必須(255字), price必須(0以上・整数運用), stock必須(0以上), is_published必須(デフォルトTRUE), 公開期間/販売期間の開始≦終了
+**ルール**: 顧客向け表示は `product.is_published && category.is_published && 公開期間内`。購入可否は `顧客向け表示 && 販売期間内 && stock > 0`。`stock = 0` → 「売り切れ」表示。有効在庫 = `stock - Σ(引当数量)`
+
+### ProductCategory（商品カテゴリ）
+
+```sql
+CREATE TABLE product_categories (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  display_order INTEGER NOT NULL DEFAULT 0,
   is_published BOOLEAN NOT NULL DEFAULT TRUE,
   -- 監査カラム（共通設計参照）
 );
 ```
 
-**制約**: name必須(255字), price必須(0以上), stock必須(0以上), is_published必須(デフォルトTRUE)
-**ルール**: `is_published = false` → 一覧・検索非表示。`stock = 0` → 「売り切れ」表示。有効在庫 = `stock - Σ(引当数量)`
+**制約**: name必須(ユニーク), display_orderは0以上, is_published必須(デフォルトTRUE)
+**ルール**: `is_published = false` のカテゴリは商品登録/更新で選択不可。カテゴリ非公開時は所属商品も顧客向け非表示。
 
 ### Cart（カート）
 

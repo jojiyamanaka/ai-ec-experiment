@@ -14,7 +14,8 @@
 archive/
 ├── 01_requirements/     # 要件定義ドキュメント
 ├── 02_designs/          # 技術設計ドキュメント
-└── 03_tasks/            # 実装タスクドキュメント
+├── 03_tasks/            # 実装タスクドキュメント
+└── 04_impl-notes/       # 実装判断メモ
 ```
 
 ## アーカイブ済み案件
@@ -147,6 +148,17 @@ archive/
   - ui/admin-ui.md: 会員FULL更新・新規登録UI仕様追加
   - specs/bff-architecture.md: Customer BFF 住所CRUD・BO 会員作成/FULL更新エンドポイント追加
   - docs/api/*.json: 各 OpenAPI spec を CHG-020 契約に更新
+
+### CHG-021: Product データモデル項目追加と画面反映
+- **実装完了日**: 2026-02-20
+- **内容**: 商品マスタに品番・カテゴリ参照・公開/販売期間を追加し、`product_categories` を新設。管理画面の商品新規登録/カテゴリ管理、顧客向け公開判定（商品公開×カテゴリ公開×期間）を実装
+- **主要ドキュメント反映先**:
+  - data-model.md: `products` 拡張カラム、`product_categories` 追加
+  - requirements.md: 公開表示/購入可否の判定式、期間制約ルール追加
+  - specs/product.md: 商品・カテゴリ・公開/販売期間仕様を更新
+  - ui/customer-ui.md: 公開表示条件とカート除外条件を更新
+  - ui/admin-ui.md: 商品登録/カテゴリ管理/公開・販売日時運用を更新
+  - docs/api/*.json: Core/BFF OpenAPI 契約を CHG-021 に更新
 
 ## 参照方法
 
