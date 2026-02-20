@@ -160,6 +160,14 @@ archive/
   - ui/admin-ui.md: 商品登録/カテゴリ管理/公開・販売日時運用を更新
   - docs/api/*.json: Core/BFF OpenAPI 契約を CHG-021 に更新
 
+### CHG-022: BO管理画面 認証復元と商品初期表示不具合修正
+- **実装完了日**: 2026-02-20
+- **内容**: BackOffice BFF に `GET /api/bo-auth/me` を追加し、管理画面の認証復元フローを安定化。未認証時の商品先行フェッチ停止と商品初期表示の再取得制御を実装
+- **主要ドキュメント反映先**:
+  - specs/bff-architecture.md: `/api/bo-auth/me` 契約と認証復元フローを追記
+  - specs/authentication.md: BoUser 認証復元時の 401 契約（`BFF_UNAUTHORIZED`/`BFF_INVALID_TOKEN`）を追記
+  - ui/admin-ui.md: 管理画面リロード時の認証復元挙動を追記
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

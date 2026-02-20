@@ -100,6 +100,8 @@ AI EC Experimentにおける認証・認可システムの振る舞いを定義�
 
 - **顧客トークン拒否**: 顧客トークンで管理APIにアクセスした場合は `CUSTOMER_TOKEN_NOT_ALLOWED` (403)
 - BackOffice BFF の `bo-auth.guard.ts` がトークン種別を判定し拒否
+- **管理画面の認証復元**: `bo_token` 保持時に `GET /api/bo-auth/me` でログイン状態を復元
+- **復元失敗時の契約**: トークンなしは `BFF_UNAUTHORIZED` (401)、不正/期限切れは `BFF_INVALID_TOKEN` (401)
 
 ---
 

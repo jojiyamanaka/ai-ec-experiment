@@ -111,6 +111,7 @@ customer-bff/src/
 | /health | GET | ヘルスチェック | 不要 |
 | /api/bo-auth/login | POST | 管理ログイン | 不要 |
 | /api/bo-auth/logout | POST | 管理ログアウト | BoUser |
+| /api/bo-auth/me | GET | ログイン中管理者情報取得（認証復元） | BoUser |
 | /api/inventory | GET | 在庫一覧取得 | BoUser |
 | /api/inventory/adjustments | GET | 在庫調整履歴 | BoUser |
 | /api/inventory/adjust | POST | 在庫調整 | BoUser |
@@ -139,6 +140,7 @@ customer-bff/src/
 
 - **認証ヘッダー**: `Authorization: Bearer <bo_token>`
 - **トークン検証**: `bo-auth.guard.ts` — Redis キャッシュ確認 → MISS 時 Core API `/api/bo-auth/me` 呼び出し（Redis Key: `bo-auth:token:{tokenHash}`, TTL 60秒）
+- **認証復元**: 管理画面リロード時は `GET /api/bo-auth/me` で BoUser を復元。トークンなしは `BFF_UNAUTHORIZED`(401)、不正/期限切れは `BFF_INVALID_TOKEN`(401)
 - **顧客トークン拒否**: 顧客トークンで管理APIにアクセスした場合は `CUSTOMER_TOKEN_NOT_ALLOWED` (403) を返す
 - **キャッシュ制御**: 全レスポンスに `Cache-Control: no-store` を付与
 
@@ -148,7 +150,7 @@ customer-bff/src/
 backoffice-bff/src/
 ├── main.ts, app.module.ts
 ├── config/configuration.ts
-├── auth/          # POST /api/bo-auth/login, logout + bo-auth.guard.ts
+├── auth/          # POST /api/bo-auth/login, logout / GET /api/bo-auth/me + bo-auth.guard.ts
 ├── orders/        # GET/POST/PUT /api/admin/orders/**
 ├── inventory/     # GET/POST/PUT /api/inventory/**
 ├── products/      # GET/POST/PUT /api/admin/items**, /api/admin/item-categories**
