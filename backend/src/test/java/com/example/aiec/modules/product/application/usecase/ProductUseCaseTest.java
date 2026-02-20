@@ -3,10 +3,12 @@ package com.example.aiec.modules.product.application.usecase;
 import com.example.aiec.modules.product.application.port.CreateProductRequest;
 import com.example.aiec.modules.product.application.port.ProductDto;
 import com.example.aiec.modules.product.application.port.ProductListResponse;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.product.domain.entity.Product;
 import com.example.aiec.modules.product.domain.entity.ProductCategory;
 import com.example.aiec.modules.product.domain.repository.ProductCategoryRepository;
 import com.example.aiec.modules.product.domain.repository.ProductRepository;
+import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ class ProductUseCaseTest {
 
     @Mock ProductRepository productRepository;
     @Mock ProductCategoryRepository productCategoryRepository;
+    @Mock InventoryQueryPort inventoryQueryPort;
 
     @InjectMocks
     ProductUseCase productUseCase;
@@ -78,6 +81,7 @@ class ProductUseCaseTest {
         when(productRepository.findPublishedForCustomer(any(Instant.class), eq(PageRequest.of(0, 20))))
                 .thenReturn(new PageImpl<>(List.of(product), PageRequest.of(0, 20), 1));
         when(productCategoryRepository.findAllById(any())).thenReturn(List.of(category));
+        when(inventoryQueryPort.calculateEffectiveStock(1L)).thenReturn(10);
 
         ProductListResponse response = productUseCase.getPublishedProducts(1, 20);
 
@@ -94,7 +98,7 @@ class ProductUseCaseTest {
                 "説明",
                 10L,
                 BigDecimal.valueOf(1000),
-                10,
+                AllocationType.REAL,
                 true,
                 Instant.parse("2026-02-20T00:00:00Z"),
                 Instant.parse("2026-02-28T23:59:59Z"),
@@ -122,6 +126,7 @@ class ProductUseCaseTest {
         product.setImage("/images/item.jpg");
         product.setDescription("説明");
         product.setStock(10);
+        product.setAllocationType(AllocationType.REAL);
         product.setCategoryId(categoryId);
         product.setIsPublished(published);
         return product;

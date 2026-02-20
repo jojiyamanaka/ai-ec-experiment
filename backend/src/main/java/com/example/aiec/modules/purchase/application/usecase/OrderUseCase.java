@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
+import com.example.aiec.modules.inventory.application.service.FrameAllocationService;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderDto;
 import com.example.aiec.modules.purchase.application.port.UnavailableProductDetail;
@@ -41,6 +42,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     private final CartRepository cartRepository;
     private final CartService cartService;
     private final InventoryCommandPort inventoryCommand;
+    private final FrameAllocationService frameAllocationService;
     private final UserRepository userRepository;
     private final OutboxEventPublisher outboxEventPublisher;
     private final MeterRegistry meterRegistry;
@@ -125,6 +127,10 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
             Order savedOrder = orderRepository.save(order);
 
             inventoryCommand.commitReservations(sessionId, savedOrder);
+            outboxEventPublisher.publish("ORDER_PLACED", String.valueOf(savedOrder.getId()), Map.of(
+                    "orderId", savedOrder.getId(),
+                    "orderNumber", savedOrder.getOrderNumber()
+            ));
 
             cartRepository.findBySessionId(sessionId)
                     .ifPresent(c -> {
@@ -233,6 +239,10 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
             throw new BusinessException("INVALID_STATUS_TRANSITION",
                 "この注文は発送完了にできません（現在のステータス: " + order.getStatus() + "）");
         }
+        if (!isFullyAllocated(order)) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                    "この注文は発送完了にできません（現在のステータス: " + order.getStatus() + "）");
+        }
 
         order.setStatus(Order.OrderStatus.SHIPPED);
         order = orderRepository.save(order);
@@ -256,6 +266,28 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderDto retryAllocation(Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+
+        if (order.getStatus() == Order.OrderStatus.CANCELLED
+                || order.getStatus() == Order.OrderStatus.SHIPPED
+                || order.getStatus() == Order.OrderStatus.DELIVERED) {
+            throw new BusinessException("INVALID_STATUS_TRANSITION",
+                    "この注文は引当再試行できません（現在のステータス: " + order.getStatus() + "）");
+        }
+
+        if (!isFullyAllocated(order)) {
+            frameAllocationService.allocatePendingByOrderId(orderId);
+        }
+
+        Order refreshed = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("ORDER_NOT_FOUND", "注文が見つかりません"));
+        return OrderDto.fromEntity(refreshed);
+    }
+
+    @Override
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<OrderDto> getAllOrders() {
         return orderRepository.findAll().stream()
@@ -274,6 +306,16 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     private String generateOrderNumber() {
         Long sequence = orderRepository.getNextOrderNumberSequence();
         return "ORD-" + String.format("%010d", sequence);
+    }
+
+    private boolean isFullyAllocated(Order order) {
+        int orderedQuantity = order.getItems().stream()
+                .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                .sum();
+        int allocatedQuantity = order.getItems().stream()
+                .mapToInt(item -> item.getAllocatedQty() != null ? item.getAllocatedQty() : 0)
+                .sum();
+        return orderedQuantity == allocatedQuantity;
     }
 
 }

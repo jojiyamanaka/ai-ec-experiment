@@ -3,6 +3,8 @@ import type { Product } from '@entities/product'
 export interface OrderItem {
   product: Product
   quantity: number
+  orderedQuantity: number
+  allocatedQuantity: number
   subtotal: number
 }
 
@@ -14,6 +16,8 @@ export interface Order {
   userDisplayName?: string
   items: OrderItem[]
   totalPrice: number
+  orderedQuantity: number
+  allocatedQuantity: number
   status: string
   statusLabel?: string
   createdAt: string

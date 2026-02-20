@@ -5,6 +5,7 @@ import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductDto;
 import com.example.aiec.modules.product.application.port.ProductListResponse;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +49,18 @@ class ProductControllerContractTest {
 
     @Test
     void getProducts_shouldReturnPagedProductList() throws Exception {
-        ProductDto item = new ProductDto(1L, "AIスピーカー", BigDecimal.valueOf(3980),
-                "/img/speaker.jpg", "AI搭載スピーカー", 100, true,
-                "P000001", 1L, "未分類", null, null, null, null);
+        ProductDto item = new ProductDto();
+        item.setId(1L);
+        item.setName("AIスピーカー");
+        item.setPrice(BigDecimal.valueOf(3980));
+        item.setImage("/img/speaker.jpg");
+        item.setDescription("AI搭載スピーカー");
+        item.setAllocationType(AllocationType.REAL);
+        item.setEffectiveStock(100);
+        item.setIsPublished(true);
+        item.setProductCode("P000001");
+        item.setCategoryId(1L);
+        item.setCategoryName("未分類");
         ProductListResponse response = new ProductListResponse(List.of(item), 1L, 1, 20);
         when(productQuery.getPublishedProducts(1, 20)).thenReturn(response);
 
@@ -69,9 +79,18 @@ class ProductControllerContractTest {
 
     @Test
     void getProduct_shouldReturnProductWithRequiredFields() throws Exception {
-        ProductDto product = new ProductDto(42L, "商品A", BigDecimal.valueOf(1980),
-                "/img/a.jpg", "商品Aの説明", 50, true,
-                "P000042", 1L, "未分類", null, null, null, null);
+        ProductDto product = new ProductDto();
+        product.setId(42L);
+        product.setName("商品A");
+        product.setPrice(BigDecimal.valueOf(1980));
+        product.setImage("/img/a.jpg");
+        product.setDescription("商品Aの説明");
+        product.setAllocationType(AllocationType.FRAME);
+        product.setEffectiveStock(50);
+        product.setIsPublished(true);
+        product.setProductCode("P000042");
+        product.setCategoryId(1L);
+        product.setCategoryName("未分類");
         when(productQuery.getProduct(42L)).thenReturn(product);
 
         mockMvc.perform(get("/api/item/42"))
@@ -81,7 +100,8 @@ class ProductControllerContractTest {
                 .andExpect(jsonPath("$.data.name").value("商品A"))
                 .andExpect(jsonPath("$.data.price").value(1980))
                 .andExpect(jsonPath("$.data.isPublished").value(true))
-                .andExpect(jsonPath("$.data.stock").value(50));
+                .andExpect(jsonPath("$.data.allocationType").value("FRAME"))
+                .andExpect(jsonPath("$.data.effectiveStock").value(50));
     }
 
     // ── GET /api/item ページ指定 ──────────────────────────────────────────

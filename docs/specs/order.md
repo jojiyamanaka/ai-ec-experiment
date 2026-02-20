@@ -124,3 +124,11 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 
 **バックエンド**: `OrderService.java`, `OrderController.java`, `Order.java`, `OrderItem.java`, `InventoryService.java`
 **フロントエンド**: `pages/customer/OrderConfirmPage/`, `pages/customer/OrderCompletePage/`, `features/cart/model/CartContext.tsx`
+
+---
+
+## CHG-023 追記
+
+- 注文/注文明細レスポンスに `orderedQuantity` と `allocatedQuantity` を追加。
+- 出荷条件は `allocatedQuantity == orderedQuantity`。
+- 管理API `POST /api/order/{id}/allocation/retry` を追加（未引当がある注文に対して本引当を再試行）。

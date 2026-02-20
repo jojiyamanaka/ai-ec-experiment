@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useProducts } from '@entities/product'
-import type { CreateProductRequest, ProductCategory } from '@entities/product'
+import { useProducts, getAdminItemInventory, updateAdminItemInventory } from '@entities/product'
+import type {
+  AllocationType,
+  CreateProductRequest,
+  ProductCategory,
+  ProductInventory,
+  UpdateProductInventoryRequest,
+} from '@entities/product'
 import {
   AdminFilterChips,
   AdminModalBase,
@@ -10,18 +16,40 @@ import {
   AdminTableShell,
 } from '@shared/ui/admin'
 
+type DetailTab = 'PRODUCT' | 'INVENTORY' | 'SALES'
+
 interface ProductDetailForm {
   name: string
   description: string
   categoryId: number
   price: number
-  stock: number
   image: string
+}
+
+interface SalesForm {
   isPublished: boolean
   publishStartAt: string
   publishEndAt: string
   saleStartAt: string
   saleEndAt: string
+}
+
+interface InventoryForm {
+  allocationType: AllocationType
+  allocatableQty: number
+  salesLimitTotal: number
+  allocatedQty: number
+  remainingQty: number
+  consumedQty: number
+}
+
+const INITIAL_INVENTORY_FORM: InventoryForm = {
+  allocationType: 'REAL',
+  allocatableQty: 0,
+  salesLimitTotal: 0,
+  allocatedQty: 0,
+  remainingQty: 0,
+  consumedQty: 0,
 }
 
 export default function AdminItemPage() {
@@ -40,7 +68,11 @@ export default function AdminItemPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [publishFilter, setPublishFilter] = useState<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL')
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<DetailTab>('PRODUCT')
   const [detailForm, setDetailForm] = useState<ProductDetailForm | null>(null)
+  const [salesForm, setSalesForm] = useState<SalesForm | null>(null)
+  const [inventoryForm, setInventoryForm] = useState<InventoryForm>(INITIAL_INVENTORY_FORM)
+  const [inventorySnapshot, setInventorySnapshot] = useState<ProductInventory | null>(null)
   const [isDetailSaving, setIsDetailSaving] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -53,7 +85,7 @@ export default function AdminItemPage() {
     description: '',
     categoryId: 0,
     price: 0,
-    stock: 0,
+    allocationType: 'REAL',
     isPublished: true,
     publishStartAt: null,
     publishEndAt: null,
@@ -104,21 +136,43 @@ export default function AdminItemPage() {
     const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null
     if (!selectedProduct) {
       setDetailForm(null)
+      setSalesForm(null)
+      setInventoryForm(INITIAL_INVENTORY_FORM)
+      setInventorySnapshot(null)
       return
     }
+
     setDetailForm({
       name: selectedProduct.name,
       description: selectedProduct.description,
       categoryId: selectedProduct.categoryId ?? categories[0]?.id ?? 0,
       price: selectedProduct.price,
-      stock: selectedProduct.stock,
       image: selectedProduct.image,
+    })
+    setSalesForm({
       isPublished: selectedProduct.isPublished,
       publishStartAt: toDateTimeLocal(selectedProduct.publishStartAt),
       publishEndAt: toDateTimeLocal(selectedProduct.publishEndAt),
       saleStartAt: toDateTimeLocal(selectedProduct.saleStartAt),
       saleEndAt: toDateTimeLocal(selectedProduct.saleEndAt),
     })
+
+    const loadInventory = async () => {
+      const response = await getAdminItemInventory(selectedProduct.id)
+      if (response.success && response.data) {
+        setInventorySnapshot(response.data)
+        setInventoryForm({
+          allocationType: response.data.allocationType,
+          allocatableQty: response.data.locationStock.allocatableQty,
+          salesLimitTotal: response.data.salesLimit.salesLimitTotal,
+          allocatedQty: response.data.locationStock.allocatedQty,
+          remainingQty: response.data.locationStock.remainingQty,
+          consumedQty: response.data.salesLimit.consumedQty,
+        })
+      }
+    }
+
+    void loadInventory()
   }, [categories, products, selectedProductId])
 
   const handleCreateProduct = async () => {
@@ -137,7 +191,7 @@ export default function AdminItemPage() {
         description: '',
         categoryId: categories[0]?.id ?? 0,
         price: 0,
-        stock: 0,
+        allocationType: 'REAL',
         isPublished: true,
         publishStartAt: null,
         publishEndAt: null,
@@ -210,26 +264,67 @@ export default function AdminItemPage() {
     setDetailForm((prev) => (prev ? { ...prev, [field]: value } : prev))
   }
 
+  const handleSalesField = <K extends keyof SalesForm>(field: K, value: SalesForm[K]) => {
+    setSalesForm((prev) => (prev ? { ...prev, [field]: value } : prev))
+  }
+
+  const handleInventoryField = <K extends keyof InventoryForm>(field: K, value: InventoryForm[K]) => {
+    setInventoryForm((prev) => ({ ...prev, [field]: value }))
+  }
+
   const handleSaveDetail = async () => {
-    if (!selectedProductId || !detailForm) {
+    if (!selectedProductId || !detailForm || !salesForm) {
       return
     }
+
     setIsDetailSaving(true)
     try {
-      await updateProduct(selectedProductId, {
-        name: detailForm.name,
-        description: detailForm.description,
-        categoryId: detailForm.categoryId > 0 ? detailForm.categoryId : undefined,
-        price: detailForm.price,
-        stock: detailForm.stock,
-        image: detailForm.image,
-        isPublished: detailForm.isPublished,
-        publishStartAt: toIsoOrNull(detailForm.publishStartAt),
-        publishEndAt: toIsoOrNull(detailForm.publishEndAt),
-        saleStartAt: toIsoOrNull(detailForm.saleStartAt),
-        saleEndAt: toIsoOrNull(detailForm.saleEndAt),
-      })
-      setSelectedProductId(null)
+      if (activeTab === 'PRODUCT') {
+        await updateProduct(selectedProductId, {
+          name: detailForm.name,
+          description: detailForm.description,
+          categoryId: detailForm.categoryId > 0 ? detailForm.categoryId : undefined,
+          price: detailForm.price,
+          image: detailForm.image,
+        })
+      }
+
+      if (activeTab === 'INVENTORY') {
+        const payload: UpdateProductInventoryRequest = {
+          allocationType: inventoryForm.allocationType,
+          locationStock: {
+            allocatableQty: inventoryForm.allocatableQty,
+          },
+          salesLimit: {
+            salesLimitTotal: inventoryForm.salesLimitTotal,
+          },
+        }
+        const response = await updateAdminItemInventory(selectedProductId, payload)
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message || '在庫情報の保存に失敗しました')
+        }
+        setInventorySnapshot(response.data)
+        setInventoryForm({
+          allocationType: response.data.allocationType,
+          allocatableQty: response.data.locationStock.allocatableQty,
+          salesLimitTotal: response.data.salesLimit.salesLimitTotal,
+          allocatedQty: response.data.locationStock.allocatedQty,
+          remainingQty: response.data.locationStock.remainingQty,
+          consumedQty: response.data.salesLimit.consumedQty,
+        })
+      }
+
+      if (activeTab === 'SALES') {
+        await updateProduct(selectedProductId, {
+          isPublished: salesForm.isPublished,
+          publishStartAt: toIsoOrNull(salesForm.publishStartAt),
+          publishEndAt: toIsoOrNull(salesForm.publishEndAt),
+          saleStartAt: toIsoOrNull(salesForm.saleStartAt),
+          saleEndAt: toIsoOrNull(salesForm.saleEndAt),
+        })
+      }
+
+      await refreshProducts()
       setSavedMessage(true)
       setTimeout(() => setSavedMessage(false), 3000)
     } catch (error) {
@@ -313,12 +408,9 @@ export default function AdminItemPage() {
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">品番</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">カテゴリ</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">価格（円）</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">在庫数</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">引当区分</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">有効在庫</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">公開状態</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">公開開始</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">公開終了</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">販売開始</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">販売終了</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -326,7 +418,10 @@ export default function AdminItemPage() {
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="whitespace-nowrap px-6 py-4 text-sm">
                   <button
-                    onClick={() => setSelectedProductId(product.id)}
+                    onClick={() => {
+                      setSelectedProductId(product.id)
+                      setActiveTab('PRODUCT')
+                    }}
                     className="font-mono text-blue-600 hover:underline"
                   >
                     {product.id}
@@ -346,15 +441,10 @@ export default function AdminItemPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{product.productCode}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  {product.categoryName}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">
-                  {product.price.toLocaleString()}円
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">
-                  {product.stock}
-                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">{product.categoryName}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">{product.price.toLocaleString()}円</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{product.allocationType}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">{product.effectiveStock}</td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
@@ -365,18 +455,6 @@ export default function AdminItemPage() {
                   >
                     {product.isPublished ? '公開' : '非公開'}
                   </span>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                  {toDateTimeLocal(product.publishStartAt) || '-'}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                  {toDateTimeLocal(product.publishEndAt) || '-'}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                  {toDateTimeLocal(product.saleStartAt) || '-'}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                  {toDateTimeLocal(product.saleEndAt) || '-'}
                 </td>
               </tr>
             ))}
@@ -391,131 +469,195 @@ export default function AdminItemPage() {
         maxWidthClass="max-w-4xl"
         bodyClassName="p-8"
       >
-        {selectedProduct && detailForm ? (
+        {selectedProduct && detailForm && salesForm ? (
           <>
-            <div>
-              <h3 className="mb-3 font-bold text-zinc-900">基本情報</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm text-zinc-700">
-                  品番
-                  <input
-                    value={selectedProduct.productCode}
-                    readOnly
-                    className="mt-1 w-full rounded border bg-gray-50 px-3 py-2 text-gray-700"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  商品名
-                  <input
-                    value={detailForm.name}
-                    onChange={(e) => handleDetailField('name', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  カテゴリ
-                  <select
-                    value={detailForm.categoryId}
-                    onChange={(e) => handleDetailField('categoryId', parseInt(e.target.value, 10))}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}（ID:{category.id}）
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    現在のカテゴリID: {selectedDetailCategory?.id ?? detailForm.categoryId}
-                  </p>
-                </label>
-                <label className="text-sm text-zinc-700">
-                  価格
-                  <input
-                    type="number"
-                    value={detailForm.price}
-                    onChange={(e) => handleDetailField('price', parseInt(e.target.value, 10) || 0)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  在庫
-                  <input
-                    type="number"
-                    value={detailForm.stock}
-                    onChange={(e) => handleDetailField('stock', parseInt(e.target.value, 10) || 0)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700 md:col-span-2">
-                  画像URL
-                  <input
-                    type="text"
-                    value={detailForm.image}
-                    onChange={(e) => handleDetailField('image', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700 md:col-span-2">
-                  説明
-                  <textarea
-                    value={detailForm.description}
-                    onChange={(e) => handleDetailField('description', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-              </div>
+            <div className="mb-4 flex gap-2">
+              {([
+                { key: 'PRODUCT', label: '商品' },
+                { key: 'INVENTORY', label: '在庫' },
+                { key: 'SALES', label: '販売' },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`rounded px-4 py-2 text-sm ${
+                    activeTab === tab.key
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="mt-4 rounded-lg bg-gray-50 p-4">
-              <h3 className="mb-3 font-bold text-zinc-900">販売設定</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm text-zinc-700">
-                  公開開始
+            {activeTab === 'PRODUCT' && (
+              <div>
+                <h3 className="mb-3 font-bold text-zinc-900">商品情報</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="text-sm text-zinc-700">
+                    品番
+                    <input
+                      value={selectedProduct.productCode}
+                      readOnly
+                      className="mt-1 w-full rounded border bg-gray-50 px-3 py-2 text-gray-700"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    商品名
+                    <input
+                      value={detailForm.name}
+                      onChange={(e) => handleDetailField('name', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    カテゴリ
+                    <select
+                      value={detailForm.categoryId}
+                      onChange={(e) => handleDetailField('categoryId', parseInt(e.target.value, 10))}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    >
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}（ID:{category.id}）
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      現在のカテゴリID: {selectedDetailCategory?.id ?? detailForm.categoryId}
+                    </p>
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    価格
+                    <input
+                      type="number"
+                      value={detailForm.price}
+                      onChange={(e) => handleDetailField('price', parseInt(e.target.value, 10) || 0)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700 md:col-span-2">
+                    画像URL
+                    <input
+                      type="text"
+                      value={detailForm.image}
+                      onChange={(e) => handleDetailField('image', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700 md:col-span-2">
+                    説明
+                    <textarea
+                      value={detailForm.description}
+                      onChange={(e) => handleDetailField('description', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'INVENTORY' && (
+              <div>
+                <h3 className="mb-3 font-bold text-zinc-900">在庫情報</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="text-sm text-zinc-700">
+                    引当区分
+                    <select
+                      value={inventoryForm.allocationType}
+                      onChange={(e) => handleInventoryField('allocationType', e.target.value as AllocationType)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    >
+                      <option value="REAL">REAL</option>
+                      <option value="FRAME">FRAME</option>
+                    </select>
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    実在庫（引当可能数）
+                    <input
+                      type="number"
+                      value={inventoryForm.allocatableQty}
+                      onChange={(e) => handleInventoryField('allocatableQty', parseInt(e.target.value, 10) || 0)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    枠在庫（販売上限）
+                    <input
+                      type="number"
+                      value={inventoryForm.salesLimitTotal}
+                      onChange={(e) => handleInventoryField('salesLimitTotal', parseInt(e.target.value, 10) || 0)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <div className="rounded border bg-gray-50 p-3 text-sm text-gray-700">
+                    <p>引当済: {inventoryForm.allocatedQty}</p>
+                    <p>残数: {inventoryForm.remainingQty}</p>
+                    <p>枠消費: {inventoryForm.consumedQty}</p>
+                  </div>
+                </div>
+                {inventorySnapshot ? (
+                  <p className="mt-2 text-xs text-gray-500">
+                    最新反映: allocationType={inventorySnapshot.allocationType},
+                    location={inventorySnapshot.locationStock.remainingQty},
+                    sales={inventorySnapshot.salesLimit.remainingQty}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+            {activeTab === 'SALES' && (
+              <div className="rounded-lg bg-gray-50 p-4">
+                <h3 className="mb-3 font-bold text-zinc-900">販売設定</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="text-sm text-zinc-700">
+                    公開開始
+                    <input
+                      type="datetime-local"
+                      value={salesForm.publishStartAt}
+                      onChange={(e) => handleSalesField('publishStartAt', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    公開終了
+                    <input
+                      type="datetime-local"
+                      value={salesForm.publishEndAt}
+                      onChange={(e) => handleSalesField('publishEndAt', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    販売開始
+                    <input
+                      type="datetime-local"
+                      value={salesForm.saleStartAt}
+                      onChange={(e) => handleSalesField('saleStartAt', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm text-zinc-700">
+                    販売終了
+                    <input
+                      type="datetime-local"
+                      value={salesForm.saleEndAt}
+                      onChange={(e) => handleSalesField('saleEndAt', e.target.value)}
+                      className="mt-1 w-full rounded border px-3 py-2"
+                    />
+                  </label>
+                </div>
+                <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-700">
                   <input
-                    type="datetime-local"
-                    value={detailForm.publishStartAt}
-                    onChange={(e) => handleDetailField('publishStartAt', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
+                    type="checkbox"
+                    checked={salesForm.isPublished}
+                    onChange={(e) => handleSalesField('isPublished', e.target.checked)}
                   />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  公開終了
-                  <input
-                    type="datetime-local"
-                    value={detailForm.publishEndAt}
-                    onChange={(e) => handleDetailField('publishEndAt', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  販売開始
-                  <input
-                    type="datetime-local"
-                    value={detailForm.saleStartAt}
-                    onChange={(e) => handleDetailField('saleStartAt', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm text-zinc-700">
-                  販売終了
-                  <input
-                    type="datetime-local"
-                    value={detailForm.saleEndAt}
-                    onChange={(e) => handleDetailField('saleEndAt', e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                  />
+                  公開
                 </label>
               </div>
-              <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={detailForm.isPublished}
-                  onChange={(e) => handleDetailField('isPublished', e.target.checked)}
-                />
-                公開
-              </label>
-            </div>
+            )}
 
             <div className="mt-6 flex gap-2">
               <button
@@ -523,7 +665,7 @@ export default function AdminItemPage() {
                 disabled={isDetailSaving}
                 className="flex-1 rounded bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
               >
-                {isDetailSaving ? '保存中...' : '商品情報を保存'}
+                {isDetailSaving ? '保存中...' : activeTab === 'PRODUCT' ? '商品情報を保存' : activeTab === 'INVENTORY' ? '在庫情報を保存' : '販売設定を保存'}
               </button>
             </div>
 
@@ -575,22 +717,21 @@ export default function AdminItemPage() {
               </option>
             ))}
           </select>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              placeholder="価格"
-              value={createForm.price}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, price: parseInt(e.target.value, 10) || 0 }))}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-            <input
-              type="number"
-              placeholder="在庫"
-              value={createForm.stock}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, stock: parseInt(e.target.value, 10) || 0 }))}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-          </div>
+          <select
+            value={createForm.allocationType}
+            onChange={(e) => setCreateForm((prev) => ({ ...prev, allocationType: e.target.value as AllocationType }))}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="REAL">REAL</option>
+            <option value="FRAME">FRAME</option>
+          </select>
+          <input
+            type="number"
+            placeholder="価格"
+            value={createForm.price}
+            onChange={(e) => setCreateForm((prev) => ({ ...prev, price: parseInt(e.target.value, 10) || 0 }))}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
           <div className="grid grid-cols-2 gap-3">
             <input
               type="datetime-local"

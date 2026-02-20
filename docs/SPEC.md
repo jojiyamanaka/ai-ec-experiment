@@ -124,6 +124,8 @@ AIがおすすめする商品を販売するECサイトのプロトタイプ。
   - 他モジュールの `domain.*` 直接参照禁止。`application.port.*` 経由のみ
   - UseCase 実装クラスはパッケージプライベート（`class`、`public` 不可）
   - クロスモジュール JPA 関連禁止。参照は ID のみ
+- 在庫モデル: `products.stock` 非依存。`products.allocation_type` と `location_stocks`（実在庫）、`sales_limits`（枠在庫）で管理
+- 引当モデル: `order_items.allocated_qty` を進捗の真実として保持し、枠在庫商品は Outbox（`ORDER_PLACED` / `STOCK_AVAILABILITY_INCREASED`）で非同期本引当
 - ArchUnit による境界制約テスト（10ルール）
 - 非同期処理（監査ログ・メール送信）: Transactional Outbox パターン + ポーリングワーカー（`modules/shared/outbox`）
 - ジョブ管理（業務自動化）: JobRunr ベースの統一基盤（`modules/shared/job`）+ 各モジュールのジョブ実装（`*/application/job`）

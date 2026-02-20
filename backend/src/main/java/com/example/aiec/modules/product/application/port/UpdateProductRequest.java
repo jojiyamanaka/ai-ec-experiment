@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,8 +30,7 @@ public class UpdateProductRequest {
     @Digits(integer = 10, fraction = 0, message = "価格は整数である必要があります")
     private BigDecimal price;
 
-    @Min(value = 0, message = "在庫数は0以上である必要があります")
-    private Integer stock;
+    private AllocationType allocationType;
 
     private Boolean isPublished;
 

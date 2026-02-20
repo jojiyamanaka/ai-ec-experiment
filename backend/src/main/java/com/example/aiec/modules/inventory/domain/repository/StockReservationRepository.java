@@ -20,18 +20,6 @@ import java.util.Optional;
 public interface StockReservationRepository extends JpaRepository<StockReservation, Long> {
 
     /**
-     * 有効在庫を計算する
-     * stock - 有効な仮引当の合計 - 本引当の合計
-     */
-    @Query("SELECT p.stock " +
-            "- COALESCE(SUM(CASE WHEN r.type = 'TENTATIVE' AND r.expiresAt > :now THEN r.quantity ELSE 0 END), 0) " +
-            "- COALESCE(SUM(CASE WHEN r.type = 'COMMITTED' THEN r.quantity ELSE 0 END), 0) " +
-            "FROM Product p LEFT JOIN StockReservation r ON p.id = r.product.id " +
-            "WHERE p.id = :productId " +
-            "GROUP BY p.stock")
-    Integer calculateAvailableStock(@Param("productId") Long productId, @Param("now") Instant now);
-
-    /**
      * 仮引当の合計数量を取得
      */
     @Query("SELECT COALESCE(SUM(r.quantity), 0) FROM StockReservation r " +

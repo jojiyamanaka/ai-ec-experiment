@@ -11,7 +11,10 @@ export class ProductDto {
   price!: number;
 
   @ApiProperty()
-  stock!: number;
+  allocationType!: 'REAL' | 'FRAME';
+
+  @ApiProperty()
+  effectiveStock!: number;
 
   @ApiProperty()
   imageUrl!: string;

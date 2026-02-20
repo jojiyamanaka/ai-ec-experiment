@@ -42,6 +42,10 @@ public class Product {
     @Column(nullable = false)
     private Integer stock;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "allocation_type", nullable = false, length = 20)
+    private AllocationType allocationType = AllocationType.REAL;
+
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = true;
 
@@ -104,6 +108,7 @@ public class Product {
         this.image = image;
         this.description = description;
         this.stock = stock;
+        this.allocationType = AllocationType.REAL;
         this.isPublished = isPublished;
     }
 

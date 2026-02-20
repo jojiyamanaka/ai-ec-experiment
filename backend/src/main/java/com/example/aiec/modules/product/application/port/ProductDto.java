@@ -1,6 +1,7 @@
 package com.example.aiec.modules.product.application.port;
 
 import com.example.aiec.modules.product.domain.entity.Product;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,8 +29,10 @@ public class ProductDto {
     private String image;
     @Schema(description = "商品説明")
     private String description;
-    @Schema(description = "在庫数", example = "100")
-    private Integer stock;
+    @Schema(description = "引当区分", example = "REAL")
+    private AllocationType allocationType;
+    @Schema(description = "有効在庫", example = "100")
+    private Integer effectiveStock;
     @Schema(description = "公開状態", example = "true")
     private Boolean isPublished;
     @Schema(description = "商品コード", example = "P000001")
@@ -51,17 +54,22 @@ public class ProductDto {
      * エンティティから DTO を生成
      */
     public static ProductDto fromEntity(Product product) {
-        return fromEntity(product, null);
+        return fromEntity(product, null, 0);
     }
 
     public static ProductDto fromEntity(Product product, String categoryName) {
+        return fromEntity(product, categoryName, 0);
+    }
+
+    public static ProductDto fromEntity(Product product, String categoryName, Integer effectiveStock) {
         return new ProductDto(
                 product.getId(),
                 product.getName(),
                 product.getPrice(),
                 product.getImage(),
                 product.getDescription(),
-                product.getStock(),
+                product.getAllocationType(),
+                effectiveStock,
                 product.getIsPublished(),
                 product.getProductCode(),
                 product.getCategoryId(),

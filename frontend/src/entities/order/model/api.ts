@@ -36,6 +36,10 @@ export async function deliverOrder(orderId: number): Promise<ApiResponse<Order>>
   return fetchApi<Order>(`/api/order/${orderId}/deliver`, { method: 'POST' }, 'bo')
 }
 
+export async function retryAllocation(orderId: number): Promise<ApiResponse<Order>> {
+  return fetchApi<Order>(`/api/admin/orders/${orderId}/allocation/retry`, { method: 'POST' }, 'bo')
+}
+
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
   const response = await fetchApi<{ orders?: Order[] } | Order[]>('/api/order', {}, 'bo')
   if (!response.success || !response.data) {

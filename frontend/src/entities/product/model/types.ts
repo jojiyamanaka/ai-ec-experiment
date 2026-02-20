@@ -1,3 +1,5 @@
+export type AllocationType = 'REAL' | 'FRAME'
+
 export interface Product {
   id: number
   productCode: string
@@ -7,7 +9,8 @@ export interface Product {
   price: number
   image: string
   description: string
-  stock: number
+  allocationType: AllocationType
+  effectiveStock: number
   isPublished: boolean
   publishStartAt: string | number | null
   publishEndAt: string | number | null
@@ -28,7 +31,7 @@ export interface CreateProductRequest {
   description?: string
   categoryId: number
   price: number
-  stock: number
+  allocationType?: AllocationType
   isPublished?: boolean
   publishStartAt?: string | null
   publishEndAt?: string | null
@@ -42,7 +45,7 @@ export interface UpdateProductRequest {
   description?: string
   categoryId?: number
   price?: number
-  stock?: number
+  allocationType?: AllocationType
   isPublished?: boolean
   publishStartAt?: string | null
   publishEndAt?: string | null
@@ -68,4 +71,30 @@ export interface UpdateProductCategoryRequest {
   name?: string
   displayOrder?: number
   isPublished?: boolean
+}
+
+export interface ProductInventory {
+  productId: number
+  allocationType: AllocationType
+  locationStock: {
+    locationId: number
+    allocatableQty: number
+    allocatedQty: number
+    remainingQty: number
+  }
+  salesLimit: {
+    salesLimitTotal: number
+    consumedQty: number
+    remainingQty: number
+  }
+}
+
+export interface UpdateProductInventoryRequest {
+  allocationType: AllocationType
+  locationStock: {
+    allocatableQty: number
+  }
+  salesLimit: {
+    salesLimitTotal: number
+  }
 }

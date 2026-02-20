@@ -3,6 +3,8 @@ import { CoreApiService } from '../core-api/core-api.service';
 import { RedisService } from '../redis/redis.service';
 import { ApiResponse } from '@app/shared';
 
+type AllocationType = 'REAL' | 'FRAME';
+
 interface CoreProduct {
   id: number;
   productCode?: string;
@@ -13,7 +15,8 @@ interface CoreProduct {
   categoryId?: number;
   categoryName?: string;
   category?: string;
-  stock: number;
+  allocationType?: AllocationType;
+  effectiveStock?: number;
   isPublished?: boolean;
   published?: boolean;
   publishStartAt?: string | number;
@@ -41,11 +44,11 @@ export class ProductsService {
     const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 20;
     const cacheKey = `cache:products:list:page:${safePage}:limit:${safeLimit}`;
 
-    // 1. キャッシュ確認
     const cached = await this.redisService.get<any>(cacheKey);
-    if (cached) return { success: true, data: cached };
+    if (cached) {
+      return { success: true, data: cached };
+    }
 
-    // 2. Core API 呼び出し
     const response = await this.coreApiService.get<ApiResponse<CoreProductList>>(
       `/api/item?page=${safePage}&limit=${safeLimit}`,
       undefined,
@@ -67,7 +70,6 @@ export class ProductsService {
       limit: response.data.limit,
     };
 
-    // 3. キャッシュ保存（TTL: 180秒）
     await this.redisService.set(cacheKey, data, 180);
     return { success: true, data };
   }
@@ -75,11 +77,11 @@ export class ProductsService {
   async getProductById(id: number, traceId?: string): Promise<ApiResponse<any>> {
     const cacheKey = `cache:product:${id}`;
 
-    // 1. キャッシュ確認
     const cached = await this.redisService.get<any>(cacheKey);
-    if (cached) return { success: true, data: cached };
+    if (cached) {
+      return { success: true, data: cached };
+    }
 
-    // 2. Core API 呼び出し
     const response = await this.coreApiService.get<ApiResponse<CoreProduct>>(
       `/api/item/${id}`,
       undefined,
@@ -101,8 +103,6 @@ export class ProductsService {
     }
 
     const data = this.transformProduct(response.data);
-
-    // 3. キャッシュ保存（TTL: 600秒）
     await this.redisService.set(cacheKey, data, 600);
     return { success: true, data };
   }
@@ -110,13 +110,14 @@ export class ProductsService {
   async getProductFull(id: number, traceId?: string): Promise<ApiResponse<any>> {
     const relatedCacheKey = `cache:product:${id}:related`;
 
-    // 商品詳細 + 関連商品キャッシュを並列取得
     const [product, relatedCached] = await Promise.all([
       this.getProductById(id, traceId),
       this.redisService.get<any>(relatedCacheKey),
     ]);
 
-    if (!product.success) return product;
+    if (!product.success) {
+      return product;
+    }
 
     let relatedProducts: any[];
     if (relatedCached) {
@@ -145,13 +146,15 @@ export class ProductsService {
   }
 
   transformProduct(product: CoreProduct): any {
-    const stockStatus = this.getStockStatus(product.stock);
+    const effectiveStock = this.resolveEffectiveStock(product);
+    const stockStatus = this.getStockStatus(effectiveStock);
     const isPublished = this.isPublished(product);
     const categoryName = product.categoryName ?? product.category ?? '';
     const publishStartAt = product.publishStartAt ?? null;
     const publishEndAt = product.publishEndAt ?? null;
     const saleStartAt = product.saleStartAt ?? null;
     const saleEndAt = product.saleEndAt ?? null;
+
     return {
       id: product.id,
       productCode: product.productCode ?? '',
@@ -163,7 +166,8 @@ export class ProductsService {
       categoryId: product.categoryId ?? null,
       categoryName,
       category: categoryName,
-      stock: product.stock,
+      allocationType: product.allocationType ?? 'REAL',
+      effectiveStock,
       isPublished,
       publishStartAt,
       publishEndAt,
@@ -171,6 +175,10 @@ export class ProductsService {
       saleEndAt,
       stockStatus,
     };
+  }
+
+  private resolveEffectiveStock(product: CoreProduct): number {
+    return Number(product.effectiveStock ?? 0);
   }
 
   private isVisible(product: CoreProduct): boolean {
@@ -199,18 +207,17 @@ export class ProductsService {
       return null;
     }
     if (typeof value === 'number') {
-      // Core API の Instant は epoch seconds の小数で返るため ms に正規化する
       return value < 10_000_000_000 ? Math.floor(value * 1000) : Math.floor(value);
     }
     const parsed = Date.parse(value);
     return Number.isNaN(parsed) ? null : parsed;
   }
 
-  private getStockStatus(stock: number): string {
-    if (stock === 0) {
+  private getStockStatus(effectiveStock: number): string {
+    if (effectiveStock === 0) {
       return '在庫なし';
     }
-    if (stock <= 5) {
+    if (effectiveStock <= 5) {
       return '残りわずか';
     }
     return '在庫あり';

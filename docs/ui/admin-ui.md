@@ -14,9 +14,8 @@
 | 画面 | パス | 主な操作 |
 |------|------|---------|
 | BoUser ログイン | /bo/login | 管理者アカウントでログイン |
-| 商品管理 | /bo/item | 品番/カテゴリ/価格/在庫/公開状態/公開・販売日時の編集、商品新規登録 |
-| 注文管理 | /bo/order | 注文一覧・ステータス変更・キャンセル |
-| 在庫管理 | /bo/inventory | 在庫一覧・在庫調整・調整履歴 |
+| 商品管理 | /bo/item | 品番/カテゴリ/価格/公開状態/公開・販売日時の編集、商品新規登録、在庫タブ操作 |
+| 注文管理 | /bo/order | 注文一覧・ステータス変更・本引当再試行・キャンセル |
 | 会員管理 | /bo/members | 会員一覧・新規登録・詳細/FULL更新・住所管理・有効/無効切替 |
 
 すべての変更は**即時反映**（バッチ処理なし）。
@@ -74,7 +73,7 @@
 ### 公開/販売期間・カテゴリ運用
 
 - 顧客向け表示: `product.isPublished && category.isPublished && now ∈ [publishStartAt, publishEndAt]`
-- 購入可否: `顧客向け表示 && now ∈ [saleStartAt, saleEndAt] && stock > 0`
+- 購入可否: `顧客向け表示 && now ∈ [saleStartAt, saleEndAt] && effectiveStock > 0`
 - `isPublished = false` のカテゴリは商品登録/更新で選択不可（`CATEGORY_INACTIVE`）
 - 期間制約違反（公開期間・販売期間の逆転、販売期間が公開期間外）は `INVALID_SCHEDULE`
 
@@ -94,6 +93,7 @@
 
 - 全注文をテーブル表示（注文番号, 日時, 合計金額, ステータス）
 - ステータスフィルタ: ALL, PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+- 注文単位の引当進捗（`allocatedQuantity / orderedQuantity`）を表示
 
 ### ステータス変更
 
@@ -101,7 +101,8 @@
 |-----------|-----------|--------|
 | PENDING | 「確認」ボタン | CONFIRMED |
 | PENDING | 「キャンセル」ボタン | CANCELLED（在庫戻し） |
-| CONFIRMED | 「発送」ボタン | SHIPPED |
+| CONFIRMED | 「発送」ボタン | SHIPPED（Core側 `mark-shipped`。全量引当済みのみ） |
+| CONFIRMED | 「本引当再試行」ボタン | CONFIRMED（進捗のみ前進） |
 | CONFIRMED | 「キャンセル」ボタン | CANCELLED（在庫戻し） |
 | SHIPPED | 「配達完了」ボタン | DELIVERED |
 | SHIPPED/DELIVERED/CANCELLED | — | ステータス変更不可 |
@@ -112,20 +113,22 @@ PENDING(グレー), CONFIRMED(ブルー), SHIPPED(パープル), DELIVERED(グ�
 
 ---
 
-## 6. 在庫管理画面（/bo/inventory）
+## 6. 在庫タブ（/bo/item 内）
 
-### 在庫一覧
+- `/bo/inventory` は UI導線（ルーター/サイドバー）を廃止し、在庫操作は商品詳細に集約
+- 商品詳細は `商品 / 在庫 / 販売` の3タブ構成
 
-- 全商品の在庫情報: 商品ID, 商品名, 物理在庫, 有効在庫, 引当数, 公開状態
+### 在庫タブの編集項目
 
-### 在庫調整
+- 引当区分: `allocationType`（`REAL` / `FRAME`）
+- 実在庫: `locationStock.allocatableQty`（引当可能実在庫）
+- 枠在庫: `salesLimit.salesLimitTotal`（販売上限）
 
-- `POST /api/inventory/adjust` — 商品選択、増減数入力、理由入力（入荷/廃棄/棚卸差異等）
-- 調整前後の在庫数と差分を記録
+### 在庫タブの表示項目（算出値）
 
-### 在庫調整履歴
-
-- 過去の調整履歴一覧: 商品名, 調整前後の数量, 差分, 理由, 調整者, 日時
+- 引当済: `locationStock.allocatedQty`
+- 残数: `locationStock.remainingQty`
+- 枠消費: `salesLimit.consumedQty`
 
 ---
 

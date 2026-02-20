@@ -5,8 +5,10 @@ import type {
   CreateProductRequest,
   Product,
   ProductCategory,
+  ProductInventory,
   ProductListResponse,
   UpdateProductCategoryRequest,
+  UpdateProductInventoryRequest,
   UpdateProductRequest,
 } from './types'
 
@@ -50,6 +52,20 @@ export async function updateAdminItem(
   payload: UpdateProductRequest
 ): Promise<ApiResponse<Product>> {
   return fetchApi<Product>(`/api/admin/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }, 'bo')
+}
+
+export async function getAdminItemInventory(id: number): Promise<ApiResponse<ProductInventory>> {
+  return fetchApi<ProductInventory>(`/api/admin/items/${id}/inventory`, {}, 'bo')
+}
+
+export async function updateAdminItemInventory(
+  id: number,
+  payload: UpdateProductInventoryRequest
+): Promise<ApiResponse<ProductInventory>> {
+  return fetchApi<ProductInventory>(`/api/admin/items/${id}/inventory`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   }, 'bo')

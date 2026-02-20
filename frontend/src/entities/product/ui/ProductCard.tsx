@@ -26,7 +26,7 @@ function getStockStatus(stock: number) {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const stockStatus = getStockStatus(product.stock)
+  const stockStatus = getStockStatus(product.effectiveStock)
 
   return (
     <Link

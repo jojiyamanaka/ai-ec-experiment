@@ -1790,5 +1790,15 @@
   "servers": [],
   "components": {
     "schemas": {}
+  },
+  "x-chg-023": {
+    "allocationType": "REAL|FRAME",
+    "effectiveStock": "enabled",
+    "location_stocks": "enabled",
+    "sales_limits": "enabled",
+    "orderedQuantity": "enabled",
+    "allocatedQuantity": "enabled",
+    "allocationRetryPath": "/api/order/{id}/allocation/retry",
+    "legacyStock": "products.stock is non-business field"
   }
 }

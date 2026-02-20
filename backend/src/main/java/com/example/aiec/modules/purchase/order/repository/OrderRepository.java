@@ -57,10 +57,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
               AND o.is_deleted = FALSE
               AND EXISTS (
                   SELECT 1
-                  FROM stock_reservations sr
-                  WHERE sr.order_id = o.id
-                    AND sr.reservation_type = 'COMMITTED'
-                    AND sr.is_deleted = FALSE
+                  FROM order_items oi
+                  WHERE oi.order_id = o.id
+                    AND oi.is_deleted = FALSE
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM order_items oi
+                  WHERE oi.order_id = o.id
+                    AND oi.is_deleted = FALSE
+                    AND oi.allocated_qty < oi.quantity
               )
               AND NOT EXISTS (
                   SELECT 1
@@ -72,6 +78,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             ORDER BY o.created_at ASC
             """, nativeQuery = true)
     List<Order> findConfirmedWithoutOutboundShipment();
+
+    @Query("""
+            SELECT DISTINCT o
+            FROM Order o
+            LEFT JOIN FETCH o.items
+            WHERE o.id = :id
+            """)
+    Optional<Order> findByIdWithItems(@Param("id") Long id);
 
     @Modifying
     @Query("UPDATE Order o SET o.isDeleted = TRUE, o.deletedAt = CURRENT_TIMESTAMP, o.deletedByType = :deletedByType, o.deletedById = :deletedById WHERE o.id = :id")

@@ -35,6 +35,10 @@ public class OrderDto {
     private List<OrderItemDto> items;
     @Schema(description = "合計金額（円）", example = "11940")
     private BigDecimal totalPrice;
+    @Schema(description = "注文点数", example = "3")
+    private Integer orderedQuantity;
+    @Schema(description = "引当済点数", example = "2")
+    private Integer allocatedQuantity;
     @Schema(description = "注文ステータス", example = "PENDING")
     private String status;
     @Schema(description = "注文日時（ISO 8601）")
@@ -63,6 +67,14 @@ public class OrderDto {
                 .map(OrderItemDto::fromEntity)
                 .collect(Collectors.toList()));
         dto.setTotalPrice(order.getTotalPrice());
+        int orderedQuantity = order.getItems().stream()
+                .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                .sum();
+        int allocatedQuantity = order.getItems().stream()
+                .mapToInt(item -> item.getAllocatedQty() != null ? item.getAllocatedQty() : 0)
+                .sum();
+        dto.setOrderedQuantity(orderedQuantity);
+        dto.setAllocatedQuantity(allocatedQuantity);
         dto.setStatus(order.getStatus().name());
         dto.setCreatedAt(order.getCreatedAt().atZone(ZoneId.of("Asia/Tokyo")).format(ISO_FORMATTER));
         dto.setUpdatedAt(order.getUpdatedAt().atZone(ZoneId.of("Asia/Tokyo")).format(ISO_FORMATTER));

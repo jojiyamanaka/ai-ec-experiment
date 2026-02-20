@@ -45,4 +45,9 @@ public interface InventoryCommandPort {
      */
     InventoryAdjustment adjustStock(Long productId, Integer quantityDelta, String reason, BoUser admin);
 
+    /**
+     * 管理向け在庫タブを更新する
+     */
+    AdminItemInventoryDto updateAdminItemInventory(Long productId, UpdateItemInventoryRequest request, BoUser admin);
+
 }

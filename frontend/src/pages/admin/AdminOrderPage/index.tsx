@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getAllOrders, confirmOrder, shipOrder, deliverOrder, cancelOrder } from '@entities/order'
+import { getAllOrders, confirmOrder, shipOrder, deliverOrder, cancelOrder, retryAllocation } from '@entities/order'
 import type { Order } from '@entities/order'
 import {
   AdminFilterChips,
@@ -47,7 +47,7 @@ export default function AdminOrderPage() {
 
   const handleStatusChange = async (
     orderId: number,
-    action: 'confirm' | 'ship' | 'deliver' | 'cancel'
+    action: 'confirm' | 'ship' | 'deliver' | 'cancel' | 'retry'
   ) => {
     if (
       !window.confirm(
@@ -56,8 +56,10 @@ export default function AdminOrderPage() {
             ? '確認'
             : action === 'ship'
               ? '発送'
-              : action === 'deliver'
+            : action === 'deliver'
                 ? '配達完了'
+                : action === 'retry'
+                  ? '本引当再試行'
                 : 'キャンセル'
         }しますか？`
       )
@@ -78,6 +80,9 @@ export default function AdminOrderPage() {
         break
       case 'cancel':
         response = await cancelOrder(orderId)
+        break
+      case 'retry':
+        response = await retryAllocation(orderId)
         break
     }
 
@@ -147,6 +152,7 @@ export default function AdminOrderPage() {
               <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">会員メール</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">会員表示名</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">ステータス</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">引当進捗</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">合計金額</th>
             </tr>
           </thead>
@@ -180,6 +186,9 @@ export default function AdminOrderPage() {
                   }`}>
                     {getStatusLabel(order.status)}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 tabular-nums">
+                  {order.allocatedQuantity} / {order.orderedQuantity}
                 </td>
                 <td className="px-6 py-4 text-sm tabular-nums text-gray-900">
                   {order.totalPrice.toLocaleString()}円
@@ -218,6 +227,9 @@ export default function AdminOrderPage() {
                 <span className="font-medium text-gray-900">ステータス:</span> {getStatusLabel(selectedOrder.status)}
               </p>
               <p>
+                <span className="font-medium text-gray-900">引当進捗:</span> {selectedOrder.allocatedQuantity} / {selectedOrder.orderedQuantity}
+              </p>
+              <p>
                 <span className="font-medium text-gray-900">合計金額:</span>{' '}
                 {selectedOrder.totalPrice.toLocaleString()}円
               </p>
@@ -229,6 +241,7 @@ export default function AdminOrderPage() {
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">商品</th>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">数量</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">引当進捗</th>
                     <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">小計</th>
                   </tr>
                 </thead>
@@ -237,6 +250,7 @@ export default function AdminOrderPage() {
                     <tr key={`${selectedOrder.orderId}-${idx}`}>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.product.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.quantity}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.allocatedQuantity} / {item.orderedQuantity}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.subtotal.toLocaleString()}円</td>
                     </tr>
                   ))}
@@ -268,6 +282,12 @@ export default function AdminOrderPage() {
                     className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700"
                   >
                     発送
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(selectedOrder.orderId, 'retry')}
+                    className="rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+                  >
+                    本引当再試行
                   </button>
                   <button
                     onClick={() => handleStatusChange(selectedOrder.orderId, 'cancel')}

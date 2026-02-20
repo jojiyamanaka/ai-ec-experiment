@@ -2,6 +2,7 @@ package com.example.aiec.modules.purchase.application.usecase;
 
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
+import com.example.aiec.modules.inventory.application.service.FrameAllocationService;
 import com.example.aiec.modules.purchase.application.port.OrderDto;
 import com.example.aiec.modules.purchase.cart.entity.Cart;
 import com.example.aiec.modules.purchase.cart.entity.CartItem;
@@ -44,6 +45,7 @@ class OrderUseCaseStateTransitionTest {
     @Mock CartRepository cartRepository;
     @Mock CartService cartService;
     @Mock InventoryCommandPort inventoryCommand;
+    @Mock FrameAllocationService frameAllocationService;
     @Mock UserRepository userRepository;
     @Mock OutboxEventPublisher outboxEventPublisher;
 
@@ -55,7 +57,7 @@ class OrderUseCaseStateTransitionTest {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         orderUseCase = new OrderUseCase(
                 orderRepository, cartRepository, cartService,
-                inventoryCommand, userRepository, outboxEventPublisher, meterRegistry);
+                inventoryCommand, frameAllocationService, userRepository, outboxEventPublisher, meterRegistry);
         ReflectionTestUtils.invokeMethod(orderUseCase, "initMetrics");
     }
 

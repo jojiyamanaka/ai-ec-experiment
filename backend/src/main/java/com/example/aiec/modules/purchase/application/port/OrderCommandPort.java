@@ -32,4 +32,9 @@ public interface OrderCommandPort {
      */
     OrderDto deliverOrder(Long orderId);
 
+    /**
+     * 本引当を再試行
+     */
+    OrderDto retryAllocation(Long orderId);
+
 }

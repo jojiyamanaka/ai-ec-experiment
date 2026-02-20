@@ -2,11 +2,14 @@ package com.example.aiec.modules.product.adapter.rest;
 
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
+import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
+import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.product.application.port.ProductCategoryDto;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductDto;
 import com.example.aiec.modules.product.application.port.ProductListResponse;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.shared.domain.model.PermissionLevel;
 import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +40,8 @@ class BoAdminProductControllerContractTest {
     @Mock ProductCommandPort productCommand;
     @Mock BoAuthService boAuthService;
     @Mock OutboxEventPublisher outboxEventPublisher;
+    @Mock InventoryQueryPort inventoryQuery;
+    @Mock InventoryCommandPort inventoryCommand;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -44,16 +49,30 @@ class BoAdminProductControllerContractTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new BoAdminProductController(productQuery, productCommand, boAuthService, outboxEventPublisher))
+                .standaloneSetup(new BoAdminProductController(
+                        productQuery,
+                        productCommand,
+                        boAuthService,
+                        outboxEventPublisher,
+                        inventoryQuery,
+                        inventoryCommand))
                 .build();
     }
 
     @Test
     void getAdminProducts_shouldReturnPagedResult() throws Exception {
-        ProductDto item = new ProductDto(
-                1L, "商品A", BigDecimal.valueOf(1000), "/img/a.jpg", "説明", 10, true,
-                "P000001", 10L, "カテゴリA", null, null, null, null
-        );
+        ProductDto item = new ProductDto();
+        item.setId(1L);
+        item.setName("商品A");
+        item.setPrice(BigDecimal.valueOf(1000));
+        item.setImage("/img/a.jpg");
+        item.setDescription("説明");
+        item.setAllocationType(AllocationType.REAL);
+        item.setEffectiveStock(10);
+        item.setIsPublished(true);
+        item.setProductCode("P000001");
+        item.setCategoryId(10L);
+        item.setCategoryName("カテゴリA");
         when(boAuthService.verifyToken("token")).thenReturn(adminUser());
         when(productQuery.getAdminProducts(1, 20)).thenReturn(new ProductListResponse(List.of(item), 1L, 1, 20));
 
@@ -81,14 +100,22 @@ class BoAdminProductControllerContractTest {
 
     @Test
     void createProduct_shouldAcceptScheduleFields() throws Exception {
-        ProductDto created = new ProductDto(
-                2L, "新商品", BigDecimal.valueOf(2000), "/img/new.jpg", "説明", 5, true,
-                "P000002", 10L, "カテゴリA",
-                java.time.Instant.parse("2026-02-20T00:00:00Z"),
-                java.time.Instant.parse("2026-12-31T23:59:59Z"),
-                java.time.Instant.parse("2026-02-20T00:00:00Z"),
-                java.time.Instant.parse("2026-12-30T23:59:59Z")
-        );
+        ProductDto created = new ProductDto();
+        created.setId(2L);
+        created.setName("新商品");
+        created.setPrice(BigDecimal.valueOf(2000));
+        created.setImage("/img/new.jpg");
+        created.setDescription("説明");
+        created.setAllocationType(AllocationType.FRAME);
+        created.setEffectiveStock(5);
+        created.setIsPublished(true);
+        created.setProductCode("P000002");
+        created.setCategoryId(10L);
+        created.setCategoryName("カテゴリA");
+        created.setPublishStartAt(java.time.Instant.parse("2026-02-20T00:00:00Z"));
+        created.setPublishEndAt(java.time.Instant.parse("2026-12-31T23:59:59Z"));
+        created.setSaleStartAt(java.time.Instant.parse("2026-02-20T00:00:00Z"));
+        created.setSaleEndAt(java.time.Instant.parse("2026-12-30T23:59:59Z"));
         when(boAuthService.verifyToken("token")).thenReturn(adminUser());
         when(productCommand.createProduct(any())).thenReturn(created);
 
@@ -98,7 +125,7 @@ class BoAdminProductControllerContractTest {
         payload.put("description", "説明");
         payload.put("categoryId", 10);
         payload.put("price", 2000);
-        payload.put("stock", 5);
+        payload.put("allocationType", "FRAME");
         payload.put("isPublished", true);
         payload.put("publishStartAt", "2026-02-20T00:00:00Z");
         payload.put("publishEndAt", "2026-12-31T23:59:59Z");

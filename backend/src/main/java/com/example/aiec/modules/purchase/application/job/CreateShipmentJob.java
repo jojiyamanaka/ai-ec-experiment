@@ -59,6 +59,12 @@ public class CreateShipmentJob extends JobRunnerBase {
             if (shipmentRepository.existsByOrderIdAndShipmentType(order.getId(), Shipment.ShipmentType.OUTBOUND)) {
                 continue;
             }
+            boolean hasUnallocatedItem = order.getItems().stream()
+                    .anyMatch(item -> (item.getAllocatedQty() != null ? item.getAllocatedQty() : 0)
+                            < (item.getQuantity() != null ? item.getQuantity() : 0));
+            if (hasUnallocatedItem) {
+                continue;
+            }
 
             Shipment shipment = new Shipment();
             shipment.setOrder(order);

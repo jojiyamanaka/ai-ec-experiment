@@ -3,7 +3,6 @@ import { NavLink } from 'react-router'
 const menuItems = [
   { label: '商品', path: '/bo/item' },
   { label: '注文', path: '/bo/order' },
-  { label: '在庫', path: '/bo/inventory' },
   { label: '会員', path: '/bo/members' },
 ]
 

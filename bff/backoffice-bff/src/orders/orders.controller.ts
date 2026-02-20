@@ -111,4 +111,13 @@ export class OrdersController {
       req.traceId,
     );
   }
+
+  @Post(':id/allocation/retry')
+  @ApiOperation({ summary: '本引当再試行' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({ description: '更新後注文情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async retryAllocation(@Param('id') id: string, @Req() req: any): Promise<ApiResponse<any>> {
+    return this.ordersService.retryAllocation(parseInt(id, 10), req.token, req.traceId);
+  }
 }

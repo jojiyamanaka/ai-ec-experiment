@@ -30,7 +30,7 @@
 
 - 注文番号: `ORD-xxxxxxxxxx` 形式（0埋め10桁連番）
 - 注文確定時にカート自動クリア
-- 注文時に在庫引当（仮引当 → 本引当）
+- 注文時に在庫引当（`REAL`: 同期本引当、`FRAME`: 仮引当後に非同期本引当）
 - 詳細: [注文管理](./specs/order.md), [在庫管理](./specs/inventory.md)
 
 ### 4. 商品管理機能（管理画面）
@@ -45,7 +45,7 @@
 | ルール | 内容 |
 |--------|------|
 | 表示可否 | `product.isPublished && category.isPublished && now ∈ [publishStartAt, publishEndAt]` |
-| 購入可否 | `表示可否 && now ∈ [saleStartAt, saleEndAt] && stock > 0` |
+| 購入可否 | `表示可否 && now ∈ [saleStartAt, saleEndAt] && effectiveStock > 0` |
 | 整合制約 | `publishStartAt <= publishEndAt`、`saleStartAt <= saleEndAt`、販売期間は公開期間内 |
 | バリデーションエラー | 期間制約違反は `INVALID_SCHEDULE` |
 | カテゴリ選択制約 | `is_published = false` のカテゴリは商品登録/更新で指定不可（`CATEGORY_INACTIVE`） |
@@ -63,7 +63,7 @@
 
 ---
 
-## 在庫状態のルール
+## 在庫状態のルール（`effectiveStock` 基準）
 
 | 在庫数 | 状態 | 表示 | バッジ色 | カート追加 |
 |--------|------|------|----------|-----------|
@@ -79,6 +79,7 @@
 |------|----------|------|
 | 作成済み | PENDING | 注文作成の初期状態 |
 | 確認済み | CONFIRMED | 処理開始 |
+| 出荷準備中 | PREPARING_SHIPMENT | 出荷指示生成済み |
 | 発送済み | SHIPPED | 商品発送済み |
 | 配達完了 | DELIVERED | 配達完了 |
 | キャンセル | CANCELLED | キャンセル済み |
@@ -88,9 +89,10 @@
 | 遷移 | 条件・備考 |
 |------|-----------|
 | PENDING → CONFIRMED | 管理者が注文確認 |
-| CONFIRMED → SHIPPED | 梱包完了・配送引渡し |
+| CONFIRMED → PREPARING_SHIPMENT | 出荷指示生成ジョブで遷移 |
+| PREPARING_SHIPMENT → SHIPPED | 管理者が発送完了。`allocatedQuantity == orderedQuantity` が必須 |
 | SHIPPED → DELIVERED | 配達完了 |
-| PENDING/CONFIRMED → CANCELLED | 顧客or管理者がキャンセル、在庫戻し |
+| PENDING/CONFIRMED/PREPARING_SHIPMENT → CANCELLED | 顧客or管理者がキャンセル、在庫戻し |
 | SHIPPED/DELIVERED → CANCELLED | **不可** |
 
 詳細: [注文管理](./specs/order.md)

@@ -269,6 +269,30 @@ public class OrderController {
     }
 
     /**
+     * 引当再試行（管理者向け）
+     * POST /api/order/:id/allocation/retry
+     */
+    @PostMapping("/{id}/allocation/retry")
+    @Operation(summary = "本引当再試行", description = "管理者が注文の本引当を再試行する")
+    public ApiResponse<OrderDto> retryAllocation(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        String token = extractToken(authHeader);
+        BoUser boUser = boAuthService.verifyToken(token);
+        requireAdmin(boUser, "/api/order/" + id + "/allocation/retry");
+
+        OrderDto order = orderCommand.retryAllocation(id);
+        outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
+                "operationType", "ORDER_ALLOCATION_RETRY",
+                "performedBy", boUser.getEmail(),
+                "requestPath", "/api/order/" + id + "/allocation/retry",
+                "details", "Retried allocation: " + order.getOrderNumber()));
+
+        return ApiResponse.success(order);
+    }
+
+    /**
      * 注文配達完了（管理者向け）
      * POST /api/order/:id/deliver
      */

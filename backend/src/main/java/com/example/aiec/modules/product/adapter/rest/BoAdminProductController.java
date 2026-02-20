@@ -2,6 +2,10 @@ package com.example.aiec.modules.product.adapter.rest;
 
 import com.example.aiec.modules.backoffice.domain.entity.BoUser;
 import com.example.aiec.modules.backoffice.domain.service.BoAuthService;
+import com.example.aiec.modules.inventory.application.port.AdminItemInventoryDto;
+import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
+import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
+import com.example.aiec.modules.inventory.application.port.UpdateItemInventoryRequest;
 import com.example.aiec.modules.product.application.port.CreateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.CreateProductRequest;
 import com.example.aiec.modules.product.application.port.ProductCategoryDto;
@@ -35,6 +39,8 @@ public class BoAdminProductController {
     private final ProductCommandPort productCommand;
     private final BoAuthService boAuthService;
     private final OutboxEventPublisher outboxEventPublisher;
+    private final InventoryQueryPort inventoryQuery;
+    private final InventoryCommandPort inventoryCommand;
 
     @GetMapping({"/api/bo/admin/items", "/api/admin/items"})
     @Operation(summary = "管理向け商品一覧取得", description = "公開状態に関係なく商品一覧を取得")
@@ -79,6 +85,29 @@ public class BoAdminProductController {
         BoUser boUser = verifyAdmin(authHeader, "/api/bo/admin/items/" + id);
         ProductDto response = productCommand.updateProduct(id, request);
         publishAudit("ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/items/" + id, "Updated product: " + response.getName());
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping({"/api/bo/admin/items/{id}/inventory", "/api/admin/items/{id}/inventory"})
+    @Operation(summary = "管理向け在庫タブ取得", description = "商品の在庫タブ表示情報を取得")
+    public ApiResponse<AdminItemInventoryDto> getItemInventory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        BoUser boUser = verifyAdmin(authHeader, "/api/bo/admin/items/" + id + "/inventory");
+        AdminItemInventoryDto response = inventoryQuery.getAdminItemInventory(id);
+        publishAudit("ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/items/" + id + "/inventory", "Fetched inventory tab data");
+        return ApiResponse.success(response);
+    }
+
+    @PutMapping({"/api/bo/admin/items/{id}/inventory", "/api/admin/items/{id}/inventory"})
+    @Operation(summary = "管理向け在庫タブ更新", description = "商品の在庫タブ情報を更新")
+    public ApiResponse<AdminItemInventoryDto> updateItemInventory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestBody UpdateItemInventoryRequest request) {
+        BoUser boUser = verifyAdmin(authHeader, "/api/bo/admin/items/" + id + "/inventory");
+        AdminItemInventoryDto response = inventoryCommand.updateAdminItemInventory(id, request, boUser);
+        publishAudit("ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/items/" + id + "/inventory", "Updated inventory tab data");
         return ApiResponse.success(response);
     }
 

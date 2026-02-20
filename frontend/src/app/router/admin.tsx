@@ -5,7 +5,6 @@ import { ProductProvider } from '@entities/product'
 import { AdminLayout } from '@widgets/AdminLayout'
 import AdminItemPage from '@pages/admin/AdminItemPage'
 import AdminOrderPage from '@pages/admin/AdminOrderPage'
-import AdminInventoryPage from '@pages/admin/AdminInventoryPage'
 import AdminMembersPage from '@pages/admin/AdminMembersPage'
 import BoLoginPage from '@pages/admin/BoLoginPage'
 
@@ -21,7 +20,6 @@ export function AdminRouter() {
               <Route path="/bo" element={<AdminLayout />}>
                 <Route path="item" element={<AdminItemPage />} />
                 <Route path="order" element={<AdminOrderPage />} />
-                <Route path="inventory" element={<AdminInventoryPage />} />
                 <Route path="members" element={<AdminMembersPage />} />
               </Route>
             </Route>

@@ -40,8 +40,8 @@ export default function ItemDetailPage() {
     )
   }
 
-  const stockStatus = getStockStatus(product.stock)
-  const isSoldOut = product.stock === 0
+  const stockStatus = getStockStatus(product.effectiveStock)
+  const isSoldOut = product.effectiveStock === 0
 
   const handleAddToCart = async () => {
     setIsAdding(true)

@@ -9,8 +9,10 @@ import com.example.aiec.modules.product.application.port.UpdateProductRequest;
 import com.example.aiec.modules.product.application.port.UpdateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.product.domain.entity.Product;
 import com.example.aiec.modules.product.domain.entity.ProductCategory;
+import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.product.domain.repository.ProductRepository;
 import com.example.aiec.modules.product.domain.repository.ProductCategoryRepository;
 import com.example.aiec.modules.shared.exception.BusinessException;
@@ -39,6 +41,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
 
     private final ProductRepository productRepository;
     private final ProductCategoryRepository productCategoryRepository;
+    private final InventoryQueryPort inventoryQueryPort;
 
     private static final String DEFAULT_IMAGE = "/images/no-image.png";
 
@@ -53,7 +56,10 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         Map<Long, String> categoryNames = loadCategoryNames(productPage.getContent());
 
         List<ProductDto> items = productPage.getContent().stream()
-                .map(product -> ProductDto.fromEntity(product, categoryNames.get(product.getCategoryId())))
+                .map(product -> ProductDto.fromEntity(
+                        product,
+                        categoryNames.get(product.getCategoryId()),
+                        inventoryQueryPort.calculateEffectiveStock(product.getId())))
                 .collect(Collectors.toList());
 
         return new ProductListResponse(
@@ -71,7 +77,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         Product product = productRepository.findVisibleById(id, now)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
         String categoryName = loadCategoryName(product.getCategoryId());
-        return ProductDto.fromEntity(product, categoryName);
+        return ProductDto.fromEntity(product, categoryName, inventoryQueryPort.calculateEffectiveStock(product.getId()));
     }
 
     @Override
@@ -83,7 +89,10 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         Page<Product> productPage = productRepository.findAll(pageable);
         Map<Long, String> categoryNames = loadCategoryNames(productPage.getContent());
         List<ProductDto> items = productPage.getContent().stream()
-                .map(product -> ProductDto.fromEntity(product, categoryNames.get(product.getCategoryId())))
+                .map(product -> ProductDto.fromEntity(
+                        product,
+                        categoryNames.get(product.getCategoryId()),
+                        inventoryQueryPort.calculateEffectiveStock(product.getId())))
                 .collect(Collectors.toList());
         return new ProductListResponse(items, productPage.getTotalElements(), safePage, safeLimit);
     }
@@ -94,7 +103,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
         String categoryName = loadCategoryName(product.getCategoryId());
-        return ProductDto.fromEntity(product, categoryName);
+        return ProductDto.fromEntity(product, categoryName, inventoryQueryPort.calculateEffectiveStock(product.getId()));
     }
 
     @Override
@@ -119,7 +128,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         product.setDescription(request.getDescription());
         product.setCategoryId(category.getId());
         product.setPrice(request.getPrice());
-        product.setStock(request.getStock());
+        product.setAllocationType(request.getAllocationType() != null ? request.getAllocationType() : AllocationType.REAL);
         product.setIsPublished(request.getIsPublished() != null ? request.getIsPublished() : true);
         product.setPublishStartAt(request.getPublishStartAt());
         product.setPublishEndAt(request.getPublishEndAt());
@@ -128,7 +137,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         product.setImage(request.getImage() != null && !request.getImage().isBlank() ? request.getImage() : DEFAULT_IMAGE);
 
         Product created = productRepository.save(product);
-        return ProductDto.fromEntity(created, category.getName());
+        return ProductDto.fromEntity(created, category.getName(), inventoryQueryPort.calculateEffectiveStock(created.getId()));
     }
 
     @Override
@@ -152,8 +161,8 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
         if (request.getPrice() != null) {
             product.setPrice(request.getPrice());
         }
-        if (request.getStock() != null) {
-            product.setStock(request.getStock());
+        if (request.getAllocationType() != null) {
+            product.setAllocationType(request.getAllocationType());
         }
         if (request.getIsPublished() != null) {
             product.setIsPublished(request.getIsPublished());
@@ -183,7 +192,7 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
 
         Product updated = productRepository.save(product);
         String categoryName = category != null ? category.getName() : loadCategoryName(updated.getCategoryId());
-        return ProductDto.fromEntity(updated, categoryName);
+        return ProductDto.fromEntity(updated, categoryName, inventoryQueryPort.calculateEffectiveStock(updated.getId()));
     }
 
     @Override

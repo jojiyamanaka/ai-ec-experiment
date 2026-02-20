@@ -136,6 +136,7 @@ class CreateShipmentJobTest {
         orderItem.setProductName("商品A");
         orderItem.setProductPrice(BigDecimal.valueOf(1000));
         orderItem.setQuantity(2);
+        orderItem.setAllocatedQty(2);
         orderItem.setSubtotal(BigDecimal.valueOf(2000));
 
         com.example.aiec.modules.product.domain.entity.Product product = new com.example.aiec.modules.product.domain.entity.Product();

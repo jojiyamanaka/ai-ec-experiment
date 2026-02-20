@@ -20,4 +20,14 @@ public interface InventoryQueryPort {
      */
     List<InventoryStatusDto> getAllInventoryStatus();
 
+    /**
+     * 管理向け在庫タブ情報を取得
+     */
+    AdminItemInventoryDto getAdminItemInventory(Long productId);
+
+    /**
+     * 商品の有効在庫を算出
+     */
+    Integer calculateEffectiveStock(Long productId);
+
 }

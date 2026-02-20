@@ -175,3 +175,12 @@ WHERE p.id = ?
 
 **バックエンド**: `InventoryService.java`, `InventoryController.java`, `StockReservation.java`, `StockReservationRepository.java`, `CartService.java`, `OrderService.java`
 **フロントエンド**: `widgets/ProductCard/`（在庫状態表示）, `pages/customer/ItemDetailPage/`（カート追加制御）, `features/cart/model/CartContext.tsx`（カート状態管理）
+
+---
+
+## CHG-023 追記
+
+- 在庫モデルは `location_stocks`（実在庫）と `sales_limits`（枠在庫）に分離。
+- 顧客表示在庫は `effectiveStock` を用いる。
+- 商品契約の `allocationType` は `REAL | FRAME`。
+- `products.stock` は参照しない。

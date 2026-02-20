@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import com.example.aiec.modules.customer.domain.entity.User;
 import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
+import com.example.aiec.modules.inventory.application.service.FrameAllocationService;
 import com.example.aiec.modules.purchase.cart.repository.CartRepository;
 import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.purchase.order.entity.Order;
@@ -47,6 +48,9 @@ class OrderUseCaseOutboxTest {
     private InventoryCommandPort inventoryCommand;
 
     @Mock
+    private FrameAllocationService frameAllocationService;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -67,6 +71,7 @@ class OrderUseCaseOutboxTest {
                 cartRepository,
                 cartService,
                 inventoryCommand,
+                frameAllocationService,
                 userRepository,
                 outboxEventPublisher,
                 meterRegistry

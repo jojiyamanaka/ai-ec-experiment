@@ -57,6 +57,32 @@ export class ProductsService {
     return response;
   }
 
+  async getItemInventory(id: number, token: string, traceId?: string): Promise<ApiResponse<any>> {
+    return this.coreApiService.get<ApiResponse<any>>(
+      `/api/bo/admin/items/${id}/inventory`,
+      token,
+      traceId,
+    );
+  }
+
+  async updateItemInventory(
+    id: number,
+    payload: Record<string, unknown>,
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    const response = await this.coreApiService.put<ApiResponse<any>>(
+      `/api/bo/admin/items/${id}/inventory`,
+      payload,
+      token,
+      traceId,
+    );
+    if (response.success) {
+      await this.clearProductCache();
+    }
+    return response;
+  }
+
   async getCategories(token: string, traceId?: string): Promise<ApiResponse<any>> {
     return this.coreApiService.get<ApiResponse<any>>(
       '/api/bo/admin/item-categories',

@@ -7,5 +7,6 @@ export {
   confirmOrder,
   shipOrder,
   deliverOrder,
+  retryAllocation,
   getAllOrders,
 } from './model/api'

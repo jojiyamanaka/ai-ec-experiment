@@ -123,9 +123,11 @@ customer-bff/src/
 | /api/admin/orders/:id/ship | POST | 注文発送 | BoUser |
 | /api/admin/orders/:id/deliver | POST | 配達完了 | BoUser |
 | /api/admin/orders/:id/cancel | POST | 注文キャンセル | BoUser |
+| /api/admin/orders/:id/allocation/retry | POST | 本引当再試行 | BoUser |
 | /api/order/* | * | 互換エイリアス（上記の /api/admin/orders と同等） | BoUser |
 | /api/admin/items | GET/POST | 商品一覧取得・商品新規登録 | BoUser |
 | /api/admin/items/:id | GET/PUT | 商品詳細取得・商品更新 | BoUser |
+| /api/admin/items/:id/inventory | GET/PUT | 商品在庫タブ取得・更新 | BoUser |
 | /api/admin/item-categories | GET/POST | 商品カテゴリ一覧取得・カテゴリ新規登録 | BoUser |
 | /api/admin/item-categories/:id | PUT | 商品カテゴリ更新 | BoUser |
 | /api/admin/members | POST | 会員新規登録 | BoUser(ADMIN以上) |
@@ -153,7 +155,7 @@ backoffice-bff/src/
 ├── auth/          # POST /api/bo-auth/login, logout / GET /api/bo-auth/me + bo-auth.guard.ts
 ├── orders/        # GET/POST/PUT /api/admin/orders/**
 ├── inventory/     # GET/POST/PUT /api/inventory/**
-├── products/      # GET/POST/PUT /api/admin/items**, /api/admin/item-categories**
+├── products/      # GET/POST/PUT /api/admin/items**, /api/admin/items/:id/inventory, /api/admin/item-categories**
 ├── members/       # GET/PUT /api/admin/members/**
 ├── bo-users/      # GET/POST /api/admin/bo-users/**
 ├── core-api/      # Core API HTTP クライアント（共通）

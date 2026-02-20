@@ -62,6 +62,32 @@ export class ProductsController {
     return this.productsService.updateProduct(parseInt(id, 10), body, req.token, req.traceId);
   }
 
+  @Get('items/:id/inventory')
+  @ApiOperation({ summary: '商品在庫タブ取得' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({ description: '在庫タブ情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async getItemInventory(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.productsService.getItemInventory(parseInt(id, 10), req.token, req.traceId);
+  }
+
+  @Put('items/:id/inventory')
+  @ApiOperation({ summary: '商品在庫タブ更新' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({ schema: { type: 'object' } })
+  @ApiOkResponse({ description: '更新後在庫タブ情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async updateItemInventory(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() req: any,
+  ): Promise<ApiResponse<any>> {
+    return this.productsService.updateItemInventory(parseInt(id, 10), body, req.token, req.traceId);
+  }
+
   @Get('item-categories')
   @ApiOperation({ summary: '管理向けカテゴリ一覧取得' })
   @ApiOkResponse({ description: 'カテゴリ一覧を返却' })

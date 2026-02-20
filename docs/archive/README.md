@@ -168,6 +168,19 @@ archive/
   - specs/authentication.md: BoUser 認証復元時の 401 契約（`BFF_UNAUTHORIZED`/`BFF_INVALID_TOKEN`）を追記
   - ui/admin-ui.md: 管理画面リロード時の認証復元挙動を追記
 
+### CHG-023: 引当区分導入と在庫モデル再編
+- **実装完了日**: 2026-02-20
+- **内容**: 商品ごとに `allocationType`（`REAL`/`FRAME`）を導入し、在庫源泉を `location_stocks` / `sales_limits` へ分離。枠在庫商品の非同期本引当、注文進捗（`allocatedQuantity / orderedQuantity`）可視化、商品詳細3タブ化と `/bo/inventory` 導線廃止を実装
+- **主要ドキュメント反映先**:
+  - data-model.md: `allocation_type`、`location_stocks`、`sales_limits`、`order_items.allocated_qty` を反映
+  - requirements.md: `effectiveStock` 基準、出荷統制（全量引当済み）を反映
+  - specs/product.md: `allocationType` / `effectiveStock` 契約反映
+  - specs/inventory.md: 在庫源泉分離と非同期本引当フローを反映
+  - specs/order.md: 進捗項目と引当再試行 API を反映
+  - specs/bff-architecture.md: 管理向け在庫タブ API・本引当再試行 API を反映
+  - ui/admin-ui.md: 商品詳細3タブ構成、`/bo/inventory` 導線廃止を反映
+  - docs/api/*.json: Core/BFF OpenAPI 契約を CHG-023 に更新
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

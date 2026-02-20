@@ -17,6 +17,12 @@ export class OrderDto {
   totalAmount!: number;
 
   @ApiProperty()
+  orderedQuantity!: number;
+
+  @ApiProperty()
+  allocatedQuantity!: number;
+
+  @ApiProperty()
   createdAt!: string;
 
   @ApiProperty({ type: () => OrderItemDto, isArray: true })
@@ -35,6 +41,12 @@ export class OrderItemDto {
 
   @ApiProperty()
   quantity!: number;
+
+  @ApiProperty()
+  orderedQuantity!: number;
+
+  @ApiProperty()
+  allocatedQuantity!: number;
 
   @ApiProperty()
   price!: number;
