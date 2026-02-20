@@ -13,7 +13,7 @@ CHG番号: $ARGUMENTS
 
 ### 1. 対象ファイルの特定
 
-`docs/01_requirements/`, `docs/02_designs/`, `docs/03_tasks/` から $ARGUMENTS に一致するファイルを Glob で検索する。
+`docs/01_requirements/`, `docs/02_designs/`, `docs/03_tasks/` , `docs/04_impl-notes/` から $ARGUMENTS に一致するファイルを Glob で検索する。
 見つからない場合はユーザーに報告して終了する。
 
 要件定義書を読み、変更の概要と影響範囲を把握する。
@@ -43,17 +43,27 @@ mv docs/02_designs/CHG-XXX_*.md docs/archive/02_designs/
 
 # 実装タスク
 mv docs/03_tasks/CHG-XXX_*.md docs/archive/03_tasks/
+
+# impl-notes
+mv docs/04_impl-notes/CHG-XXX_*.md docs/archive/04_impl-notes/
 ```
 
-### 5. git commit
+### 5. git commit + push
 
-以下の手順でコミットする:
+以下の手順でコミット・push する:
 
 ```bash
+# ドキュメント更新分
 git add docs/archive/ docs/SPEC.md docs/requirements.md docs/data-model.md \
         docs/ui/ docs/specs/ docs/design-system.md
+
+# 実装ファイル（CHG-XXX の変更分のみ）
+git add <backend|bff|frontend の対象ファイル...>
+
 git status
 ```
+
+`git status` で **CHG-XXX に関係ない差分がステージされていないこと** を確認する。
 
 変更ファイルを確認し、コミットメッセージを作成する:
 - 形式: `{CHG番号} アーカイブ: {案件名の要約}`
@@ -66,6 +76,8 @@ git commit -m "$(cat <<'EOF'
 Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 EOF
 )"
+
+git push origin "$(git branch --show-current)"
 ```
 
 ### 6. ユーザーへの報告
@@ -75,3 +87,4 @@ EOF
 - 更新したドキュメントと変更内容の要約
 - 更新をスキップしたドキュメントとその理由
 - コミットハッシュ
+- push 結果
