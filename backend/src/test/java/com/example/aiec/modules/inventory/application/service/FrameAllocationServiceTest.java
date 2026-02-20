@@ -59,7 +59,7 @@ class FrameAllocationServiceTest {
         item1.setOrder(order1);
         item1.setProduct(product);
         item1.setQuantity(3);
-        item1.setAllocatedQty(0);
+        item1.setCommittedQty(0);
 
         Order order2 = new Order();
         order2.setId(101L);
@@ -70,13 +70,13 @@ class FrameAllocationServiceTest {
         item2.setOrder(order2);
         item2.setProduct(product);
         item2.setQuantity(4);
-        item2.setAllocatedQty(1);
+        item2.setCommittedQty(1);
 
         LocationStock locationStock = new LocationStock();
         locationStock.setProduct(product);
         locationStock.setLocationId(1);
-        locationStock.setAllocatableQty(5);
-        locationStock.setAllocatedQty(0);
+        locationStock.setAvailableQty(5);
+        locationStock.setCommittedQty(0);
 
         when(orderItemRepository.findPendingItemsForAllocation(1L, AllocationType.FRAME, List.of(
                 Order.OrderStatus.PENDING,
@@ -88,9 +88,9 @@ class FrameAllocationServiceTest {
         int allocated = frameAllocationService.allocatePendingByProductId(1L);
 
         assertThat(allocated).isEqualTo(5);
-        assertThat(item1.getAllocatedQty()).isEqualTo(3);
-        assertThat(item2.getAllocatedQty()).isEqualTo(3);
-        assertThat(locationStock.getAllocatedQty()).isEqualTo(5);
+        assertThat(item1.getCommittedQty()).isEqualTo(3);
+        assertThat(item2.getCommittedQty()).isEqualTo(3);
+        assertThat(locationStock.getCommittedQty()).isEqualTo(5);
         verify(locationStockRepository).save(locationStock);
         verify(orderItemRepository).saveAll(List.of(item1, item2));
     }
@@ -110,7 +110,7 @@ class FrameAllocationServiceTest {
         item.setOrder(order);
         item.setProduct(product);
         item.setQuantity(1);
-        item.setAllocatedQty(0);
+        item.setCommittedQty(0);
 
         when(orderItemRepository.findPendingItemsForAllocation(1L, AllocationType.FRAME, List.of(
                 Order.OrderStatus.PENDING,
@@ -123,8 +123,8 @@ class FrameAllocationServiceTest {
         LocationStock created = new LocationStock();
         created.setProduct(product);
         created.setLocationId(1);
-        created.setAllocatableQty(2);
-        created.setAllocatedQty(0);
+        created.setAvailableQty(2);
+        created.setCommittedQty(0);
         when(locationStockRepository.save(any(LocationStock.class))).thenReturn(created);
 
         frameAllocationService.allocatePendingByProductId(1L);

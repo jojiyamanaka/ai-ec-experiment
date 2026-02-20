@@ -78,12 +78,12 @@ export interface ProductInventory {
   allocationType: AllocationType
   locationStock: {
     locationId: number
-    allocatableQty: number
-    allocatedQty: number
+    availableQty: number
+    committedQty: number
     remainingQty: number
   }
   salesLimit: {
-    salesLimitTotal: number
+    frameLimitQty: number
     consumedQty: number
     remainingQty: number
   }
@@ -92,9 +92,9 @@ export interface ProductInventory {
 export interface UpdateProductInventoryRequest {
   allocationType: AllocationType
   locationStock: {
-    allocatableQty: number
+    availableQty: number
   }
   salesLimit: {
-    salesLimitTotal: number
+    frameLimitQty: number
   }
 }

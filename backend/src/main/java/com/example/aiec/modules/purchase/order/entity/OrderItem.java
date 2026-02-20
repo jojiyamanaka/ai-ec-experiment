@@ -45,8 +45,8 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "allocated_qty", nullable = false)
-    private Integer allocatedQty = 0;
+    @Column(name = "committed_qty", nullable = false)
+    private Integer committedQty = 0;
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal subtotal;

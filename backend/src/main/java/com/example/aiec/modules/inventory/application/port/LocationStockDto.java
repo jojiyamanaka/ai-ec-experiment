@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class LocationStockDto {
 
     private Integer locationId;
-    private Integer allocatableQty;
-    private Integer allocatedQty;
+    private Integer availableQty;
+    private Integer committedQty;
     private Integer remainingQty;
 }

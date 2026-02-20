@@ -4,7 +4,7 @@ export interface OrderItem {
   product: Product
   quantity: number
   orderedQuantity: number
-  allocatedQuantity: number
+  committedQuantity: number
   subtotal: number
 }
 
@@ -17,7 +17,7 @@ export interface Order {
   items: OrderItem[]
   totalPrice: number
   orderedQuantity: number
-  allocatedQuantity: number
+  committedQuantity: number
   status: string
   statusLabel?: string
   createdAt: string

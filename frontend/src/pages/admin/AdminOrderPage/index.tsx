@@ -188,7 +188,7 @@ export default function AdminOrderPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900 tabular-nums">
-                  {order.allocatedQuantity} / {order.orderedQuantity}
+                  {order.committedQuantity} / {order.orderedQuantity}
                 </td>
                 <td className="px-6 py-4 text-sm tabular-nums text-gray-900">
                   {order.totalPrice.toLocaleString()}円
@@ -227,7 +227,7 @@ export default function AdminOrderPage() {
                 <span className="font-medium text-gray-900">ステータス:</span> {getStatusLabel(selectedOrder.status)}
               </p>
               <p>
-                <span className="font-medium text-gray-900">引当進捗:</span> {selectedOrder.allocatedQuantity} / {selectedOrder.orderedQuantity}
+                <span className="font-medium text-gray-900">引当進捗:</span> {selectedOrder.committedQuantity} / {selectedOrder.orderedQuantity}
               </p>
               <p>
                 <span className="font-medium text-gray-900">合計金額:</span>{' '}
@@ -250,7 +250,7 @@ export default function AdminOrderPage() {
                     <tr key={`${selectedOrder.orderId}-${idx}`}>
                       <td className="px-4 py-3 text-sm text-gray-900">{item.product.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.quantity}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.allocatedQuantity} / {item.orderedQuantity}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.committedQuantity} / {item.orderedQuantity}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 tabular-nums">{item.subtotal.toLocaleString()}円</td>
                     </tr>
                   ))}

@@ -70,8 +70,8 @@ class InventoryUseCaseTest {
         LocationStock locationStock = new LocationStock();
         locationStock.setProduct(product);
         locationStock.setLocationId(1);
-        locationStock.setAllocatableQty(allocatable);
-        locationStock.setAllocatedQty(allocated);
+        locationStock.setAvailableQty(allocatable);
+        locationStock.setCommittedQty(allocated);
         return locationStock;
     }
 
@@ -97,7 +97,7 @@ class InventoryUseCaseTest {
         OrderItem orderItem = new OrderItem();
         orderItem.setProduct(product);
         orderItem.setQuantity(quantity);
-        orderItem.setAllocatedQty(0);
+        orderItem.setCommittedQty(0);
         orderItem.setSubtotal(BigDecimal.valueOf(2000));
         order.addItem(orderItem);
         return order;
@@ -144,7 +144,7 @@ class InventoryUseCaseTest {
     }
 
     @Test
-    void commitReservations_realProductSuccess_shouldIncreaseAllocatedQty() {
+    void commitReservations_realProductSuccess_shouldIncreaseCommittedQty() {
         Product product = buildProduct(1L, AllocationType.REAL);
         StockReservation reservation = buildTentativeReservation(product, 2);
         Order order = buildOrder(10L, Order.OrderStatus.PENDING, product, 2);
@@ -156,8 +156,8 @@ class InventoryUseCaseTest {
 
         inventoryUseCase.commitReservations("sess", order);
 
-        assertThat(order.getItems().getFirst().getAllocatedQty()).isEqualTo(2);
-        assertThat(locationStock.getAllocatedQty()).isEqualTo(3);
+        assertThat(order.getItems().getFirst().getCommittedQty()).isEqualTo(2);
+        assertThat(locationStock.getCommittedQty()).isEqualTo(3);
         verify(locationStockRepository).save(locationStock);
         verify(reservationRepository).delete(reservation);
     }
@@ -177,7 +177,7 @@ class InventoryUseCaseTest {
     void releaseCommittedReservations_success_shouldRestoreLocationStockAndCancelOrder() {
         Product product = buildProduct(1L, AllocationType.REAL);
         Order order = buildOrder(10L, Order.OrderStatus.CONFIRMED, product, 2);
-        order.getItems().getFirst().setAllocatedQty(2);
+        order.getItems().getFirst().setCommittedQty(2);
         LocationStock locationStock = buildLocationStock(product, 8, 3);
 
         when(orderRepository.findByIdWithItems(10L)).thenReturn(Optional.of(order));
@@ -188,8 +188,8 @@ class InventoryUseCaseTest {
         inventoryUseCase.releaseCommittedReservations(10L);
 
         assertThat(order.getStatus()).isEqualTo(Order.OrderStatus.CANCELLED);
-        assertThat(order.getItems().getFirst().getAllocatedQty()).isEqualTo(0);
-        assertThat(locationStock.getAllocatedQty()).isEqualTo(1);
+        assertThat(order.getItems().getFirst().getCommittedQty()).isEqualTo(0);
+        assertThat(locationStock.getCommittedQty()).isEqualTo(1);
         verify(orderRepository).save(order);
         verify(outboxEventPublisher).publish(eq("STOCK_AVAILABILITY_INCREASED"), eq("1"), any());
     }

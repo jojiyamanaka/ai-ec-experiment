@@ -21,13 +21,13 @@ public class UpdateItemInventoryRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LocationStockInput {
-        private Integer allocatableQty;
+        private Integer availableQty;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SalesLimitInput {
-        private Integer salesLimitTotal;
+        private Integer frameLimitQty;
     }
 }

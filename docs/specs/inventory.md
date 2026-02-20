@@ -184,3 +184,8 @@ WHERE p.id = ?
 - 顧客表示在庫は `effectiveStock` を用いる。
 - 商品契約の `allocationType` は `REAL | FRAME`。
 - `products.stock` は参照しない。
+- 在庫APIの語彙は以下を正とする。
+  - 実在庫: `locationStock.availableQty` / `locationStock.committedQty` / `locationStock.remainingQty`
+  - 枠在庫: `salesLimit.frameLimitQty` / `salesLimit.consumedQty` / `salesLimit.remainingQty`
+- 注文進捗は `committedQuantity / orderedQuantity` を使用する。
+- Flyway V12 で旧語彙を置換（`allocatable/allocated/salesLimitTotal` → `available/committed/frameLimitQty`）。

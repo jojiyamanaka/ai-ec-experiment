@@ -170,9 +170,9 @@ archive/
 
 ### CHG-023: 引当区分導入と在庫モデル再編
 - **実装完了日**: 2026-02-20
-- **内容**: 商品ごとに `allocationType`（`REAL`/`FRAME`）を導入し、在庫源泉を `location_stocks` / `sales_limits` へ分離。枠在庫商品の非同期本引当、注文進捗（`allocatedQuantity / orderedQuantity`）可視化、商品詳細3タブ化と `/bo/inventory` 導線廃止を実装
+- **内容**: 商品ごとに `allocationType`（`REAL`/`FRAME`）を導入し、在庫源泉を `location_stocks` / `sales_limits` へ分離。枠在庫商品の非同期本引当、注文進捗（`committedQuantity / orderedQuantity`）可視化、商品詳細3タブ化と `/bo/inventory` 導線廃止を実装
 - **主要ドキュメント反映先**:
-  - data-model.md: `allocation_type`、`location_stocks`、`sales_limits`、`order_items.allocated_qty` を反映
+  - data-model.md: `allocation_type`、`location_stocks`、`sales_limits`、`order_items.committed_qty` を反映
   - requirements.md: `effectiveStock` 基準、出荷統制（全量引当済み）を反映
   - specs/product.md: `allocationType` / `effectiveStock` 契約反映
   - specs/inventory.md: 在庫源泉分離と非同期本引当フローを反映

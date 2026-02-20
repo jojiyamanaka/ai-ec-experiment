@@ -53,13 +53,13 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                                                                         @Param("excludedOrderId") Long excludedOrderId);
 
     @Query("""
-            SELECT COALESCE(SUM(oi.allocatedQty), 0)
+            SELECT COALESCE(SUM(oi.committedQty), 0)
             FROM OrderItem oi
             JOIN oi.order o
             WHERE oi.product.id = :productId
               AND o.status <> :cancelledStatus
             """)
-    Integer sumAllocatedQuantityByProductExcludingCancelled(@Param("productId") Long productId,
+    Integer sumCommittedQuantityByProductExcludingCancelled(@Param("productId") Long productId,
                                                             @Param("cancelledStatus") Order.OrderStatus cancelledStatus);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -71,7 +71,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             WHERE p.id = :productId
               AND p.allocationType = :allocationType
               AND o.status IN :statuses
-              AND oi.allocatedQty < oi.quantity
+              AND oi.committedQty < oi.quantity
             ORDER BY o.createdAt ASC, o.id ASC, oi.id ASC
             """)
     List<OrderItem> findPendingItemsForAllocation(@Param("productId") Long productId,
@@ -87,7 +87,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             WHERE o.id = :orderId
               AND p.allocationType = :allocationType
               AND o.status IN :statuses
-              AND oi.allocatedQty < oi.quantity
+              AND oi.committedQty < oi.quantity
             ORDER BY o.createdAt ASC, o.id ASC, oi.id ASC
             """)
     List<OrderItem> findPendingItemsForAllocationByOrderId(@Param("orderId") Long orderId,

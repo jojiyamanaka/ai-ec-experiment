@@ -66,7 +66,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                   FROM order_items oi
                   WHERE oi.order_id = o.id
                     AND oi.is_deleted = FALSE
-                    AND oi.allocated_qty < oi.quantity
+                    AND oi.committed_qty < oi.quantity
               )
               AND NOT EXISTS (
                   SELECT 1

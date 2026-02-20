@@ -25,7 +25,7 @@ public class OrderItemDto {
     @Schema(description = "注文点数", example = "2")
     private Integer orderedQuantity;
     @Schema(description = "引当済点数", example = "1")
-    private Integer allocatedQuantity;
+    private Integer committedQuantity;
     @Schema(description = "小計（円）", example = "7960")
     private BigDecimal subtotal;
 
@@ -37,7 +37,7 @@ public class OrderItemDto {
                 ProductDto.fromEntity(orderItem.getProduct()),
                 orderItem.getQuantity(),
                 orderItem.getQuantity(),
-                orderItem.getAllocatedQty(),
+                orderItem.getCommittedQty(),
                 orderItem.getSubtotal()
         );
     }

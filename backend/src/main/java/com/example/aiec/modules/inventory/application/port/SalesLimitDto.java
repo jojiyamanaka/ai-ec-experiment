@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SalesLimitDto {
 
-    private Integer salesLimitTotal;
+    private Integer frameLimitQty;
     private Integer consumedQty;
     private Integer remainingQty;
 }

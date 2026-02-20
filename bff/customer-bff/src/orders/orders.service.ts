@@ -159,17 +159,17 @@ export class OrdersService {
   private normalizeOrder(order: any): any {
     const status = order.status;
     const orderedQuantity = Number(order.orderedQuantity ?? 0);
-    const allocatedQuantity = Number(order.allocatedQuantity ?? 0);
+    const committedQuantity = Number(order.committedQuantity ?? 0);
     return {
       ...order,
       id: order.id ?? order.orderId,
       orderId: order.orderId ?? order.id,
       orderedQuantity,
-      allocatedQuantity,
+      committedQuantity,
       items: (order.items ?? []).map((item: any) => ({
         ...item,
         orderedQuantity: Number(item.orderedQuantity ?? item.quantity ?? 0),
-        allocatedQuantity: Number(item.allocatedQuantity ?? 0),
+        committedQuantity: Number(item.committedQuantity ?? 0),
       })),
       statusLabel: this.toStatusLabel(status),
     };

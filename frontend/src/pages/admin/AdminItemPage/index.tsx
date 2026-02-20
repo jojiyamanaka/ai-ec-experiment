@@ -36,20 +36,22 @@ interface SalesForm {
 
 interface InventoryForm {
   allocationType: AllocationType
-  allocatableQty: number
-  salesLimitTotal: number
-  allocatedQty: number
-  remainingQty: number
+  availableQty: number
+  frameLimitQty: number
+  committedQty: number
+  realRemainingQty: number
   consumedQty: number
+  frameRemainingQty: number
 }
 
 const INITIAL_INVENTORY_FORM: InventoryForm = {
   allocationType: 'REAL',
-  allocatableQty: 0,
-  salesLimitTotal: 0,
-  allocatedQty: 0,
-  remainingQty: 0,
+  availableQty: 0,
+  frameLimitQty: 0,
+  committedQty: 0,
+  realRemainingQty: 0,
   consumedQty: 0,
+  frameRemainingQty: 0,
 }
 
 export default function AdminItemPage() {
@@ -163,11 +165,12 @@ export default function AdminItemPage() {
         setInventorySnapshot(response.data)
         setInventoryForm({
           allocationType: response.data.allocationType,
-          allocatableQty: response.data.locationStock.allocatableQty,
-          salesLimitTotal: response.data.salesLimit.salesLimitTotal,
-          allocatedQty: response.data.locationStock.allocatedQty,
-          remainingQty: response.data.locationStock.remainingQty,
+          availableQty: response.data.locationStock.availableQty,
+          frameLimitQty: response.data.salesLimit.frameLimitQty,
+          committedQty: response.data.locationStock.committedQty,
+          realRemainingQty: response.data.locationStock.remainingQty,
           consumedQty: response.data.salesLimit.consumedQty,
+          frameRemainingQty: response.data.salesLimit.remainingQty,
         })
       }
     }
@@ -293,10 +296,10 @@ export default function AdminItemPage() {
         const payload: UpdateProductInventoryRequest = {
           allocationType: inventoryForm.allocationType,
           locationStock: {
-            allocatableQty: inventoryForm.allocatableQty,
+            availableQty: inventoryForm.availableQty,
           },
           salesLimit: {
-            salesLimitTotal: inventoryForm.salesLimitTotal,
+            frameLimitQty: inventoryForm.frameLimitQty,
           },
         }
         const response = await updateAdminItemInventory(selectedProductId, payload)
@@ -306,11 +309,12 @@ export default function AdminItemPage() {
         setInventorySnapshot(response.data)
         setInventoryForm({
           allocationType: response.data.allocationType,
-          allocatableQty: response.data.locationStock.allocatableQty,
-          salesLimitTotal: response.data.salesLimit.salesLimitTotal,
-          allocatedQty: response.data.locationStock.allocatedQty,
-          remainingQty: response.data.locationStock.remainingQty,
+          availableQty: response.data.locationStock.availableQty,
+          frameLimitQty: response.data.salesLimit.frameLimitQty,
+          committedQty: response.data.locationStock.committedQty,
+          realRemainingQty: response.data.locationStock.remainingQty,
           consumedQty: response.data.salesLimit.consumedQty,
+          frameRemainingQty: response.data.salesLimit.remainingQty,
         })
       }
 
@@ -561,7 +565,7 @@ export default function AdminItemPage() {
             {activeTab === 'INVENTORY' && (
               <div>
                 <h3 className="mb-3 font-bold text-zinc-900">在庫情報</h3>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="mb-3">
                   <label className="text-sm text-zinc-700">
                     引当区分
                     <select
@@ -573,35 +577,46 @@ export default function AdminItemPage() {
                       <option value="FRAME">FRAME</option>
                     </select>
                   </label>
-                  <label className="text-sm text-zinc-700">
-                    実在庫（引当可能数）
-                    <input
-                      type="number"
-                      value={inventoryForm.allocatableQty}
-                      onChange={(e) => handleInventoryField('allocatableQty', parseInt(e.target.value, 10) || 0)}
-                      className="mt-1 w-full rounded border px-3 py-2"
-                    />
-                  </label>
-                  <label className="text-sm text-zinc-700">
-                    枠在庫（販売上限）
-                    <input
-                      type="number"
-                      value={inventoryForm.salesLimitTotal}
-                      onChange={(e) => handleInventoryField('salesLimitTotal', parseInt(e.target.value, 10) || 0)}
-                      className="mt-1 w-full rounded border px-3 py-2"
-                    />
-                  </label>
-                  <div className="rounded border bg-gray-50 p-3 text-sm text-gray-700">
-                    <p>引当済: {inventoryForm.allocatedQty}</p>
-                    <p>残数: {inventoryForm.remainingQty}</p>
-                    <p>枠消費: {inventoryForm.consumedQty}</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className={`rounded border p-3 ${inventoryForm.allocationType === 'REAL' ? 'border-zinc-900 bg-white' : 'border-zinc-200 bg-gray-50'}`}>
+                    <p className="mb-2 text-sm font-semibold text-zinc-900">実在庫</p>
+                    <label className="text-sm text-zinc-700">
+                      在庫総量
+                      <input
+                        type="number"
+                        value={inventoryForm.availableQty}
+                        onChange={(e) => handleInventoryField('availableQty', parseInt(e.target.value, 10) || 0)}
+                        className="mt-1 w-full rounded border px-3 py-2"
+                      />
+                    </label>
+                    <div className="mt-3 text-sm text-gray-700">
+                      <p>本引当済: {inventoryForm.committedQty}</p>
+                      <p>引当可能数: {inventoryForm.realRemainingQty}</p>
+                    </div>
+                  </div>
+                  <div className={`rounded border p-3 ${inventoryForm.allocationType === 'FRAME' ? 'border-zinc-900 bg-white' : 'border-zinc-200 bg-gray-50'}`}>
+                    <p className="mb-2 text-sm font-semibold text-zinc-900">枠在庫</p>
+                    <label className="text-sm text-zinc-700">
+                      販売上限
+                      <input
+                        type="number"
+                        value={inventoryForm.frameLimitQty}
+                        onChange={(e) => handleInventoryField('frameLimitQty', parseInt(e.target.value, 10) || 0)}
+                        className="mt-1 w-full rounded border px-3 py-2"
+                      />
+                    </label>
+                    <div className="mt-3 text-sm text-gray-700">
+                      <p>枠消費: {inventoryForm.consumedQty}</p>
+                      <p>枠残数: {inventoryForm.frameRemainingQty}</p>
+                    </div>
                   </div>
                 </div>
                 {inventorySnapshot ? (
                   <p className="mt-2 text-xs text-gray-500">
                     最新反映: allocationType={inventorySnapshot.allocationType},
-                    location={inventorySnapshot.locationStock.remainingQty},
-                    sales={inventorySnapshot.salesLimit.remainingQty}
+                    realRemaining={inventorySnapshot.locationStock.remainingQty},
+                    frameRemaining={inventorySnapshot.salesLimit.remainingQty}
                   </p>
                 ) : null}
               </div>

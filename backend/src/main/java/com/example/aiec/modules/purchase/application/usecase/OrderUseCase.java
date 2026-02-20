@@ -239,7 +239,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
             throw new BusinessException("INVALID_STATUS_TRANSITION",
                 "この注文は発送完了にできません（現在のステータス: " + order.getStatus() + "）");
         }
-        if (!isFullyAllocated(order)) {
+        if (!isFullyCommitted(order)) {
             throw new BusinessException("INVALID_STATUS_TRANSITION",
                     "この注文は発送完了にできません（現在のステータス: " + order.getStatus() + "）");
         }
@@ -278,7 +278,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
                     "この注文は引当再試行できません（現在のステータス: " + order.getStatus() + "）");
         }
 
-        if (!isFullyAllocated(order)) {
+        if (!isFullyCommitted(order)) {
             frameAllocationService.allocatePendingByOrderId(orderId);
         }
 
@@ -308,14 +308,14 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
         return "ORD-" + String.format("%010d", sequence);
     }
 
-    private boolean isFullyAllocated(Order order) {
+    private boolean isFullyCommitted(Order order) {
         int orderedQuantity = order.getItems().stream()
                 .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
                 .sum();
-        int allocatedQuantity = order.getItems().stream()
-                .mapToInt(item -> item.getAllocatedQty() != null ? item.getAllocatedQty() : 0)
+        int committedQuantity = order.getItems().stream()
+                .mapToInt(item -> item.getCommittedQty() != null ? item.getCommittedQty() : 0)
                 .sum();
-        return orderedQuantity == allocatedQuantity;
+        return orderedQuantity == committedQuantity;
     }
 
 }

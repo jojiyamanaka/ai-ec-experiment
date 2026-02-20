@@ -106,7 +106,7 @@ export default function OrderHistoryPage() {
                 <p className="text-sm text-zinc-500">注文番号</p>
                 <p className="font-mono text-lg">{order.orderNumber}</p>
                 <p className="text-xs text-zinc-500">
-                  引当進捗: {order.allocatedQuantity} / {order.orderedQuantity}
+                  引当進捗: {order.committedQuantity} / {order.orderedQuantity}
                 </p>
               </div>
               <div>
@@ -140,7 +140,7 @@ export default function OrderHistoryPage() {
                       数量: {item.quantity} × ¥{item.product.price.toLocaleString()}
                     </p>
                     <p className="text-xs text-zinc-500">
-                      引当進捗: {item.allocatedQuantity} / {item.orderedQuantity}
+                      引当進捗: {item.committedQuantity} / {item.orderedQuantity}
                     </p>
                   </div>
                   <p className="font-medium">

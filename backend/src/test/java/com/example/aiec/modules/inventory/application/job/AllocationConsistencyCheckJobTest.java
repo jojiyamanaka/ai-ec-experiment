@@ -47,7 +47,7 @@ class AllocationConsistencyCheckJobTest {
     void run_whenNoMismatch_shouldRecordSuccessWithZeroProcessed() {
         LocationStock stock = buildLocationStock(1L, 3);
         when(locationStockRepository.findAll()).thenReturn(List.of(stock));
-        when(orderItemRepository.sumAllocatedQuantityByProductExcludingCancelled(1L, Order.OrderStatus.CANCELLED))
+        when(orderItemRepository.sumCommittedQuantityByProductExcludingCancelled(1L, Order.OrderStatus.CANCELLED))
                 .thenReturn(3);
 
         job.run();
@@ -62,7 +62,7 @@ class AllocationConsistencyCheckJobTest {
     void run_whenMismatch_shouldRecordProcessedCount() {
         LocationStock stock = buildLocationStock(1L, 5);
         when(locationStockRepository.findAll()).thenReturn(List.of(stock));
-        when(orderItemRepository.sumAllocatedQuantityByProductExcludingCancelled(1L, Order.OrderStatus.CANCELLED))
+        when(orderItemRepository.sumCommittedQuantityByProductExcludingCancelled(1L, Order.OrderStatus.CANCELLED))
                 .thenReturn(2);
 
         job.run();
@@ -73,14 +73,14 @@ class AllocationConsistencyCheckJobTest {
         assertThat(history.getProcessedCount()).isEqualTo(1);
     }
 
-    private LocationStock buildLocationStock(Long productId, Integer allocatedQty) {
+    private LocationStock buildLocationStock(Long productId, Integer committedQty) {
         Product product = new Product();
         product.setId(productId);
 
         LocationStock stock = new LocationStock();
         stock.setProduct(product);
-        stock.setAllocatedQty(allocatedQty);
-        stock.setAllocatableQty(allocatedQty);
+        stock.setCommittedQty(committedQty);
+        stock.setAvailableQty(committedQty);
         stock.setLocationId(1);
         return stock;
     }

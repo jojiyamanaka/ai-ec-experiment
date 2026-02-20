@@ -174,6 +174,7 @@ CREATE TABLE order_items (
   product_name VARCHAR(255) NOT NULL,
   product_price NUMERIC(10, 2) NOT NULL,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
+  committed_qty INTEGER NOT NULL DEFAULT 0 CHECK (committed_qty >= 0 AND committed_qty <= quantity),
   subtotal NUMERIC(10, 2) NOT NULL CHECK (subtotal >= 0),
   -- 監査カラム（共通設計参照）
   CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
@@ -478,3 +479,8 @@ SELECT * FROM order_items WHERE subtotal != product_price * quantity AND is_dele
   - `FRAME`: `sales_limits` の `frame_limit_qty - consumedQty`
 - 注文進捗は `order_items.committed_qty` を真実として `orderedQuantity` / `committedQuantity` を算出する。
 - 手動再試行は `/api/order/{id}/allocation/retry` で受け付ける。
+- Flyway V12 で在庫語彙を統一した。
+  - `location_stocks.allocatable_qty` → `location_stocks.available_qty`
+  - `location_stocks.allocated_qty` → `location_stocks.committed_qty`
+  - `order_items.allocated_qty` → `order_items.committed_qty`
+  - `sales_limits.sales_limit_total` → `sales_limits.frame_limit_qty`

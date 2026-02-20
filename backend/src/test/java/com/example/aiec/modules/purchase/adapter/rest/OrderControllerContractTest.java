@@ -62,7 +62,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.orderId").value(10))
                 .andExpect(jsonPath("$.data.orderedQuantity").value(3))
-                .andExpect(jsonPath("$.data.allocatedQuantity").value(3));
+                .andExpect(jsonPath("$.data.committedQuantity").value(3));
     }
 
     @Test
@@ -76,7 +76,7 @@ class OrderControllerContractTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.orderId").value(11))
                 .andExpect(jsonPath("$.data.orderedQuantity").value(5))
-                .andExpect(jsonPath("$.data.allocatedQuantity").value(2));
+                .andExpect(jsonPath("$.data.committedQuantity").value(2));
     }
 
     private BoUser adminUser() {
@@ -88,14 +88,14 @@ class OrderControllerContractTest {
         return boUser;
     }
 
-    private OrderDto buildOrderDto(Long orderId, String status, int orderedQuantity, int allocatedQuantity) {
+    private OrderDto buildOrderDto(Long orderId, String status, int orderedQuantity, int committedQuantity) {
         OrderDto orderDto = new OrderDto();
         orderDto.setOrderId(orderId);
         orderDto.setOrderNumber("ORD-0000000010");
         orderDto.setItems(List.of());
         orderDto.setTotalPrice(BigDecimal.valueOf(1000));
         orderDto.setOrderedQuantity(orderedQuantity);
-        orderDto.setAllocatedQuantity(allocatedQuantity);
+        orderDto.setCommittedQuantity(committedQuantity);
         orderDto.setStatus(status);
         orderDto.setCreatedAt("2026-02-20T00:00:00+09:00");
         orderDto.setUpdatedAt("2026-02-20T00:00:00+09:00");

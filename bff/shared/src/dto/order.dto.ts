@@ -20,7 +20,7 @@ export class OrderDto {
   orderedQuantity!: number;
 
   @ApiProperty()
-  allocatedQuantity!: number;
+  committedQuantity!: number;
 
   @ApiProperty()
   createdAt!: string;
@@ -46,7 +46,7 @@ export class OrderItemDto {
   orderedQuantity!: number;
 
   @ApiProperty()
-  allocatedQuantity!: number;
+  committedQuantity!: number;
 
   @ApiProperty()
   price!: number;

@@ -33,8 +33,8 @@ public class SalesLimit {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(name = "sales_limit_total", nullable = false)
-    private Integer salesLimitTotal;
+    @Column(name = "frame_limit_qty", nullable = false)
+    private Integer frameLimitQty;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

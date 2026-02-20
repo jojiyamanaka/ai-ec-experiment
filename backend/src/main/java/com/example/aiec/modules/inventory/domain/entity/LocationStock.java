@@ -36,11 +36,11 @@ public class LocationStock {
     @Column(name = "location_id", nullable = false)
     private Integer locationId;
 
-    @Column(name = "allocatable_qty", nullable = false)
-    private Integer allocatableQty;
+    @Column(name = "available_qty", nullable = false)
+    private Integer availableQty;
 
-    @Column(name = "allocated_qty", nullable = false)
-    private Integer allocatedQty;
+    @Column(name = "committed_qty", nullable = false)
+    private Integer committedQty;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -91,6 +91,6 @@ public class LocationStock {
     }
 
     public int remainingQty() {
-        return Math.max(0, allocatableQty - allocatedQty);
+        return Math.max(0, availableQty - committedQty);
     }
 }

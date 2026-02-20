@@ -45,17 +45,17 @@ public class AllocationConsistencyCheckJob extends JobRunnerBase {
 
         for (LocationStock locationStock : locationStocks) {
             Long productId = locationStock.getProduct().getId();
-            int expectedAllocatedQty = orderItemRepository.sumAllocatedQuantityByProductExcludingCancelled(
+            int expectedCommittedQty = orderItemRepository.sumCommittedQuantityByProductExcludingCancelled(
                     productId,
                     Order.OrderStatus.CANCELLED
             );
-            int actualAllocatedQty = locationStock.getAllocatedQty() != null ? locationStock.getAllocatedQty() : 0;
-            if (actualAllocatedQty != expectedAllocatedQty) {
+            int actualCommittedQty = locationStock.getCommittedQty() != null ? locationStock.getCommittedQty() : 0;
+            if (actualCommittedQty != expectedCommittedQty) {
                 mismatched++;
-                log.warn("Allocation mismatch detected: productId={}, locationAllocated={}, orderItemsAllocated={}",
+                log.warn("Commitment mismatch detected: productId={}, locationCommitted={}, orderItemsCommitted={}",
                         productId,
-                        actualAllocatedQty,
-                        expectedAllocatedQty);
+                        actualCommittedQty,
+                        expectedCommittedQty);
             }
         }
 

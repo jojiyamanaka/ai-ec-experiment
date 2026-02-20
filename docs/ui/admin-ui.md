@@ -121,14 +121,15 @@ PENDING(グレー), CONFIRMED(ブルー), SHIPPED(パープル), DELIVERED(グ�
 ### 在庫タブの編集項目
 
 - 引当区分: `allocationType`（`REAL` / `FRAME`）
-- 実在庫: `locationStock.availableQty`（引当可能実在庫）
-- 枠在庫: `salesLimit.frameLimitQty`（販売上限）
+- 実在庫カード: `locationStock.availableQty`（在庫総量）
+- 枠在庫カード: `salesLimit.frameLimitQty`（販売上限）
+- 選択中の引当区分カードを強調表示（非選択カードは淡色表示）
 
 ### 在庫タブの表示項目（算出値）
 
-- 引当済: `locationStock.committedQty`
-- 残数: `locationStock.remainingQty`
-- 枠消費: `salesLimit.consumedQty`
+- 実在庫カード: `locationStock.committedQty`（本引当済）, `locationStock.remainingQty`（引当可能数）
+- 枠在庫カード: `salesLimit.consumedQty`（枠消費）, `salesLimit.remainingQty`（枠残数）
+- 最新反映表示: `realRemaining` / `frameRemaining`
 
 ---
 

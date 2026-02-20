@@ -70,16 +70,16 @@ public class FrameAllocationService {
             }
 
             for (OrderItem orderItem : entry.getValue()) {
-                int currentAllocated = orderItem.getAllocatedQty() != null ? orderItem.getAllocatedQty() : 0;
+                int currentCommitted = orderItem.getCommittedQty() != null ? orderItem.getCommittedQty() : 0;
                 int orderQuantity = orderItem.getQuantity() != null ? orderItem.getQuantity() : 0;
-                int shortfall = Math.max(0, orderQuantity - currentAllocated);
+                int shortfall = Math.max(0, orderQuantity - currentCommitted);
                 if (shortfall == 0 || remainingQty == 0) {
                     continue;
                 }
 
                 int allocateQty = Math.min(shortfall, remainingQty);
-                orderItem.setAllocatedQty(currentAllocated + allocateQty);
-                locationStock.setAllocatedQty(locationStock.getAllocatedQty() + allocateQty);
+                orderItem.setCommittedQty(currentCommitted + allocateQty);
+                locationStock.setCommittedQty(locationStock.getCommittedQty() + allocateQty);
                 remainingQty -= allocateQty;
                 updatedCount += allocateQty;
             }
@@ -99,8 +99,8 @@ public class FrameAllocationService {
                     LocationStock locationStock = new LocationStock();
                     locationStock.setProduct(product);
                     locationStock.setLocationId(DEFAULT_LOCATION_ID);
-                    locationStock.setAllocatableQty(0);
-                    locationStock.setAllocatedQty(0);
+                    locationStock.setAvailableQty(0);
+                    locationStock.setCommittedQty(0);
                     return locationStockRepository.save(locationStock);
                 });
     }

@@ -125,7 +125,7 @@ export default function OrderDetailPage() {
           <div>
             <dt className="text-sm text-gray-600">引当進捗</dt>
             <dd className="font-semibold text-gray-900">
-              {order.allocatedQuantity} / {order.orderedQuantity}
+              {order.committedQuantity} / {order.orderedQuantity}
             </dd>
           </div>
         </dl>
@@ -149,7 +149,7 @@ export default function OrderDetailPage() {
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900">{item.product.name}</h3>
               <p className="text-sm text-gray-600">数量: {item.quantity}</p>
-              <p className="text-xs text-gray-500">引当進捗: {item.allocatedQuantity} / {item.orderedQuantity}</p>
+              <p className="text-xs text-gray-500">引当進捗: {item.committedQuantity} / {item.orderedQuantity}</p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-gray-900">

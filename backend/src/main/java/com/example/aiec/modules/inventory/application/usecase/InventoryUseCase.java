@@ -182,13 +182,13 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
 
             if (product.getAllocationType() == AllocationType.REAL) {
                 LocationStock locationStock = locationStockByProductId.get(product.getId());
-                int currentAllocated = orderItem.getAllocatedQty() != null ? orderItem.getAllocatedQty() : 0;
+                int currentCommitted = orderItem.getCommittedQty() != null ? orderItem.getCommittedQty() : 0;
                 int allocateQty = reservation.getQuantity();
-                orderItem.setAllocatedQty(Math.min(orderItem.getQuantity(), currentAllocated + allocateQty));
-                locationStock.setAllocatedQty(locationStock.getAllocatedQty() + allocateQty);
+                orderItem.setCommittedQty(Math.min(orderItem.getQuantity(), currentCommitted + allocateQty));
+                locationStock.setCommittedQty(locationStock.getCommittedQty() + allocateQty);
                 locationStockRepository.save(locationStock);
             } else {
-                orderItem.setAllocatedQty(0);
+                orderItem.setCommittedQty(0);
             }
 
             reservationRepository.delete(reservation);
@@ -211,10 +211,10 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
 
         Map<Long, Integer> releasedQtyByProductId = new HashMap<>();
         for (OrderItem orderItem : order.getItems()) {
-            int allocatedQty = valueOrZero(orderItem.getAllocatedQty());
-            if (allocatedQty > 0) {
-                releasedQtyByProductId.merge(orderItem.getProduct().getId(), allocatedQty, Integer::sum);
-                orderItem.setAllocatedQty(0);
+            int committedQty = valueOrZero(orderItem.getCommittedQty());
+            if (committedQty > 0) {
+                releasedQtyByProductId.merge(orderItem.getProduct().getId(), committedQty, Integer::sum);
+                orderItem.setCommittedQty(0);
             }
         }
 
@@ -225,7 +225,7 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                     .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
             LocationStock locationStock = findOrCreateLocationStockForUpdate(product);
             int beforeRemaining = locationStock.remainingQty();
-            locationStock.setAllocatedQty(Math.max(0, locationStock.getAllocatedQty() - releasedQty));
+            locationStock.setCommittedQty(Math.max(0, locationStock.getCommittedQty() - releasedQty));
             locationStockRepository.save(locationStock);
             int afterRemaining = locationStock.remainingQty();
             if (afterRemaining > beforeRemaining) {
@@ -255,12 +255,12 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
         if (product.getAllocationType() == AllocationType.REAL) {
             LocationStock locationStock = locationStockRepository.findByProductIdAndLocationId(productId, DEFAULT_LOCATION_ID)
                     .orElse(null);
-            physicalStock = locationStock != null ? valueOrZero(locationStock.getAllocatableQty()) : 0;
-            committedReserved = locationStock != null ? valueOrZero(locationStock.getAllocatedQty()) : 0;
+            physicalStock = locationStock != null ? valueOrZero(locationStock.getAvailableQty()) : 0;
+            committedReserved = locationStock != null ? valueOrZero(locationStock.getCommittedQty()) : 0;
             availableStock = Math.max(0, physicalStock - committedReserved - tentativeReserved);
         } else {
             SalesLimit salesLimit = salesLimitRepository.findByProductId(productId).orElse(null);
-            physicalStock = salesLimit != null ? valueOrZero(salesLimit.getSalesLimitTotal()) : 0;
+            physicalStock = salesLimit != null ? valueOrZero(salesLimit.getFrameLimitQty()) : 0;
             committedReserved = valueOrZero(orderItemRepository.sumOrderedQuantityByProductAndAllocationType(
                     productId,
                     AllocationType.FRAME,
@@ -289,8 +289,8 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
             int tentative = valueOrZero(reservationRepository.sumTentativeReserved(productId, now));
             LocationStock locationStock = locationStockRepository.findByProductIdAndLocationId(productId, DEFAULT_LOCATION_ID)
                     .orElse(null);
-            int physicalStock = locationStock != null ? valueOrZero(locationStock.getAllocatableQty()) : 0;
-            int committed = locationStock != null ? valueOrZero(locationStock.getAllocatedQty()) : 0;
+            int physicalStock = locationStock != null ? valueOrZero(locationStock.getAvailableQty()) : 0;
+            int committed = locationStock != null ? valueOrZero(locationStock.getCommittedQty()) : 0;
 
             return InventoryStatusDto.builder()
                     .productId(productId)
@@ -310,7 +310,7 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                 .orElseThrow(() -> new ResourceNotFoundException("PRODUCT_NOT_FOUND", "商品が見つかりません"));
 
         LocationStock locationStock = findOrCreateLocationStockForUpdate(product);
-        Integer quantityBefore = valueOrZero(locationStock.getAllocatableQty());
+        Integer quantityBefore = valueOrZero(locationStock.getAvailableQty());
         Integer quantityAfter = quantityBefore + quantityDelta;
         if (quantityAfter < 0) {
             throw new BusinessException("INVALID_STOCK_ADJUSTMENT",
@@ -318,7 +318,7 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
         }
 
         int remainingBefore = locationStock.remainingQty();
-        locationStock.setAllocatableQty(quantityAfter);
+        locationStock.setAvailableQty(quantityAfter);
         locationStockRepository.save(locationStock);
         int remainingAfter = locationStock.remainingQty();
 
@@ -349,15 +349,15 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                     LocationStock emptyStock = new LocationStock();
                     emptyStock.setProduct(product);
                     emptyStock.setLocationId(DEFAULT_LOCATION_ID);
-                    emptyStock.setAllocatableQty(0);
-                    emptyStock.setAllocatedQty(0);
+                    emptyStock.setAvailableQty(0);
+                    emptyStock.setCommittedQty(0);
                     return emptyStock;
                 });
         SalesLimit salesLimit = salesLimitRepository.findByProductId(productId)
                 .orElseGet(() -> {
                     SalesLimit emptyLimit = new SalesLimit();
                     emptyLimit.setProduct(product);
-                    emptyLimit.setSalesLimitTotal(0);
+                    emptyLimit.setFrameLimitQty(0);
                     return emptyLimit;
                 });
 
@@ -372,14 +372,14 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                 product.getAllocationType(),
                 new LocationStockDto(
                         locationStock.getLocationId(),
-                        valueOrZero(locationStock.getAllocatableQty()),
-                        valueOrZero(locationStock.getAllocatedQty()),
+                        valueOrZero(locationStock.getAvailableQty()),
+                        valueOrZero(locationStock.getCommittedQty()),
                         locationStock.remainingQty()
                 ),
                 new SalesLimitDto(
-                        valueOrZero(salesLimit.getSalesLimitTotal()),
+                        valueOrZero(salesLimit.getFrameLimitQty()),
                         consumedQty,
-                        Math.max(0, valueOrZero(salesLimit.getSalesLimitTotal()) - consumedQty)
+                        Math.max(0, valueOrZero(salesLimit.getFrameLimitQty()) - consumedQty)
                 )
         );
     }
@@ -405,25 +405,25 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
         if (request.getAllocationType() != null) {
             product.setAllocationType(request.getAllocationType());
         }
-        if (request.getLocationStock() != null && request.getLocationStock().getAllocatableQty() != null) {
-            Integer allocatableQty = request.getLocationStock().getAllocatableQty();
-            if (allocatableQty < 0) {
-                int current = valueOrZero(locationStock.getAllocatableQty());
-                int delta = allocatableQty - current;
+        if (request.getLocationStock() != null && request.getLocationStock().getAvailableQty() != null) {
+            Integer availableQty = request.getLocationStock().getAvailableQty();
+            if (availableQty < 0) {
+                int current = valueOrZero(locationStock.getAvailableQty());
+                int delta = availableQty - current;
                 throw new BusinessException("INVALID_STOCK_ADJUSTMENT",
                         "在庫調整後の数量が負になります（現在: " + current + ", 調整: " + delta + "）");
             }
-            locationStock.setAllocatableQty(allocatableQty);
+            locationStock.setAvailableQty(availableQty);
         }
-        if (request.getSalesLimit() != null && request.getSalesLimit().getSalesLimitTotal() != null) {
-            Integer salesLimitTotal = request.getSalesLimit().getSalesLimitTotal();
-            if (salesLimitTotal < 0) {
-                int current = valueOrZero(salesLimit.getSalesLimitTotal());
-                int delta = salesLimitTotal - current;
+        if (request.getSalesLimit() != null && request.getSalesLimit().getFrameLimitQty() != null) {
+            Integer frameLimitQty = request.getSalesLimit().getFrameLimitQty();
+            if (frameLimitQty < 0) {
+                int current = valueOrZero(salesLimit.getFrameLimitQty());
+                int delta = frameLimitQty - current;
                 throw new BusinessException("INVALID_STOCK_ADJUSTMENT",
                         "在庫調整後の数量が負になります（現在: " + current + ", 調整: " + delta + "）");
             }
-            salesLimit.setSalesLimitTotal(salesLimitTotal);
+            salesLimit.setFrameLimitQty(frameLimitQty);
         }
 
         productRepository.save(product);
@@ -455,26 +455,26 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
 
     private int calculateFrameEffectiveStock(Long productId, Instant now) {
         SalesLimit salesLimit = salesLimitRepository.findByProductId(productId).orElse(null);
-        int salesLimitTotal = salesLimit != null ? valueOrZero(salesLimit.getSalesLimitTotal()) : 0;
+        int frameLimitQty = salesLimit != null ? valueOrZero(salesLimit.getFrameLimitQty()) : 0;
         int consumedQty = valueOrZero(orderItemRepository.sumOrderedQuantityByProductAndAllocationType(
                 productId,
                 AllocationType.FRAME,
                 Order.OrderStatus.CANCELLED
         ));
         int tentativeQty = valueOrZero(reservationRepository.sumTentativeReserved(productId, now));
-        return Math.max(0, salesLimitTotal - consumedQty - tentativeQty);
+        return Math.max(0, frameLimitQty - consumedQty - tentativeQty);
     }
 
     private int calculateFrameRemainingQtyExcludingOrder(Long productId, Long excludedOrderId) {
         SalesLimit salesLimit = salesLimitRepository.findByProductId(productId).orElse(null);
-        int salesLimitTotal = salesLimit != null ? valueOrZero(salesLimit.getSalesLimitTotal()) : 0;
+        int frameLimitQty = salesLimit != null ? valueOrZero(salesLimit.getFrameLimitQty()) : 0;
         int consumedQty = valueOrZero(orderItemRepository.sumOrderedQuantityByProductAndAllocationTypeExcludingOrder(
                 productId,
                 AllocationType.FRAME,
                 Order.OrderStatus.CANCELLED,
                 excludedOrderId
         ));
-        return Math.max(0, salesLimitTotal - consumedQty);
+        return Math.max(0, frameLimitQty - consumedQty);
     }
 
     private LocationStock findOrCreateLocationStockForUpdate(Product product) {
@@ -483,8 +483,8 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                     LocationStock created = new LocationStock();
                     created.setProduct(product);
                     created.setLocationId(DEFAULT_LOCATION_ID);
-                    created.setAllocatableQty(0);
-                    created.setAllocatedQty(0);
+                    created.setAvailableQty(0);
+                    created.setCommittedQty(0);
                     return locationStockRepository.save(created);
                 });
     }
@@ -494,7 +494,7 @@ class InventoryUseCase implements InventoryQueryPort, InventoryCommandPort {
                 .orElseGet(() -> {
                     SalesLimit created = new SalesLimit();
                     created.setProduct(product);
-                    created.setSalesLimitTotal(0);
+                    created.setFrameLimitQty(0);
                     return salesLimitRepository.save(created);
                 });
     }
