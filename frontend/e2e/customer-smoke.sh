@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-COMPOSE_FILE="../docker-compose.yml"
+COMPOSE_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/docker-compose.yml"
+
+if [ "${SKIP_E2E_SEED:-0}" != "1" ]; then
+  bash "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/e2e_seed.sh"
+fi
 
 run_in_service() {
   local service="$1"

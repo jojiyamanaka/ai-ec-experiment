@@ -78,6 +78,9 @@ cd backend && ./mvnw compile
 
 # バックエンドテストを含むタスク完了時
 cd backend && ./mvnw test -Dtest=TargetTestClass
+
+# DB変更タスク完了時（影響テーブルseed + 件数/FK整合アサート）
+bash ./scripts/e2e_seed.sh
 ```
 
 ### Final Gate（全タスク完了後に必ず実行し、結果を `docs/04_review-note/CHG-XXX.md` に記録すること）

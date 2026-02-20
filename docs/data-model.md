@@ -16,7 +16,10 @@
 - **DBMS**: PostgreSQL 16
 - **ORM**: Hibernate（Spring Boot 3.4.2）
 - **マイグレーション**: Flyway
-- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql`（CHG-020 で `V9__extend_user_profile_and_addresses.sql` を追加）
+- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql` + `backend/src/main/resources/db/flyway/V2__baseline_current_schema.sql`
+- **最新DDLスナップショット**: `backend/src/main/resources/db/snapshots/latest_schema.sql`
+- **E2E参照データ**: `backend/src/main/resources/db/e2e/seed_reference_data.sql`（会員・商品・在庫）
+- **E2E整合アサート**: `backend/src/main/resources/db/e2e/assert_reference_data.sql`（件数・FK）
 
 ---
 

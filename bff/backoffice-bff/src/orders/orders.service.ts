@@ -153,6 +153,8 @@ export class OrdersService {
         return '作成済み';
       case 'CONFIRMED':
         return '確認済み';
+      case 'PREPARING_SHIPMENT':
+        return '出荷準備中';
       case 'SHIPPED':
         return '発送済み';
       case 'DELIVERED':

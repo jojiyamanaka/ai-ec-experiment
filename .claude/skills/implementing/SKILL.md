@@ -28,6 +28,13 @@ T-1 → T-N の順に1タスクずつ実装する。
 
 **[CONTRACT] / [ARCH]**: 実装後に `docs/04_review-note/CHG-XXX.md` の `## T-N` に review-note を追記する。設計書の繰り返しは不要 — 設計書にない実装判断（バージョン選択・例外方針・テストデータ・非自明な選択）のみ記録する。
 
+### DB変更タスクの追加ルール
+
+- DBスキーマ変更を含むCHGでは、`backend/src/main/resources/db/e2e/seed_reference_data.sql` を確認し、**影響テーブルのみ**を更新する。
+- DBスキーマ変更を含むCHGでは、`backend/src/main/resources/db/e2e/assert_reference_data.sql` の件数・FK整合アサートを更新する。
+- 注文データは DML で固定投入しない。必要な注文は `scripts/e2e_seed.sh` が Customer BFF (`/api/orders`) 経由で作成する。
+- DB変更後の検証では `scripts/e2e_seed.sh` を実行し、seed投入 + 件数/FK整合アサート + 注文API生成が通ることを確認する。
+
 ### 3. Final Gate
 
 タスクファイルの「Final Gate」コマンドをすべて実行する。

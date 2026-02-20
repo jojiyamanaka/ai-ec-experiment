@@ -14,6 +14,7 @@ const STATUS_LABELS: Record<string, string> = {
   ALL: 'すべて',
   PENDING: '作成済み',
   CONFIRMED: '確認済み',
+  PREPARING_SHIPMENT: '出荷準備中',
   SHIPPED: '発送済み',
   DELIVERED: '配達完了',
   CANCELLED: 'キャンセル',
@@ -29,6 +30,9 @@ function getStatusBadgeClass(status: string): string {
   }
   if (status === 'CONFIRMED') {
     return 'bg-blue-100 text-blue-800'
+  }
+  if (status === 'PREPARING_SHIPMENT') {
+    return 'bg-amber-100 text-amber-800'
   }
   if (status === 'SHIPPED') {
     return 'bg-purple-100 text-purple-800'
@@ -150,7 +154,7 @@ export default function AdminOrderPage() {
 
       {/* フィルタエリア */}
       <AdminFilterChips
-        items={['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => ({
+        items={['ALL', 'PENDING', 'CONFIRMED', 'PREPARING_SHIPMENT', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => ({
           key: status,
           label: getStatusLabel(status),
         }))}

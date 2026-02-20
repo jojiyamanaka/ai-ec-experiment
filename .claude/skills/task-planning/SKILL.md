@@ -41,6 +41,12 @@ CHG番号: $ARGUMENTS
 - **UI確認**: UI動作確認が必要な項目は、ユーザーへの依頼ではなく、MCP Playwright によるE2E確認を実施可能とする。
 - **タグ**: 以下のリスクタグを1つ以上付与する（詳細は後述）
 
+#### DB変更タスクの必須記載
+
+- DBスキーマ変更を含むタスクは、`backend/src/main/resources/db/e2e/seed_reference_data.sql` を **影響テーブルのみ**更新対象としてタスクに明記する。
+- 同タスクの Done 条件には、`backend/src/main/resources/db/e2e/assert_reference_data.sql` の更新と `scripts/e2e_seed.sh` 成功を含める。
+- 注文データをDMLで投入するタスクは作らない。注文準備は Customer BFF 経由の seed フロー（`scripts/e2e_seed.sh`）を前提にする。
+
 各タスクに含めないこと（実装詳細 = Codex の担当）:
 
 - 行番号・挿入位置の指定
