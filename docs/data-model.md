@@ -474,7 +474,7 @@ SELECT * FROM order_items WHERE subtotal != product_price * quantity AND is_dele
 
 - `products.stock` は互換カラムとして保持し、業務参照を禁止する。
 - 商品の在庫源泉は `allocationType` により切替える。
-  - `REAL`: `location_stocks` の `allocatable_qty - allocated_qty`
-  - `FRAME`: `sales_limits` の `sales_limit_total - consumedQty`
-- 注文進捗は `order_items.allocated_qty` を真実として `orderedQuantity` / `allocatedQuantity` を算出する。
+  - `REAL`: `location_stocks` の `available_qty - committed_qty`
+  - `FRAME`: `sales_limits` の `frame_limit_qty - consumedQty`
+- 注文進捗は `order_items.committed_qty` を真実として `orderedQuantity` / `committedQuantity` を算出する。
 - 手動再試行は `/api/order/{id}/allocation/retry` で受け付ける。

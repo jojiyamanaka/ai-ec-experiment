@@ -57,7 +57,7 @@ CHG番号: $ARGUMENTS
 | `[CONTRACT]` | 高 | エンドポイントの追加/削除/変更、HTTPステータス変更、レスポンス構造変更、DBスキーマ変更（カラム追加/削除/型変更）。エンドポイント・スキーマの**削除**を含む場合は、設計書の影響範囲欄から下流コンポーネント（BFF・フロントエンド）への影響を `⚠️` 補足としてタスクに追記すること |
 | `[ARCH]` | 高 | モジュール境界・依存方向の変更、トランザクション境界の変更、非同期実行モデルの変更 |
 
-実装は Codex の `/implementing CHG-XXX` スキルが担当する（`[CONTRACT]`/`[ARCH]` は `docs/impl-notes/CHG-XXX.md` への impl-notes 記録と追加検証が必要）。このスキル自体は実装を行わない。
+実装は Codex の `/implementing CHG-XXX` スキルが担当する（`[CONTRACT]`/`[ARCH]` は `docs/04_review-note/CHG-XXX.md` への review-note 記録と追加検証が必要。Final Gate 結果と Review Packet も同ファイルに記録）。このスキル自体は実装を行わない。
 
 #### タスク粒度のルール
 

@@ -129,6 +129,6 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 
 ## CHG-023 追記
 
-- 注文/注文明細レスポンスに `orderedQuantity` と `allocatedQuantity` を追加。
-- 出荷条件は `allocatedQuantity == orderedQuantity`。
+- 注文/注文明細レスポンスに `orderedQuantity` と `committedQuantity` を追加。
+- 出荷条件は `committedQuantity == orderedQuantity`。
 - 管理API `POST /api/order/{id}/allocation/retry` を追加（未引当がある注文に対して本引当を再試行）。

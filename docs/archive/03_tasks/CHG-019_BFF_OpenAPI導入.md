@@ -32,7 +32,7 @@
 
   Done: `cd bff/customer-bff && npm run build` が通ること。BFF 起動後 `curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api-docs` が `200` を返すこと。
 
-  > 📝 ゲート高。Codex は impl-notes（各コントローラーへの `@ApiTags` 割り当て方針・`SWAGGER_ENABLED` ガード実装方法）を `docs/impl-notes/CHG-019.md` の `## T-3` セクションに追記すること。
+  > 📝 ゲート高。Codex は review-note（各コントローラーへの `@ApiTags` 割り当て方針・`SWAGGER_ENABLED` ガード実装方法）を `docs/archive/04_review-note/CHG-019.md` の `## T-3` セクションに追記すること。
 
 ---
 
@@ -42,7 +42,7 @@
 
   Done: `cd bff/backoffice-bff && npm run build` が通ること。BFF 起動後 `curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api-docs` が `200` を返すこと。
 
-  > 📝 ゲート高。Codex は impl-notes を `docs/impl-notes/CHG-019.md` の `## T-4` セクションに追記すること。
+  > 📝 ゲート高。Codex は review-note を `docs/archive/04_review-note/CHG-019.md` の `## T-4` セクションに追記すること。
 
 ---
 
@@ -188,7 +188,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/api-docs
 - `bff/shared/src/dto/inventory.dto.ts`
 - `docs/api/customer-bff-openapi.json`
 - `docs/api/backoffice-bff-openapi.json`
-- `docs/impl-notes/CHG-019.md`
+- `docs/archive/04_review-note/CHG-019.md`
 - `docs/03_tasks/CHG-019_BFF_OpenAPI導入.md`
 
 ### リスクと未解決

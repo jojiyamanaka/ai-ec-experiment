@@ -65,9 +65,9 @@ IMPORTANT: すべてのドキュメント更新時に以下を徹底する。こ
 - **更新内容**: 該当エンティティの定義を更新
 - **スキップ例**: フロントエンドのみの変更
 
-### docs/ui/api-spec.md
+### docs/api/openapi.json / docs/api/customer-bff-openapi.json / docs/api/backoffice-bff-openapi.json
 - **更新条件**: APIエンドポイントの追加・変更がある場合
-- **更新内容**: 該当エンドポイントの仕様を追加・更新
+- **更新内容**: 該当する OpenAPI 契約を更新する
 - **スキップ例**: バックエンド内部のロジック変更のみ
 
 ### docs/ui/customer-ui.md
@@ -94,7 +94,7 @@ IMPORTANT: すべてのドキュメント更新時に以下を徹底する。こ
   - 商品関連 → `specs/product.md`
   - BFF関連 → `specs/bff-architecture.md`（認証キャッシュ、エンドポイント一覧含む）
 
-### docs/operations/monitoring.md
+### docs/agent-rules/monitoring.md
 - **更新条件**: 観測性スタック（OTel, Jaeger, Prometheus, Grafana）の変更がある場合
 - **更新内容**: 該当セクションのエンドポイント・メトリクス定義を更新
 - **スキップ例**: 観測性に影響しない機能追加
@@ -103,9 +103,13 @@ IMPORTANT: すべてのドキュメント更新時に以下を徹底する。こ
 
 以下を必ず確認する:
 
+### 参照パス存在チェック
+- checklist.md 内で参照しているパスが実在すること（存在しない場合は先に checklist.md を修正する）
+
 ### API整合性
-- `docs/ui/api-spec.md` のエンドポイント一覧が `docs/specs/bff-architecture.md` のエンドポイント一覧と一致しているか
-- 新規エンドポイントが両ファイルに追加されているか
+- API契約の正は `docs/api/openapi.json` / `docs/api/customer-bff-openapi.json` / `docs/api/backoffice-bff-openapi.json` とする
+- 新規/変更エンドポイントが該当 OpenAPI ファイルに反映されているか
+- `docs/specs/bff-architecture.md` は説明ドキュメントとして整合しているか（契約の厳密一致は OpenAPI を正とする）
 
 ### 認証整合性
 - `docs/specs/authentication.md` のトークンフィールド定義が実際のエンティティと一致しているか（存在しないフィールド名を記載していないか）

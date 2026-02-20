@@ -93,7 +93,7 @@
 
 - 全注文をテーブル表示（注文番号, 日時, 合計金額, ステータス）
 - ステータスフィルタ: ALL, PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
-- 注文単位の引当進捗（`allocatedQuantity / orderedQuantity`）を表示
+- 注文単位の引当進捗（`committedQuantity / orderedQuantity`）を表示
 
 ### ステータス変更
 
@@ -121,12 +121,12 @@ PENDING(グレー), CONFIRMED(ブルー), SHIPPED(パープル), DELIVERED(グ�
 ### 在庫タブの編集項目
 
 - 引当区分: `allocationType`（`REAL` / `FRAME`）
-- 実在庫: `locationStock.allocatableQty`（引当可能実在庫）
-- 枠在庫: `salesLimit.salesLimitTotal`（販売上限）
+- 実在庫: `locationStock.availableQty`（引当可能実在庫）
+- 枠在庫: `salesLimit.frameLimitQty`（販売上限）
 
 ### 在庫タブの表示項目（算出値）
 
-- 引当済: `locationStock.allocatedQty`
+- 引当済: `locationStock.committedQty`
 - 残数: `locationStock.remainingQty`
 - 枠消費: `salesLimit.consumedQty`
 

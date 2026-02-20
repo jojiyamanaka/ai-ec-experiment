@@ -4949,7 +4949,7 @@
     "location_stocks": "enabled",
     "sales_limits": "enabled",
     "orderedQuantity": "enabled",
-    "allocatedQuantity": "enabled",
+    "committedQuantity": "enabled",
     "allocationRetryPath": "/api/order/{id}/allocation/retry",
     "legacyStock": "products.stock is non-business field"
   }

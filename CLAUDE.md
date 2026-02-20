@@ -62,6 +62,7 @@ npm run lint
 機能開発は `docs/03_tasks/CHG-XXX_*.md`（task.md）を起点とし、task.md は UTF-8 で読むこと。
 実装手順（T-1→T-N、Final Gate、Review Packet、自己修正ルール）の正本は `.claude/skills/implementing/SKILL.md` とする。
 実装してユーザーへ完了報告する前に、変更対象に対応するコンテナを必ず `docker compose build` すること（例: `frontend` 変更なら `frontend-admin`/`frontend-customer`、BFF変更なら `customer-bff`/`backoffice-bff`、`backend` 変更なら `backend`）。
+起動中コンテナが旧イメージの可能性があるため、build 後は必要に応じて `docker compose up -d` で再作成すること。
 
 ### グローバル禁止事項
 

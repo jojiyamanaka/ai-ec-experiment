@@ -16,7 +16,7 @@
 
   Done: `docker compose up -d && docker compose logs backend | rg "V10__extend_product_master_and_categories|Successfully applied"` で Flyway V10 の適用を確認できること
 
-  > 📝 ゲート高。Codex は impl-notes（DDL 制約・既存データ移行互換・インデックス命名の判断）を `docs/impl-notes/CHG-021.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（DDL 制約・既存データ移行互換・インデックス命名の判断）を `docs/archive/04_review-note/CHG-021.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -26,7 +26,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=ProductUseCaseTest` が通ること（`INVALID_SCHEDULE`、`CATEGORY_INACTIVE`、公開判定式を検証するケースを含むこと）
 
-  > 📝 ゲート高。Codex は impl-notes（公開/販売期間の境界判定、`ITEM_NOT_FOUND` 隠蔽方針、カテゴリ公開との合成ロジック）を `docs/impl-notes/CHG-021.md` の `## T-2` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（公開/販売期間の境界判定、`ITEM_NOT_FOUND` 隠蔽方針、カテゴリ公開との合成ロジック）を `docs/archive/04_review-note/CHG-021.md` の `## T-2` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -36,7 +36,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=ProductControllerContractTest,BoAdminProductControllerContractTest` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（管理向け契約の互換エイリアス方針・エラーコード整合）を `docs/impl-notes/CHG-021.md` の `## T-3` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（管理向け契約の互換エイリアス方針・エラーコード整合）を `docs/archive/04_review-note/CHG-021.md` の `## T-3` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -46,7 +46,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=CartServiceTest` が通ること（期間外・非公開カテゴリ商品の追加拒否を検証するケースを含むこと）
 
-  > 📝 ゲート高。Codex は impl-notes（既存エラーメッセージ維持のための判定順序、在庫判定との優先順位）を `docs/impl-notes/CHG-021.md` の `## T-4` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（既存エラーメッセージ維持のための判定順序、在庫判定との優先順位）を `docs/archive/04_review-note/CHG-021.md` の `## T-4` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -58,7 +58,7 @@
 
   Done: `cd bff/customer-bff && npm run build` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（Core API 互換フィールド吸収方針・期間判定の実装責務境界）を `docs/impl-notes/CHG-021.md` の `## T-5` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（Core API 互換フィールド吸収方針・期間判定の実装責務境界）を `docs/archive/04_review-note/CHG-021.md` の `## T-5` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -68,7 +68,7 @@
 
   Done: `cd bff/backoffice-bff && npm run build` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（`/api/admin/*` と `/api/bo/admin/*` 互換提供の判断）を `docs/impl-notes/CHG-021.md` の `## T-6` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（`/api/admin/*` と `/api/bo/admin/*` 互換提供の判断）を `docs/archive/04_review-note/CHG-021.md` の `## T-6` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -98,7 +98,7 @@
 
   Done: `rg -n "product_code|product_categories|is_published|publish_start_at|publish_end_at|sale_start_at|sale_end_at|INVALID_SCHEDULE" docs/data-model.md docs/specs/product.md docs/ui/customer-ui.md docs/ui/admin-ui.md docs/requirements.md docs/api/openapi.json docs/api/customer-bff-openapi.json docs/api/backoffice-bff-openapi.json` で反映箇所を確認できること
 
-  > 📝 ゲート高。Codex は impl-notes（契約文言の統一方針・旧 `is_active` 記述の互換扱い）を `docs/impl-notes/CHG-021.md` の `## T-9` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（契約文言の統一方針・旧 `is_active` 記述の互換扱い）を `docs/archive/04_review-note/CHG-021.md` の `## T-9` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -240,7 +240,7 @@ curl -sS -o /dev/null -w "backend=%{http_code}\n" http://localhost:8080/actuator
 - `docs/api/openapi.json`
 - `docs/api/customer-bff-openapi.json`
 - `docs/api/backoffice-bff-openapi.json`
-- `docs/impl-notes/CHG-021.md`
+- `docs/archive/04_review-note/CHG-021.md`
 
 ### リスクと未解決
 - Final Gate の backend health check (`http://localhost:8080/actuator/health`) は FAIL。現在の docker-compose では backend の host 公開ポートが `8000` 設定で、`8080` がホスト公開されていない。

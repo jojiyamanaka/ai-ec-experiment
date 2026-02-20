@@ -16,7 +16,7 @@
 
   Done: `cd bff/backoffice-bff && npm run build && docker compose up -d backoffice-bff backend redis && docker compose exec -T backoffice-bff sh -lc 'token=$(curl -sS -X POST http://localhost:3002/api/bo-auth/login -H "Content-Type: application/json" -d "{\"email\":\"admin@example.com\",\"password\":\"password\"}" | sed -n "s/.*\"token\":\"\\([^\"]*\\)\".*/\\1/p" | head -n 1); [ -n "$token" ] && [ "$(curl -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $token" http://localhost:3002/api/bo-auth/me)" = "200" ] && [ "$(curl -sS -o /dev/null -w "%{http_code}" http://localhost:3002/api/bo-auth/me)" = "401" ]'` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（既存ガード再利用の判断・401 契約の扱い）を `docs/04_impl-notes/CHG-022.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（既存ガード再利用の判断・401 契約の扱い）を `docs/archive/04_review-note/CHG-022.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -118,14 +118,14 @@ curl -sS -o /dev/null -w "frontend-admin=%{http_code}\n" http://localhost:5174
 - `ProductContext` を認証条件付き取得に変更し、未認証時の管理向け商品/カテゴリ先行フェッチを停止した。
 - `ProductContext` は `bo-auth:authenticated` / `bo-auth:unauthorized` で商品・カテゴリ状態を同期するようにした。
 - `AdminItemPage` 表示時に `refreshProducts` / `refreshCategories` を明示実行し、初回表示の再取得トリガーを追加した。
-- `[CONTRACT]` の impl-notes を `docs/04_impl-notes/CHG-022.md` に記録した。
+- `[CONTRACT]` の review-note を `docs/archive/04_review-note/CHG-022.md` に記録した。
 
 ### 変更ファイル一覧
 - `bff/backoffice-bff/src/auth/bo-auth.controller.ts`
 - `frontend/src/features/bo-auth/model/BoAuthContext.tsx`
 - `frontend/src/entities/product/model/ProductContext.tsx`
 - `frontend/src/pages/admin/AdminItemPage/index.tsx`
-- `docs/04_impl-notes/CHG-022.md`
+- `docs/archive/04_review-note/CHG-022.md`
 - `docs/03_tasks/CHG-022_BO管理画面 認証復元と商品初期表示不具合修正.md`
 
 ### リスクと未解決

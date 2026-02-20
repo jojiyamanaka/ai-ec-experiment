@@ -1,6 +1,6 @@
 ---
 name: implementing
-description: タスクファイルの全タスクを直列に実装する。[CONTRACT]/[ARCH] は impl-notes 記録と追加検証が必要。
+description: タスクファイルの全タスクを直列に実装する。[CONTRACT]/[ARCH] は review-note 記録と追加検証が必要。
 argument-hint: "[CHG番号 例: CHG-018]"
 ---
 
@@ -26,20 +26,27 @@ T-1 → T-N の順に1タスクずつ実装する。
 
 **[SAFE]**: 通常の実装のみ。
 
-**[CONTRACT] / [ARCH]**: 実装後に `docs/04_impl-notes/$ARGUMENTS.md` の `## T-N` に impl-notes を追記する。設計書の繰り返しは不要 — 設計書にない実装判断（バージョン選択・例外方針・テストデータ・非自明な選択）のみ記録する。
+**[CONTRACT] / [ARCH]**: 実装後に `docs/04_review-note/$ARGUMENTS.md` の `## T-N` に review-note を追記する。設計書の繰り返しは不要 — 設計書にない実装判断（バージョン選択・例外方針・テストデータ・非自明な選択）のみ記録する。
 
 ### 3. Final Gate
 
 タスクファイルの「Final Gate」コマンドをすべて実行する。
 UI 手動確認が必要な場合は MCP Playwright で必ず実施する。Docker Playwright は再現スクリプト化（CI連携・共有）が必要な場合のみ使う。
-結果の要約を「Final Gate 結果」欄に記載する。
+結果の要約を `docs/04_review-note/$ARGUMENTS.md` の `## Final Gate 結果` に追記する。
 失敗した場合は下記「自己修正ルール」に従う。
 
 ### 4. Review Packet
 
-task.md 末尾に追記する:
+`docs/04_review-note/$ARGUMENTS.md` に追記する:
 
 ```markdown
+## CHG-XXX review-note
+## T-N
+（[CONTRACT]/[ARCH] の実装判断）
+
+## Final Gate 結果
+（実行コマンドと結果要約）
+
 ## Review Packet
 ### 変更サマリ（10行以内）
 ### 変更ファイル一覧
@@ -51,7 +58,7 @@ task.md 末尾に追記する:
 ### 5. 報告
 
 - 実装タスク一覧
-- impl-notes 記録状況（[CONTRACT]/[ARCH] がある場合）
+- review-note 記録状況（[CONTRACT]/[ARCH] がある場合）
 - Final Gate 結果概要・未解決事項
 
 ## 自己修正ルール

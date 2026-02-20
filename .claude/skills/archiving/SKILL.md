@@ -13,7 +13,7 @@ CHG番号: $ARGUMENTS
 
 ### 1. 対象ファイルの特定
 
-`docs/01_requirements/`, `docs/02_designs/`, `docs/03_tasks/` , `docs/04_impl-notes/` から $ARGUMENTS に一致するファイルを Glob で検索する。
+`docs/01_requirements/`, `docs/02_designs/`, `docs/03_tasks/` , `docs/04_review-note/` から $ARGUMENTS に一致するファイルを Glob で検索する。
 見つからない場合はユーザーに報告して終了する。
 
 要件定義書を読み、変更の概要と影響範囲を把握する。
@@ -44,8 +44,8 @@ mv docs/02_designs/CHG-XXX_*.md docs/archive/02_designs/
 # 実装タスク
 mv docs/03_tasks/CHG-XXX_*.md docs/archive/03_tasks/
 
-# impl-notes
-mv docs/04_impl-notes/CHG-XXX_*.md docs/archive/04_impl-notes/
+# review-note
+mv docs/04_review-note/CHG-XXX*.md docs/archive/04_review-note/
 ```
 
 ### 5. git commit + push

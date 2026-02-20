@@ -90,7 +90,7 @@
 |------|-----------|
 | PENDING → CONFIRMED | 管理者が注文確認 |
 | CONFIRMED → PREPARING_SHIPMENT | 出荷指示生成ジョブで遷移 |
-| PREPARING_SHIPMENT → SHIPPED | 管理者が発送完了。`allocatedQuantity == orderedQuantity` が必須 |
+| PREPARING_SHIPMENT → SHIPPED | 管理者が発送完了。`committedQuantity == orderedQuantity` が必須 |
 | SHIPPED → DELIVERED | 配達完了 |
 | PENDING/CONFIRMED/PREPARING_SHIPMENT → CANCELLED | 顧客or管理者がキャンセル、在庫戻し |
 | SHIPPED/DELIVERED → CANCELLED | **不可** |

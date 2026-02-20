@@ -16,7 +16,7 @@
 
   Done: `docker compose up -d && docker compose logs backend | rg "V9__extend_user_profile_and_addresses|Successfully applied"` で Flyway V9 の適用を確認できること
 
-  > 📝 ゲート高。Codex は impl-notes（DDL 上の制約設計・既存データ互換の判断）を `docs/impl-notes/CHG-020.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（DDL 上の制約設計・既存データ互換の判断）を `docs/archive/04_review-note/CHG-020.md` の `## T-1` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -26,7 +26,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=UserProfileServiceTest` が通ること（`is_default` の会員内一意制約、他会員住所の更新拒否を検証するケースを含むこと）
 
-  > 📝 ゲート高。Codex は impl-notes（トランザクション境界・`is_default` 正規化戦略の判断根拠）を `docs/impl-notes/CHG-020.md` の `## T-2` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（トランザクション境界・`is_default` 正規化戦略の判断根拠）を `docs/archive/04_review-note/CHG-020.md` の `## T-2` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -36,7 +36,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=AuthControllerContractTest` が通ること（顧客更新禁止項目送信時の `INVALID_REQUEST` と住所 CRUD の認可境界を検証するケースを含むこと）
 
-  > 📝 ゲート高。Codex は impl-notes（顧客公開項目の境界定義・拒否方針）を `docs/impl-notes/CHG-020.md` の `## T-3` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（顧客公開項目の境界定義・拒否方針）を `docs/archive/04_review-note/CHG-020.md` の `## T-3` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -46,7 +46,7 @@
 
   Done: `cd backend && ./mvnw test -Dtest=BoAdminControllerContractTest` が通ること（`EMAIL_ALREADY_EXISTS` と BO 更新禁止項目拒否を検証するケースを含むこと）
 
-  > 📝 ゲート高。Codex は impl-notes（BO FULL 更新許可項目の判断・既存 `/api/admin/members/*` 互換維持方針）を `docs/impl-notes/CHG-020.md` の `## T-4` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（BO FULL 更新許可項目の判断・既存 `/api/admin/members/*` 互換維持方針）を `docs/archive/04_review-note/CHG-020.md` の `## T-4` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -58,7 +58,7 @@
 
   Done: `cd bff/customer-bff && npm run build` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（BFF DTO マッピング方針・Core API エラー透過方針）を `docs/impl-notes/CHG-020.md` の `## T-5` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（BFF DTO マッピング方針・Core API エラー透過方針）を `docs/archive/04_review-note/CHG-020.md` の `## T-5` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -68,7 +68,7 @@
 
   Done: `cd bff/backoffice-bff && npm run build` が通ること
 
-  > 📝 ゲート高。Codex は impl-notes（`/api/admin/members/*` と `/api/bo/admin/members/*` の互換方針）を `docs/impl-notes/CHG-020.md` の `## T-6` セクションに追記し、追加検証コマンドを実行すること。
+  > 📝 ゲート高。Codex は review-note（`/api/admin/members/*` と `/api/bo/admin/members/*` の互換方針）を `docs/archive/04_review-note/CHG-020.md` の `## T-6` セクションに追記し、追加検証コマンドを実行すること。
 
 ---
 
@@ -210,7 +210,7 @@ curl -sS -o /dev/null -w "backend=%{http_code}\n" http://localhost:8080/actuator
 - Customer/BackOffice BFF に会員更新・住所CRUD・会員作成/FULL更新の中継 API を追加した。
 - フロントエンドで顧客マイページ新設、管理会員画面の拡張、`entities/customer` 型/APIの更新を実施した。
 - `data-model`/`OpenAPI`/`ui`/`requirements` を CHG-020 仕様に更新した。
-- `docs/impl-notes/CHG-020.md` に T-1〜T-6 の実装判断を記録した。
+- `docs/archive/04_review-note/CHG-020.md` に T-1〜T-6 の実装判断を記録した。
 
 ### 変更ファイル一覧
 - `backend/src/main/resources/db/flyway/V9__extend_user_profile_and_addresses.sql`
@@ -249,7 +249,7 @@ curl -sS -o /dev/null -w "backend=%{http_code}\n" http://localhost:8080/actuator
 - `docs/ui/customer-ui.md`
 - `docs/ui/admin-ui.md`
 - `docs/requirements.md`
-- `docs/impl-notes/CHG-020.md`
+- `docs/archive/04_review-note/CHG-020.md`
 
 ### リスクと未解決
 - Final Gate 記載の `bash ./frontend/e2e/customer-smoke.sh` はリポジトリルート実行だと `../docker-compose.yml` 解決に失敗するため、`cd frontend && bash ./e2e/customer-smoke.sh` で実行した。
