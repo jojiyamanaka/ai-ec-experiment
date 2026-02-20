@@ -49,7 +49,8 @@ class ProductControllerContractTest {
     @Test
     void getProducts_shouldReturnPagedProductList() throws Exception {
         ProductDto item = new ProductDto(1L, "AIスピーカー", BigDecimal.valueOf(3980),
-                "/img/speaker.jpg", "AI搭載スピーカー", 100, true);
+                "/img/speaker.jpg", "AI搭載スピーカー", 100, true,
+                "P000001", 1L, "未分類", null, null, null, null);
         ProductListResponse response = new ProductListResponse(List.of(item), 1L, 1, 20);
         when(productQuery.getPublishedProducts(1, 20)).thenReturn(response);
 
@@ -69,7 +70,8 @@ class ProductControllerContractTest {
     @Test
     void getProduct_shouldReturnProductWithRequiredFields() throws Exception {
         ProductDto product = new ProductDto(42L, "商品A", BigDecimal.valueOf(1980),
-                "/img/a.jpg", "商品Aの説明", 50, true);
+                "/img/a.jpg", "商品Aの説明", 50, true,
+                "P000042", 1L, "未分類", null, null, null, null);
         when(productQuery.getProduct(42L)).thenReturn(product);
 
         mockMvc.perform(get("/api/item/42"))

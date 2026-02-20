@@ -40,19 +40,20 @@ public class CartService {
     public CartDto getOrCreateCart(String sessionId) {
         Cart cart = cartRepository.findBySessionId(sessionId)
                 .orElseGet(() -> createCart(sessionId));
+        Instant now = Instant.now();
 
-        // 非公開商品をカートから除外
-        List<CartItem> unpublishedItems = cart.getItems().stream()
-                .filter(item -> !item.getProduct().getIsPublished())
+        // 購入不可商品（非公開/カテゴリ非公開/期間外）をカートから除外
+        List<CartItem> unavailableItems = cart.getItems().stream()
+                .filter(item -> !productRepository.isPurchasableById(item.getProduct().getId(), now))
                 .toList();
 
-        if (!unpublishedItems.isEmpty()) {
-            for (CartItem item : unpublishedItems) {
+        if (!unavailableItems.isEmpty()) {
+            for (CartItem item : unavailableItems) {
                 inventoryCommand.releaseReservation(sessionId, item.getProduct().getId());
                 cart.removeItem(item);
                 cartItemRepository.delete(item);
             }
-            cart.setUpdatedAt(Instant.now());
+            cart.setUpdatedAt(now);
             cartRepository.save(cart);
         }
 
@@ -70,7 +71,7 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
 
-        if (!product.getIsPublished()) {
+        if (!productRepository.isPurchasableById(product.getId(), Instant.now())) {
             throw new BusinessException("ITEM_NOT_AVAILABLE", "この商品は現在購入できません");
         }
 
@@ -118,6 +119,10 @@ public class CartService {
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "商品が見つかりません"));
+
+        if (!productRepository.isPurchasableById(product.getId(), Instant.now())) {
+            throw new BusinessException("ITEM_NOT_AVAILABLE", "この商品は現在購入できません");
+        }
 
         CartItem cartItem = cartItemRepository.findByCartAndProduct(cart, product)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND", "カート内に商品が見つかりません"));

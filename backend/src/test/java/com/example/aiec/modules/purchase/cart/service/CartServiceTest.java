@@ -104,6 +104,7 @@ class CartServiceTest {
 
         when(cartRepository.findBySessionId("sess")).thenReturn(Optional.of(cart));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isPurchasableById(eq(1L), any(Instant.class))).thenReturn(true);
         when(cartItemRepository.findByCartAndProduct(cart, product)).thenReturn(Optional.of(existing));
 
         assertThatExceptionOfType(BusinessException.class)
@@ -120,6 +121,7 @@ class CartServiceTest {
 
         when(cartRepository.findBySessionId("sess")).thenReturn(Optional.of(cart));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isPurchasableById(eq(1L), any(Instant.class))).thenReturn(true);
         when(cartItemRepository.findByCartAndProduct(cart, product)).thenReturn(Optional.empty());
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(i -> i.getArgument(0));
         when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));

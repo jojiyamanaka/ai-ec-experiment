@@ -1,6 +1,14 @@
 import { fetchApi } from '@shared/api/client'
 import type { ApiResponse } from '@shared/types/api'
-import type { Product, ProductListResponse, UpdateProductRequest } from './types'
+import type {
+  CreateProductCategoryRequest,
+  CreateProductRequest,
+  Product,
+  ProductCategory,
+  ProductListResponse,
+  UpdateProductCategoryRequest,
+  UpdateProductRequest,
+} from './types'
 
 export async function getItems(page = 1, limit = 20): Promise<ApiResponse<ProductListResponse>> {
   return fetchApi<ProductListResponse>(`/api/products?page=${page}&limit=${limit}`)
@@ -17,5 +25,55 @@ export async function updateItem(
   return fetchApi<Product>(`/api/item/${id}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
+  }, 'bo')
+}
+
+export async function getAdminItems(page = 1, limit = 100): Promise<ApiResponse<ProductListResponse>> {
+  return fetchApi<ProductListResponse>(`/api/admin/items?page=${page}&limit=${limit}`, {}, 'bo')
+}
+
+export async function getAdminItemById(id: number): Promise<ApiResponse<Product>> {
+  return fetchApi<Product>(`/api/admin/items/${id}`, {}, 'bo')
+}
+
+export async function createAdminItem(
+  payload: CreateProductRequest
+): Promise<ApiResponse<Product>> {
+  return fetchApi<Product>(`/api/admin/items`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, 'bo')
+}
+
+export async function updateAdminItem(
+  id: number,
+  payload: UpdateProductRequest
+): Promise<ApiResponse<Product>> {
+  return fetchApi<Product>(`/api/admin/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }, 'bo')
+}
+
+export async function getAdminItemCategories(): Promise<ApiResponse<ProductCategory[]>> {
+  return fetchApi<ProductCategory[]>(`/api/admin/item-categories`, {}, 'bo')
+}
+
+export async function createAdminItemCategory(
+  payload: CreateProductCategoryRequest
+): Promise<ApiResponse<ProductCategory>> {
+  return fetchApi<ProductCategory>(`/api/admin/item-categories`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, 'bo')
+}
+
+export async function updateAdminItemCategory(
+  id: number,
+  payload: UpdateProductCategoryRequest
+): Promise<ApiResponse<ProductCategory>> {
+  return fetchApi<ProductCategory>(`/api/admin/item-categories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
   }, 'bo')
 }

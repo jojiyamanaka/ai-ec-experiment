@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
 
@@ -21,15 +21,65 @@ import jakarta.persistence.LockModeType;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    /**
-     * 公開されている商品のみを取得
-     */
-    List<Product> findByIsPublishedTrue();
+    @Query(
+            value = """
+            SELECT p FROM Product p
+            JOIN ProductCategory c ON p.categoryId = c.id
+            WHERE p.isPublished = TRUE
+              AND c.isPublished = TRUE
+              AND (p.publishStartAt IS NULL OR p.publishStartAt <= :now)
+              AND (p.publishEndAt IS NULL OR p.publishEndAt >= :now)
+            ORDER BY p.id ASC
+            """,
+            countQuery = """
+            SELECT COUNT(p) FROM Product p
+            JOIN ProductCategory c ON p.categoryId = c.id
+            WHERE p.isPublished = TRUE
+              AND c.isPublished = TRUE
+              AND (p.publishStartAt IS NULL OR p.publishStartAt <= :now)
+              AND (p.publishEndAt IS NULL OR p.publishEndAt >= :now)
+            """
+    )
+    Page<Product> findPublishedForCustomer(@Param("now") Instant now, Pageable pageable);
 
-    /**
-     * 公開されている商品のみをページネーションで取得
-     */
-    Page<Product> findByIsPublishedTrue(Pageable pageable);
+    @Query("""
+            SELECT p FROM Product p
+            JOIN ProductCategory c ON p.categoryId = c.id
+            WHERE p.id = :id
+              AND p.isPublished = TRUE
+              AND c.isPublished = TRUE
+              AND (p.publishStartAt IS NULL OR p.publishStartAt <= :now)
+              AND (p.publishEndAt IS NULL OR p.publishEndAt >= :now)
+            """)
+    Optional<Product> findVisibleById(@Param("id") Long id, @Param("now") Instant now);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p
+            JOIN ProductCategory c ON p.categoryId = c.id
+            WHERE p.id = :id
+              AND p.isPublished = TRUE
+              AND c.isPublished = TRUE
+              AND (p.publishStartAt IS NULL OR p.publishStartAt <= :now)
+              AND (p.publishEndAt IS NULL OR p.publishEndAt >= :now)
+              AND (p.saleStartAt IS NULL OR p.saleStartAt <= :now)
+              AND (p.saleEndAt IS NULL OR p.saleEndAt >= :now)
+            """)
+    boolean isPurchasableById(@Param("id") Long id, @Param("now") Instant now);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Product p
+            JOIN ProductCategory c ON p.categoryId = c.id
+            WHERE p.id = :id
+              AND p.isPublished = TRUE
+              AND c.isPublished = TRUE
+              AND (p.publishStartAt IS NULL OR p.publishStartAt <= :now)
+              AND (p.publishEndAt IS NULL OR p.publishEndAt >= :now)
+            """)
+    boolean isVisibleById(@Param("id") Long id, @Param("now") Instant now);
+
+    boolean existsByProductCode(String productCode);
+
+    boolean existsByProductCodeAndIdNot(String productCode, Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")

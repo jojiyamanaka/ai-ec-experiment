@@ -3,6 +3,8 @@ package com.example.aiec.modules.product.application.port;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,25 +12,29 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * 商品更新リクエスト（管理用）
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateProductRequest {
+public class CreateProductRequest {
 
+    @NotBlank(message = "商品コードは必須です")
+    private String productCode;
+
+    @NotBlank(message = "商品名は必須です")
     private String name;
 
     private String description;
 
+    @NotNull(message = "カテゴリIDは必須です")
     @Min(value = 1, message = "カテゴリIDは1以上である必要があります")
     private Long categoryId;
 
+    @NotNull(message = "価格は必須です")
     @DecimalMin(value = "0", message = "価格は0以上である必要があります")
     @Digits(integer = 10, fraction = 0, message = "価格は整数である必要があります")
     private BigDecimal price;
 
+    @NotNull(message = "在庫数は必須です")
     @Min(value = 0, message = "在庫数は0以上である必要があります")
     private Integer stock;
 
@@ -43,5 +49,4 @@ public class UpdateProductRequest {
     private Instant saleEndAt;
 
     private String image;
-
 }

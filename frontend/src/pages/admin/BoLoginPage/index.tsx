@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { useBoAuth } from '@features/bo-auth'
 
 export default function BoLoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { boLogin, loading, error, clearError } = useBoAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,7 +15,8 @@ export default function BoLoginPage() {
 
     try {
       await boLogin(email, password)
-      navigate('/bo/item') // ログイン成功後に管理画面へ
+      const from = (location.state as { from?: string } | null)?.from
+      navigate(from ?? '/bo/item', { replace: true }) // ログイン成功後に管理画面へ
     } catch {
       // エラーは BoAuthContext で管理されている
     }

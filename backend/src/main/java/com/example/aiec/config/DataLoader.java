@@ -65,6 +65,12 @@ public class DataLoader implements CommandLineRunner {
                         "高速データ転送可能な1TB外付けSSD", 0, true)
         );
 
+        for (int i = 0; i < products.size(); i++) {
+            Product product = products.get(i);
+            product.setProductCode(String.format("P%06d", i + 1));
+            product.setCategoryId(1L);
+        }
+
         productRepository.saveAll(products);
         log.info("{}件の商品データを投入しました。", products.size());
     }

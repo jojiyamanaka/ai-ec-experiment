@@ -5,14 +5,21 @@ import { ApiResponse } from '@app/shared';
 
 interface CoreProduct {
   id: number;
+  productCode?: string;
   name: string;
   price: number;
   image?: string;
   description?: string;
+  categoryId?: number;
+  categoryName?: string;
   category?: string;
   stock: number;
   isPublished?: boolean;
   published?: boolean;
+  publishStartAt?: string | number;
+  publishEndAt?: string | number;
+  saleStartAt?: string | number;
+  saleEndAt?: string | number;
 }
 
 interface CoreProductList {
@@ -50,7 +57,7 @@ export class ProductsService {
     }
 
     const items = response.data.items
-      .filter((product) => this.isPublished(product))
+      .filter((product) => this.isVisible(product))
       .map((product) => this.transformProduct(product));
 
     const data = {
@@ -83,7 +90,7 @@ export class ProductsService {
       return response as ApiResponse<any>;
     }
 
-    if (!this.isPublished(response.data)) {
+    if (!this.isVisible(response.data)) {
       return {
         success: false,
         error: {
@@ -140,22 +147,63 @@ export class ProductsService {
   transformProduct(product: CoreProduct): any {
     const stockStatus = this.getStockStatus(product.stock);
     const isPublished = this.isPublished(product);
+    const categoryName = product.categoryName ?? product.category ?? '';
+    const publishStartAt = product.publishStartAt ?? null;
+    const publishEndAt = product.publishEndAt ?? null;
+    const saleStartAt = product.saleStartAt ?? null;
+    const saleEndAt = product.saleEndAt ?? null;
     return {
       id: product.id,
+      productCode: product.productCode ?? '',
       name: product.name,
       price: Number(product.price),
       image: product.image ?? '',
       imageUrl: product.image ?? '',
       description: product.description ?? '',
-      category: product.category ?? '',
+      categoryId: product.categoryId ?? null,
+      categoryName,
+      category: categoryName,
       stock: product.stock,
       isPublished,
+      publishStartAt,
+      publishEndAt,
+      saleStartAt,
+      saleEndAt,
       stockStatus,
     };
   }
 
+  private isVisible(product: CoreProduct): boolean {
+    return this.isPublished(product) && this.isWithinWindow(product.publishStartAt, product.publishEndAt);
+  }
+
   private isPublished(product: CoreProduct): boolean {
     return Boolean(product.isPublished ?? product.published);
+  }
+
+  private isWithinWindow(start?: string | number, end?: string | number): boolean {
+    const now = Date.now();
+    const startMs = this.toEpochMillis(start);
+    const endMs = this.toEpochMillis(end);
+    if (startMs !== null && now < startMs) {
+      return false;
+    }
+    if (endMs !== null && now > endMs) {
+      return false;
+    }
+    return true;
+  }
+
+  private toEpochMillis(value?: string | number): number | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (typeof value === 'number') {
+      // Core API の Instant は epoch seconds の小数で返るため ms に正規化する
+      return value < 10_000_000_000 ? Math.floor(value * 1000) : Math.floor(value);
+    }
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 
   private getStockStatus(stock: number): string {

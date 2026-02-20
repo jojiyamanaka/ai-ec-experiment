@@ -1,4 +1,23 @@
-export type { Product, ProductListResponse, UpdateProductRequest } from './model/types'
+export type {
+  CreateProductCategoryRequest,
+  CreateProductRequest,
+  Product,
+  ProductCategory,
+  ProductListResponse,
+  UpdateProductCategoryRequest,
+  UpdateProductRequest,
+} from './model/types'
 export { useProducts, ProductProvider } from './model/ProductContext'
-export { getItems, getItemById, updateItem } from './model/api'
+export {
+  createAdminItem,
+  createAdminItemCategory,
+  getAdminItemById,
+  getAdminItemCategories,
+  getAdminItems,
+  getItemById,
+  getItems,
+  updateAdminItem,
+  updateAdminItemCategory,
+  updateItem,
+} from './model/api'
 export { default as ProductCard } from './ui/ProductCard'

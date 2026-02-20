@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { BoAuthProvider } from '@features/bo-auth'
+import { RequireBoAuth } from '@features/bo-auth'
 import { ProductProvider } from '@entities/product'
 import { AdminLayout } from '@widgets/AdminLayout'
 import AdminItemPage from '@pages/admin/AdminItemPage'
@@ -16,11 +17,13 @@ export function AdminRouter() {
           <Routes>
             <Route path="/" element={<BoLoginPage />} />
             <Route path="/bo/login" element={<BoLoginPage />} />
-            <Route path="/bo" element={<AdminLayout />}>
-              <Route path="item" element={<AdminItemPage />} />
-              <Route path="order" element={<AdminOrderPage />} />
-              <Route path="inventory" element={<AdminInventoryPage />} />
-              <Route path="members" element={<AdminMembersPage />} />
+            <Route element={<RequireBoAuth />}>
+              <Route path="/bo" element={<AdminLayout />}>
+                <Route path="item" element={<AdminItemPage />} />
+                <Route path="order" element={<AdminOrderPage />} />
+                <Route path="inventory" element={<AdminInventoryPage />} />
+                <Route path="members" element={<AdminMembersPage />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

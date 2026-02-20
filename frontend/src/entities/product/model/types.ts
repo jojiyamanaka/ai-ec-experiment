@@ -1,11 +1,18 @@
 export interface Product {
   id: number
+  productCode: string
   name: string
+  categoryId: number | null
+  categoryName: string
   price: number
   image: string
   description: string
   stock: number
   isPublished: boolean
+  publishStartAt: string | number | null
+  publishEndAt: string | number | null
+  saleStartAt: string | number | null
+  saleEndAt: string | number | null
 }
 
 export interface ProductListResponse {
@@ -15,8 +22,50 @@ export interface ProductListResponse {
   limit: number
 }
 
+export interface CreateProductRequest {
+  productCode: string
+  name: string
+  description?: string
+  categoryId: number
+  price: number
+  stock: number
+  isPublished?: boolean
+  publishStartAt?: string | null
+  publishEndAt?: string | null
+  saleStartAt?: string | null
+  saleEndAt?: string | null
+  image?: string
+}
+
 export interface UpdateProductRequest {
+  name?: string
+  description?: string
+  categoryId?: number
   price?: number
   stock?: number
+  isPublished?: boolean
+  publishStartAt?: string | null
+  publishEndAt?: string | null
+  saleStartAt?: string | null
+  saleEndAt?: string | null
+  image?: string
+}
+
+export interface ProductCategory {
+  id: number
+  name: string
+  displayOrder: number
+  isPublished: boolean
+}
+
+export interface CreateProductCategoryRequest {
+  name: string
+  displayOrder?: number
+  isPublished?: boolean
+}
+
+export interface UpdateProductCategoryRequest {
+  name?: string
+  displayOrder?: number
   isPublished?: boolean
 }

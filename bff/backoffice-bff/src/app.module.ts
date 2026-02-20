@@ -8,6 +8,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { OrdersModule } from './orders/orders.module';
 import { MembersModule } from './members/members.module';
 import { BoUsersModule } from './bo-users/bo-users.module';
+import { ProductsModule } from './products/products.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -24,6 +25,7 @@ import { HealthController } from './health/health.controller';
     OrdersModule,
     MembersModule,
     BoUsersModule,
+    ProductsModule,
   ],
 })
 export class AppModule {}

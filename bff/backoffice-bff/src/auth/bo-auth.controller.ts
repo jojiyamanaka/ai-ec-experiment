@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get } from '@nestjs/common';
 import { BoAuthGuard } from './bo-auth.guard';
 import { BoAuthService } from './bo-auth.service';
 import { ApiResponse } from '@app/shared';
@@ -37,5 +37,17 @@ export class BoAuthController {
   @ApiUnauthorizedResponse({ description: '認証エラー' })
   async logout(@Req() req: any): Promise<ApiResponse<void>> {
     return this.boAuthService.logout(req.token, req.traceId);
+  }
+
+  @Get('me')
+  @UseGuards(BoAuthGuard)
+  @ApiOperation({ summary: '管理者ログイン状態取得' })
+  @ApiOkResponse({ description: 'ログイン中管理者情報を返却' })
+  @ApiUnauthorizedResponse({ description: '認証エラー' })
+  async me(@Req() req: any): Promise<ApiResponse<any>> {
+    return {
+      success: true,
+      data: req.boUser,
+    };
   }
 }

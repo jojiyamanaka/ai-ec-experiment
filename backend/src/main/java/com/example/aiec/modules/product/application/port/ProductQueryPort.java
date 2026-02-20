@@ -1,8 +1,5 @@
 package com.example.aiec.modules.product.application.port;
 
-import com.example.aiec.modules.product.application.port.ProductDto;
-import com.example.aiec.modules.product.application.port.ProductListResponse;
-
 /**
  * 商品クエリAPI（公開インターフェース）
  */
@@ -13,9 +10,13 @@ public interface ProductQueryPort {
      */
     ProductListResponse getPublishedProducts(int page, int limit);
 
+    ProductListResponse getAdminProducts(int page, int limit);
+
     /**
      * 商品詳細を取得（公開されている商品のみ）
      */
     ProductDto getProduct(Long id);
+
+    ProductDto getAdminProduct(Long id);
 
 }
