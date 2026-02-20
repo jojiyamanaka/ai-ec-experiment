@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useProducts } from '@entities/product'
-import type { CreateProductRequest, ProductCategory, UpdateProductRequest } from '@entities/product'
+import type { CreateProductRequest, ProductCategory } from '@entities/product'
 import {
   AdminFilterChips,
   AdminModalBase,
@@ -9,6 +9,20 @@ import {
   AdminSearchBar,
   AdminTableShell,
 } from '@shared/ui/admin'
+
+interface ProductDetailForm {
+  name: string
+  description: string
+  categoryId: number
+  price: number
+  stock: number
+  image: string
+  isPublished: boolean
+  publishStartAt: string
+  publishEndAt: string
+  saleStartAt: string
+  saleEndAt: string
+}
 
 export default function AdminItemPage() {
   const {
@@ -21,13 +35,13 @@ export default function AdminItemPage() {
     createCategory,
     updateCategory,
   } = useProducts()
-  const [editedProducts, setEditedProducts] = useState<Record<number, UpdateProductRequest>>({})
   const [savedMessage, setSavedMessage] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [publishFilter, setPublishFilter] = useState<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL')
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
+  const [detailForm, setDetailForm] = useState<ProductDetailForm | null>(null)
+  const [isDetailSaving, setIsDetailSaving] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [categoryDrafts, setCategoryDrafts] = useState<Record<number, Partial<ProductCategory>>>({})
@@ -86,78 +100,26 @@ export default function AdminItemPage() {
     return date.toISOString()
   }
 
-  const handleEdit = (
-    id: number,
-    field: keyof UpdateProductRequest,
-    value: string | number | boolean | null
-  ) => {
-    setEditedProducts((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: value,
-      },
-    }))
-  }
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      await Promise.all(
-        Object.entries(editedProducts).map(([id, updates]) => {
-          const payload: UpdateProductRequest = {
-            ...updates,
-            publishStartAt: toIsoOrNull(updates.publishStartAt ?? null),
-            publishEndAt: toIsoOrNull(updates.publishEndAt ?? null),
-            saleStartAt: toIsoOrNull(updates.saleStartAt ?? null),
-            saleEndAt: toIsoOrNull(updates.saleEndAt ?? null),
-          }
-          return updateProduct(Number(id), payload)
-        })
-      )
-      setEditedProducts({})
-      setSavedMessage(true)
-      setTimeout(() => setSavedMessage(false), 3000)
-    } catch (error) {
-      console.error('保存エラー:', error)
-      const message = error instanceof Error ? error.message : '保存に失敗しました'
-      alert(message)
-    } finally {
-      setIsSaving(false)
+  useEffect(() => {
+    const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null
+    if (!selectedProduct) {
+      setDetailForm(null)
+      return
     }
-  }
-
-  const getValue = (
-    productId: number,
-    field: keyof UpdateProductRequest,
-    defaultValue: string | number | boolean | null
-  ) => {
-    return editedProducts[productId]?.[field] ?? defaultValue
-  }
-
-  const getNumberValue = (
-    productId: number,
-    field: 'price' | 'stock' | 'categoryId',
-    defaultValue: number
-  ) => {
-    return Number(getValue(productId, field, defaultValue))
-  }
-
-  const getBooleanValue = (
-    productId: number,
-    field: 'isPublished',
-    defaultValue: boolean
-  ) => {
-    return Boolean(getValue(productId, field, defaultValue))
-  }
-
-  const getDateTimeValue = (
-    productId: number,
-    field: 'publishStartAt' | 'publishEndAt' | 'saleStartAt' | 'saleEndAt',
-    defaultValue: string | number | null
-  ) => {
-    return toDateTimeLocal(getValue(productId, field, defaultValue) as string | number | null)
-  }
+    setDetailForm({
+      name: selectedProduct.name,
+      description: selectedProduct.description,
+      categoryId: selectedProduct.categoryId ?? categories[0]?.id ?? 0,
+      price: selectedProduct.price,
+      stock: selectedProduct.stock,
+      image: selectedProduct.image,
+      isPublished: selectedProduct.isPublished,
+      publishStartAt: toDateTimeLocal(selectedProduct.publishStartAt),
+      publishEndAt: toDateTimeLocal(selectedProduct.publishEndAt),
+      saleStartAt: toDateTimeLocal(selectedProduct.saleStartAt),
+      saleEndAt: toDateTimeLocal(selectedProduct.saleEndAt),
+    })
+  }, [categories, products, selectedProductId])
 
   const handleCreateProduct = async () => {
     try {
@@ -241,6 +203,44 @@ export default function AdminItemPage() {
     }
   }
 
+  const handleDetailField = <K extends keyof ProductDetailForm>(
+    field: K,
+    value: ProductDetailForm[K]
+  ) => {
+    setDetailForm((prev) => (prev ? { ...prev, [field]: value } : prev))
+  }
+
+  const handleSaveDetail = async () => {
+    if (!selectedProductId || !detailForm) {
+      return
+    }
+    setIsDetailSaving(true)
+    try {
+      await updateProduct(selectedProductId, {
+        name: detailForm.name,
+        description: detailForm.description,
+        categoryId: detailForm.categoryId > 0 ? detailForm.categoryId : undefined,
+        price: detailForm.price,
+        stock: detailForm.stock,
+        image: detailForm.image,
+        isPublished: detailForm.isPublished,
+        publishStartAt: toIsoOrNull(detailForm.publishStartAt),
+        publishEndAt: toIsoOrNull(detailForm.publishEndAt),
+        saleStartAt: toIsoOrNull(detailForm.saleStartAt),
+        saleEndAt: toIsoOrNull(detailForm.saleEndAt),
+      })
+      setSelectedProductId(null)
+      setSavedMessage(true)
+      setTimeout(() => setSavedMessage(false), 3000)
+    } catch (error) {
+      console.error('保存エラー:', error)
+      const message = error instanceof Error ? error.message : '保存に失敗しました'
+      alert(message)
+    } finally {
+      setIsDetailSaving(false)
+    }
+  }
+
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) =>
@@ -257,7 +257,12 @@ export default function AdminItemPage() {
     return products.find((product) => product.id === selectedProductId) ?? null
   }, [products, selectedProductId])
 
-  const hasChanges = Object.keys(editedProducts).length > 0
+  const selectedDetailCategory = useMemo(() => {
+    if (!detailForm) {
+      return null
+    }
+    return categories.find((category) => category.id === detailForm.categoryId) ?? null
+  }, [categories, detailForm])
 
   return (
     <AdminPageContainer>
@@ -341,93 +346,37 @@ export default function AdminItemPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{product.productCode}</td>
-                <td className="px-6 py-4">
-                  <select
-                    value={getNumberValue(product.id, 'categoryId', product.categoryId ?? categories[0]?.id ?? 0)}
-                    onChange={(e) => handleEdit(product.id, 'categoryId', parseInt(e.target.value, 10))}
-                    className="w-40 rounded border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {product.categoryName}
+                </td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">
+                  {product.price.toLocaleString()}円
+                </td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm tabular-nums text-gray-900">
+                  {product.stock}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="number"
-                    value={getNumberValue(product.id, 'price', product.price)}
-                    onChange={(e) => handleEdit(product.id, 'price', parseInt(e.target.value, 10) || 0)}
-                    className="w-32 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="number"
-                    value={getNumberValue(product.id, 'stock', product.stock)}
-                    onChange={(e) => handleEdit(product.id, 'stock', parseInt(e.target.value, 10) || 0)}
-                    className="w-24 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <button
-                    onClick={() =>
-                      handleEdit(
-                        product.id,
-                        'isPublished',
-                        !getBooleanValue(product.id, 'isPublished', product.isPublished)
-                      )
-                    }
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      getBooleanValue(product.id, 'isPublished', product.isPublished)
-                        ? 'bg-blue-600'
-                        : 'bg-gray-200'
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs ${
+                      product.isPublished
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        getBooleanValue(product.id, 'isPublished', product.isPublished)
-                          ? 'translate-x-6'
-                          : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                  <span className="ml-3 text-sm text-gray-700">
-                    {getBooleanValue(product.id, 'isPublished', product.isPublished) ? '公開' : '非公開'}
+                    {product.isPublished ? '公開' : '非公開'}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="datetime-local"
-                    value={getDateTimeValue(product.id, 'publishStartAt', product.publishStartAt)}
-                    onChange={(e) => handleEdit(product.id, 'publishStartAt', e.target.value || null)}
-                    className="w-48 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                  {toDateTimeLocal(product.publishStartAt) || '-'}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="datetime-local"
-                    value={getDateTimeValue(product.id, 'publishEndAt', product.publishEndAt)}
-                    onChange={(e) => handleEdit(product.id, 'publishEndAt', e.target.value || null)}
-                    className="w-48 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                  {toDateTimeLocal(product.publishEndAt) || '-'}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="datetime-local"
-                    value={getDateTimeValue(product.id, 'saleStartAt', product.saleStartAt)}
-                    onChange={(e) => handleEdit(product.id, 'saleStartAt', e.target.value || null)}
-                    className="w-48 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                  {toDateTimeLocal(product.saleStartAt) || '-'}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <input
-                    type="datetime-local"
-                    value={getDateTimeValue(product.id, 'saleEndAt', product.saleEndAt)}
-                    onChange={(e) => handleEdit(product.id, 'saleEndAt', e.target.value || null)}
-                    className="w-48 rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                  {toDateTimeLocal(product.saleEndAt) || '-'}
                 </td>
               </tr>
             ))}
@@ -435,64 +384,156 @@ export default function AdminItemPage() {
         </table>
       </AdminTableShell>
 
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className={`rounded-lg px-6 py-3 font-medium text-white ${
-            hasChanges && !isSaving
-              ? 'bg-zinc-900 hover:bg-zinc-700'
-              : 'cursor-not-allowed bg-gray-400'
-          }`}
-        >
-          {isSaving ? '保存中...' : '保存'}
-        </button>
-      </div>
-
       <AdminModalBase
         isOpen={Boolean(selectedProduct)}
         onClose={() => setSelectedProductId(null)}
         title="商品詳細"
-        maxWidthClass="max-w-2xl"
+        maxWidthClass="max-w-4xl"
+        bodyClassName="p-8"
       >
-        {selectedProduct ? (
-          <div className="space-y-2 text-sm text-gray-700">
-            <p>
-              <span className="font-medium text-gray-900">商品ID:</span>{' '}
-              <span className="font-mono">{selectedProduct.id}</span>
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">商品名:</span> {selectedProduct.name}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">品番:</span> {selectedProduct.productCode}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">カテゴリ:</span> {selectedProduct.categoryName}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">説明:</span> {selectedProduct.description}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">価格:</span>{' '}
-              {selectedProduct.price.toLocaleString()}円
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">在庫:</span> {selectedProduct.stock}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">公開状態:</span>{' '}
-              {selectedProduct.isPublished ? '公開' : '非公開'}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">公開期間:</span>{' '}
-              {toDateTimeLocal(selectedProduct.publishStartAt) || '-'} 〜 {toDateTimeLocal(selectedProduct.publishEndAt) || '-'}
-            </p>
-            <p>
-              <span className="font-medium text-gray-900">販売期間:</span>{' '}
-              {toDateTimeLocal(selectedProduct.saleStartAt) || '-'} 〜 {toDateTimeLocal(selectedProduct.saleEndAt) || '-'}
-            </p>
-          </div>
+        {selectedProduct && detailForm ? (
+          <>
+            <div>
+              <h3 className="mb-3 font-bold text-zinc-900">基本情報</h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="text-sm text-zinc-700">
+                  品番
+                  <input
+                    value={selectedProduct.productCode}
+                    readOnly
+                    className="mt-1 w-full rounded border bg-gray-50 px-3 py-2 text-gray-700"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  商品名
+                  <input
+                    value={detailForm.name}
+                    onChange={(e) => handleDetailField('name', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  カテゴリ
+                  <select
+                    value={detailForm.categoryId}
+                    onChange={(e) => handleDetailField('categoryId', parseInt(e.target.value, 10))}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}（ID:{category.id}）
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    現在のカテゴリID: {selectedDetailCategory?.id ?? detailForm.categoryId}
+                  </p>
+                </label>
+                <label className="text-sm text-zinc-700">
+                  価格
+                  <input
+                    type="number"
+                    value={detailForm.price}
+                    onChange={(e) => handleDetailField('price', parseInt(e.target.value, 10) || 0)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  在庫
+                  <input
+                    type="number"
+                    value={detailForm.stock}
+                    onChange={(e) => handleDetailField('stock', parseInt(e.target.value, 10) || 0)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700 md:col-span-2">
+                  画像URL
+                  <input
+                    type="text"
+                    value={detailForm.image}
+                    onChange={(e) => handleDetailField('image', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700 md:col-span-2">
+                  説明
+                  <textarea
+                    value={detailForm.description}
+                    onChange={(e) => handleDetailField('description', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-gray-50 p-4">
+              <h3 className="mb-3 font-bold text-zinc-900">販売設定</h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="text-sm text-zinc-700">
+                  公開開始
+                  <input
+                    type="datetime-local"
+                    value={detailForm.publishStartAt}
+                    onChange={(e) => handleDetailField('publishStartAt', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  公開終了
+                  <input
+                    type="datetime-local"
+                    value={detailForm.publishEndAt}
+                    onChange={(e) => handleDetailField('publishEndAt', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  販売開始
+                  <input
+                    type="datetime-local"
+                    value={detailForm.saleStartAt}
+                    onChange={(e) => handleDetailField('saleStartAt', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm text-zinc-700">
+                  販売終了
+                  <input
+                    type="datetime-local"
+                    value={detailForm.saleEndAt}
+                    onChange={(e) => handleDetailField('saleEndAt', e.target.value)}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  />
+                </label>
+              </div>
+              <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={detailForm.isPublished}
+                  onChange={(e) => handleDetailField('isPublished', e.target.checked)}
+                />
+                公開
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={handleSaveDetail}
+                disabled={isDetailSaving}
+                className="flex-1 rounded bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
+              >
+                {isDetailSaving ? '保存中...' : '商品情報を保存'}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setSelectedProductId(null)}
+              className="mt-4 w-full rounded bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300"
+            >
+              閉じる
+            </button>
+          </>
         ) : null}
       </AdminModalBase>
 

@@ -6,7 +6,10 @@
       "Bash(npm install:*)",
       "Bash(git add:*)",
       "Bash(./mvnw test:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "Bash(curl:*)",
+      "mcp__serena__write_memory"
     ]
   },
   "hooks": {
