@@ -31,7 +31,7 @@
 ## 最小実行コマンド
 
 ```bash
-# backend
+# backend（./mvnw test は mvn clean なしで実行可能。CHG-025 で db/archive を classpath 対象外へ移動済み）
 docker run --rm -v "$(pwd)/backend:/build" -w /build maven:3.9.9-eclipse-temurin-21 ./mvnw -DskipTests compile
 docker run --rm -v "$(pwd)/backend:/build" -w /build maven:3.9.9-eclipse-temurin-21 ./mvnw test
 
