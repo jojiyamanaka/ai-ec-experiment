@@ -191,6 +191,17 @@ archive/
   - ui/admin-ui.md: 商品詳細3タブ構成、`/bo/inventory` 導線廃止を反映
   - docs/api/*.json: Core/BFF OpenAPI 契約を CHG-023 に更新
 
+### CHG-024: 管理画面の検索機能強化
+- **実装完了日**: 2026-02-22
+- **内容**: 商品・注文管理画面に複合条件検索とページネーション機能を追加。商品は keyword/categoryId/allocationType/stockThreshold/zeroStockOnly、注文は customerEmail/statuses/dateFrom/dateTo/totalPriceMin/totalPriceMax/allocationIncomplete/unshipped で検索可能。URLクエリ同期により URL 直アクセス・ブラウザ戻るに対応
+- **主要ドキュメント反映先**:
+  - requirements.md: 管理画面の複合検索ビジネスルール追加
+  - specs/product.md: 商品検索条件（zeroStockOnly/stockThreshold優先ルール）を明示
+  - specs/order.md: 注文検索条件（allocationIncomplete/unshipped 判定方法）を明示
+  - ui/admin-ui.md: 商品管理・注文管理の検索フィルタ UI 仕様追加
+  - docs/api/openapi.json: Core API 検索パラメータ追加
+  - docs/api/backoffice-bff-openapi.json: BFF 検索クエリ・レスポンス形式更新
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

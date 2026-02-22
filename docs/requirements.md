@@ -37,6 +37,7 @@
 
 - 商品情報の一括編集、商品新規登録、カテゴリ管理、在庫数管理、公開/非公開切替、公開/販売日時設定
 - 変更は「保存」ボタンクリック時に即時反映
+- 複合検索: keyword/categoryId/isPublished/inSalePeriod/allocationType/stockThreshold/zeroStockOnly で絞り込み可能
 - 対象画面: /bo/item, /bo/order
 - 詳細: [管理画面](./ui/admin-ui.md)
 
