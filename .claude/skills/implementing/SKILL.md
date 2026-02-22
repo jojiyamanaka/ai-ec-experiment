@@ -10,9 +10,20 @@ CHG番号: $ARGUMENTS
 
 ## 手順
 
+### 0. ブランチ準備
+
+現在のブランチが `feat/$ARGUMENTS` でない場合、作成して切り替える:
+
+```bash
+git checkout -b feat/$ARGUMENTS 2>/dev/null || git checkout feat/$ARGUMENTS
+```
+
+すでに `feat/$ARGUMENTS` 上にいる場合（再実行・修正対応）はそのまま継続する。
+
 ### 1. 読み込み
 
 `docs/03_tasks/` から $ARGUMENTS のタスクファイルを、`docs/02_designs/` から設計書を読み込む。
+あわせて `docs/agent-rules/implementation-policy.md` を必ず参照すること（禁止事項・テスト方針の正本）。
 見つからない場合はユーザーに報告して終了する。
 
 ### 2. タスクの直列実装
@@ -58,17 +69,42 @@ UI 手動確認が必要な場合は MCP Playwright で必ず実施する。Dock
 
 ## Review Packet
 ### 変更サマリ（10行以内）
-### 変更ファイル一覧
 ### リスクと未解決
-### UI確認媒体（MCP/Docker）
 ### テスト結果（PASS/FAIL、失敗時は30行以内）
 ```
 
-### 5. 報告
+### 5. push + Draft PR 作成
+
+実装と Review Packet を push し、Draft PR を作成する:
+
+```bash
+git push -u origin feat/$ARGUMENTS
+```
+
+```bash
+gh pr create \
+  --title "$ARGUMENTS: <案件名>" \
+  --body "$(cat <<'EOF'
+## 概要
+（Review Packet の変更サマリを記載）
+
+## Review Packet
+docs/04_review-note/$ARGUMENTS.md を参照。
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)" \
+  --draft
+```
+
+PR URL を取得して報告に含める。
+
+### 6. 報告
 
 - 実装タスク一覧
 - review-note 記録状況（[CONTRACT]/[ARCH] がある場合）
 - Final Gate 結果概要・未解決事項
+- Draft PR URL
 
 ## 自己修正ルール
 

@@ -10,7 +10,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +18,7 @@ import java.util.List;
  * 管理向け注文検索 Specification
  */
 public final class OrderSpecifications {
+    private static final ZoneId BUSINESS_TIME_ZONE = ZoneId.of("Asia/Tokyo");
     private static final List<Order.OrderStatus> UNSHIPPED_STATUSES = List.of(
             Order.OrderStatus.PENDING,
             Order.OrderStatus.CONFIRMED,
@@ -98,6 +99,6 @@ public final class OrderSpecifications {
     }
 
     private static Instant startOfDay(LocalDate date) {
-        return date.atStartOfDay().toInstant(ZoneOffset.UTC);
+        return date.atStartOfDay(BUSINESS_TIME_ZONE).toInstant();
     }
 }

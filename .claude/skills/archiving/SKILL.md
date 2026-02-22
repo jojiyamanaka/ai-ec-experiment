@@ -11,7 +11,18 @@ CHG番号: $ARGUMENTS
 
 ## 手順
 
-### 0. verify PASS 確認（ゲート）
+### 0. 前提確認（ゲート）
+
+**このスキルは `feat/$ARGUMENTS` ブランチが main にマージ済みの状態で、main ブランチ上で実行する。**
+実装・verify は feat ブランチで完了しており、ここではドキュメント整地のみを行う。
+
+現在のブランチが main であることを確認する:
+
+```bash
+git branch --show-current
+```
+
+main でない場合はユーザーに報告して終了する。PR マージ後に再実行するよう案内する。
 
 `docs/04_review-note/$ARGUMENTS.md` の `## Verify` セクションを確認し、`### 判定` 行に `PASS` が含まれることを検証する。
 
@@ -61,20 +72,17 @@ mv docs/04_review-note/CHG-XXX*.md docs/archive/04_review-note/
 
 ### 5. git commit + push
 
-以下の手順でコミット・push する:
+実装ファイルは PR マージ済みのため、ここではドキュメント変更のみをコミットする:
 
 ```bash
-# ドキュメント更新分
+# ドキュメント更新分のみ
 git add docs/archive/ docs/SPEC.md docs/requirements.md docs/data-model.md \
         docs/ui/ docs/specs/ docs/design-system.md
-
-# 実装ファイル（CHG-XXX の変更分のみ）
-git add <backend|bff|frontend の対象ファイル...>
 
 git status
 ```
 
-`git status` で **CHG-XXX に関係ない差分がステージされていないこと** を確認する。
+`git status` で **ドキュメント以外の差分がステージされていないこと** を確認する。
 
 変更ファイルを確認し、コミットメッセージを作成する:
 - 形式: `{CHG番号} アーカイブ: {案件名の要約}`

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router'
 import { useProducts, getAdminItemInventory, updateAdminItemInventory } from '@entities/product'
 import type {
   AllocationType,
+  AdminProductSearchParams,
   CreateProductRequest,
   ProductCategory,
   ProductInventory,
@@ -52,6 +53,25 @@ const INITIAL_INVENTORY_FORM: InventoryForm = {
   realRemainingQty: 0,
   consumedQty: 0,
   frameRemainingQty: 0,
+}
+
+function buildAdminProductSearchParams(searchParams: URLSearchParams): AdminProductSearchParams {
+  const isPublishedParam = searchParams.get('isPublished')
+  const parsedIsPublished =
+    isPublishedParam === 'true' ? true : isPublishedParam === 'false' ? false : undefined
+  const categoryIdParam = searchParams.get('categoryId')
+  const stockThresholdParam = searchParams.get('stockThreshold')
+  return {
+    page: 1,
+    limit: 100,
+    keyword: searchParams.get('keyword') ?? undefined,
+    categoryId: categoryIdParam ? Number(categoryIdParam) : undefined,
+    isPublished: parsedIsPublished,
+    inSalePeriod: searchParams.get('inSalePeriod') === 'true' ? true : undefined,
+    allocationType: (searchParams.get('allocationType') as AllocationType | null) ?? undefined,
+    stockThreshold: stockThresholdParam ? Number(stockThresholdParam) : undefined,
+    zeroStockOnly: searchParams.get('zeroStockOnly') === 'true' ? true : undefined,
+  }
 }
 
 export default function AdminItemPage() {
@@ -104,22 +124,7 @@ export default function AdminItemPage() {
 
   useEffect(() => {
     setSearchInput(searchParams.get('keyword') ?? '')
-    const isPublishedParam = searchParams.get('isPublished')
-    const parsedIsPublished =
-      isPublishedParam === 'true' ? true : isPublishedParam === 'false' ? false : undefined
-    const categoryIdParam = searchParams.get('categoryId')
-    const stockThresholdParam = searchParams.get('stockThreshold')
-    void refreshProducts({
-      page: 1,
-      limit: 100,
-      keyword: searchParams.get('keyword') ?? undefined,
-      categoryId: categoryIdParam ? Number(categoryIdParam) : undefined,
-      isPublished: parsedIsPublished,
-      inSalePeriod: searchParams.get('inSalePeriod') === 'true' ? true : undefined,
-      allocationType: (searchParams.get('allocationType') as AllocationType | null) ?? undefined,
-      stockThreshold: stockThresholdParam ? Number(stockThresholdParam) : undefined,
-      zeroStockOnly: searchParams.get('zeroStockOnly') === 'true' ? true : undefined,
-    })
+    void refreshProducts(buildAdminProductSearchParams(searchParams))
     void refreshCategories()
   }, [refreshProducts, refreshCategories, searchParams])
 
@@ -354,7 +359,7 @@ export default function AdminItemPage() {
         })
       }
 
-      await refreshProducts()
+      await refreshProducts(buildAdminProductSearchParams(searchParams))
       setSavedMessage(true)
       setTimeout(() => setSavedMessage(false), 3000)
     } catch (error) {

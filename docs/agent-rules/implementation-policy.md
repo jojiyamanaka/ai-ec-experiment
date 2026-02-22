@@ -12,19 +12,9 @@
 | 整地 | `/archiving` | Haiku | アーカイブ完了・コミットハッシュ |
 | 承認 | PR レビュー | 人 | MR マージ |
 
-## 実装ルール
-
-- 機能開発は `docs/03_tasks/CHG-XXX_*.md` を起点にする
-- task.md を UTF-8 で読み、T-1 → T-N を直列に実装する
-- task.md 記載外の変更は行わない（環境起因の自己修正を除く）
-- `[CONTRACT]`/`[ARCH]` の実装判断、Final Gate結果、Review Packet は `docs/04_review-note/CHG-XXX.md` に記録する
-
 ## 禁止事項
 
-- 既存コメント（Javadoc・`//`）を削除しない
-- SVGアイコン・テキスト・CSS・HTMLタグを変更しない
-- エラーメッセージを改変しない（一字一句そのまま）
-- import文の順序を変更しない（新規追加はグループ末尾でOK）
+`CLAUDE.md` のグローバル禁止事項を参照。
 
 ## レビュー観点（二層構造）
 
@@ -54,7 +44,6 @@
 
 ## テスト実施
 
-- テストは次の2種類を必ず実施する
 - `回帰テスト`: backend + bff + frontend の破壊的変更検知テスト
 - `taskテスト`: task.md に書かれたテスト（Final Gate を含む）
 
