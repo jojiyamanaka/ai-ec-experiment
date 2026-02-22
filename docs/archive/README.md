@@ -202,6 +202,12 @@ archive/
   - docs/api/openapi.json: Core API 検索パラメータ追加
   - docs/api/backoffice-bff-openapi.json: BFF 検索クエリ・レスポンス形式更新
 
+### CHG-025: Flyway V2 マイグレーション重複解消
+- **実装完了日**: 2026-02-22
+- **内容**: アーカイブ SQL を Maven リソーススキャン対象外に移動（`backend/src/main/resources/db/archive/` → `backend/db-archive/`）し、Flyway V2 重複エラーを根本解消。`./mvnw test` の継続実行に対応
+- **主要ドキュメント反映先**:
+  - agent-rules/testing-operations.md: `./mvnw test`（clean なし）の使用可能を明記
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:
