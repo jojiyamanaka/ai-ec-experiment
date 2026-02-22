@@ -3,6 +3,7 @@ package com.example.aiec.modules.purchase.order.repository;
 import com.example.aiec.modules.shared.domain.model.ActorType;
 import com.example.aiec.modules.purchase.order.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +17,7 @@ import java.util.Optional;
  * 注文リポジトリ
  */
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     /**
      * 注文番号で検索

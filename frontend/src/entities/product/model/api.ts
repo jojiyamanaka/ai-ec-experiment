@@ -4,6 +4,7 @@ import type {
   CreateProductCategoryRequest,
   CreateProductRequest,
   Product,
+  AdminProductSearchParams,
   ProductCategory,
   ProductInventory,
   ProductListResponse,
@@ -30,8 +31,18 @@ export async function updateItem(
   }, 'bo')
 }
 
-export async function getAdminItems(page = 1, limit = 100): Promise<ApiResponse<ProductListResponse>> {
-  return fetchApi<ProductListResponse>(`/api/admin/items?page=${page}&limit=${limit}`, {}, 'bo')
+export async function getAdminItems(params: AdminProductSearchParams = {}): Promise<ApiResponse<ProductListResponse>> {
+  const query = new URLSearchParams()
+  query.set('page', String(params.page ?? 1))
+  query.set('limit', String(params.limit ?? 100))
+  if (params.keyword) query.set('keyword', params.keyword)
+  if (params.categoryId !== undefined) query.set('categoryId', String(params.categoryId))
+  if (params.isPublished !== undefined) query.set('isPublished', String(params.isPublished))
+  if (params.inSalePeriod !== undefined) query.set('inSalePeriod', String(params.inSalePeriod))
+  if (params.allocationType) query.set('allocationType', params.allocationType)
+  if (params.stockThreshold !== undefined) query.set('stockThreshold', String(params.stockThreshold))
+  if (params.zeroStockOnly !== undefined) query.set('zeroStockOnly', String(params.zeroStockOnly))
+  return fetchApi<ProductListResponse>(`/api/admin/items?${query.toString()}`, {}, 'bo')
 }
 
 export async function getAdminItemById(id: number): Promise<ApiResponse<Product>> {

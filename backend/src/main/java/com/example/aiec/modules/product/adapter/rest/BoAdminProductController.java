@@ -8,6 +8,7 @@ import com.example.aiec.modules.inventory.application.port.InventoryQueryPort;
 import com.example.aiec.modules.inventory.application.port.UpdateItemInventoryRequest;
 import com.example.aiec.modules.product.application.port.CreateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.CreateProductRequest;
+import com.example.aiec.modules.product.application.port.AdminProductSearchParams;
 import com.example.aiec.modules.product.application.port.ProductCategoryDto;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductDto;
@@ -15,6 +16,7 @@ import com.example.aiec.modules.product.application.port.ProductListResponse;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
 import com.example.aiec.modules.product.application.port.UpdateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.UpdateProductRequest;
+import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.shared.domain.model.PermissionLevel;
 import com.example.aiec.modules.shared.dto.ApiResponse;
 import com.example.aiec.modules.shared.exception.BusinessException;
@@ -47,9 +49,36 @@ public class BoAdminProductController {
     public ApiResponse<ProductListResponse> getAdminProducts(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "1") @Parameter(description = "ページ番号") int page,
-            @RequestParam(defaultValue = "20") @Parameter(description = "1ページあたりの件数") int limit) {
+            @RequestParam(defaultValue = "20") @Parameter(description = "1ページあたりの件数") int limit,
+            @RequestParam(required = false) @Parameter(description = "商品名・品番の部分一致") String keyword,
+            @RequestParam(required = false) @Parameter(description = "カテゴリID完全一致") Long categoryId,
+            @RequestParam(required = false) @Parameter(description = "公開状態フィルタ") Boolean isPublished,
+            @RequestParam(required = false) @Parameter(description = "現在販売期間内のみ") Boolean inSalePeriod,
+            @RequestParam(required = false) @Parameter(description = "引当区分フィルタ") String allocationType,
+            @RequestParam(required = false) @Parameter(description = "有効在庫閾値以下") Integer stockThreshold,
+            @RequestParam(required = false) @Parameter(description = "有効在庫0のみ") Boolean zeroStockOnly) {
         BoUser boUser = verifyAdmin(authHeader, "/api/bo/admin/items");
-        ProductListResponse response = productQuery.getAdminProducts(page, limit);
+        if (stockThreshold != null && stockThreshold < 0) {
+            throw new BusinessException("INVALID_REQUEST", "リクエストパラメータが不正です");
+        }
+        AllocationType parsedAllocationType = null;
+        if (allocationType != null && !allocationType.isBlank()) {
+            try {
+                parsedAllocationType = AllocationType.valueOf(allocationType);
+            } catch (IllegalArgumentException ex) {
+                throw new BusinessException("INVALID_REQUEST", "リクエストパラメータが不正です");
+            }
+        }
+        AdminProductSearchParams searchParams = new AdminProductSearchParams(
+                keyword,
+                categoryId,
+                isPublished,
+                inSalePeriod,
+                parsedAllocationType,
+                stockThreshold,
+                zeroStockOnly
+        );
+        ProductListResponse response = productQuery.getAdminProducts(searchParams, page, limit);
         publishAudit("ADMIN_ACTION", boUser.getEmail(), "/api/bo/admin/items", "Fetched admin product list");
         return ApiResponse.success(response);
     }

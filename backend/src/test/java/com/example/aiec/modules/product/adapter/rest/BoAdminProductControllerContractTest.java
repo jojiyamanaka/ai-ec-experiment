@@ -74,7 +74,8 @@ class BoAdminProductControllerContractTest {
         item.setCategoryId(10L);
         item.setCategoryName("カテゴリA");
         when(boAuthService.verifyToken("token")).thenReturn(adminUser());
-        when(productQuery.getAdminProducts(1, 20)).thenReturn(new ProductListResponse(List.of(item), 1L, 1, 20));
+        when(productQuery.getAdminProducts(any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(new ProductListResponse(List.of(item), 1L, 1, 20));
 
         mockMvc.perform(get("/api/admin/items")
                         .header("Authorization", "Bearer token"))

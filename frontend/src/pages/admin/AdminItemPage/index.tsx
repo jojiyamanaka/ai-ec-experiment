@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useProducts, getAdminItemInventory, updateAdminItemInventory } from '@entities/product'
 import type {
   AllocationType,
@@ -8,7 +9,6 @@ import type {
   UpdateProductInventoryRequest,
 } from '@entities/product'
 import {
-  AdminFilterChips,
   AdminModalBase,
   AdminPageContainer,
   AdminPageHeader,
@@ -55,9 +55,11 @@ const INITIAL_INVENTORY_FORM: InventoryForm = {
 }
 
 export default function AdminItemPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const {
     products,
     categories,
+    loading,
     refreshProducts,
     refreshCategories,
     createProduct,
@@ -66,9 +68,7 @@ export default function AdminItemPage() {
     updateCategory,
   } = useProducts()
   const [savedMessage, setSavedMessage] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [publishFilter, setPublishFilter] = useState<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL')
+  const [searchInput, setSearchInput] = useState(searchParams.get('keyword') ?? '')
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<DetailTab>('PRODUCT')
   const [detailForm, setDetailForm] = useState<ProductDetailForm | null>(null)
@@ -103,9 +103,35 @@ export default function AdminItemPage() {
   }, [categories, createForm.categoryId])
 
   useEffect(() => {
-    void refreshProducts()
+    setSearchInput(searchParams.get('keyword') ?? '')
+    const isPublishedParam = searchParams.get('isPublished')
+    const parsedIsPublished =
+      isPublishedParam === 'true' ? true : isPublishedParam === 'false' ? false : undefined
+    const categoryIdParam = searchParams.get('categoryId')
+    const stockThresholdParam = searchParams.get('stockThreshold')
+    void refreshProducts({
+      page: 1,
+      limit: 100,
+      keyword: searchParams.get('keyword') ?? undefined,
+      categoryId: categoryIdParam ? Number(categoryIdParam) : undefined,
+      isPublished: parsedIsPublished,
+      inSalePeriod: searchParams.get('inSalePeriod') === 'true' ? true : undefined,
+      allocationType: (searchParams.get('allocationType') as AllocationType | null) ?? undefined,
+      stockThreshold: stockThresholdParam ? Number(stockThresholdParam) : undefined,
+      zeroStockOnly: searchParams.get('zeroStockOnly') === 'true' ? true : undefined,
+    })
     void refreshCategories()
-  }, [refreshProducts, refreshCategories])
+  }, [refreshProducts, refreshCategories, searchParams])
+
+  const updateSearchParam = (key: string, value: string | undefined) => {
+    const next = new URLSearchParams(searchParams)
+    if (!value || value.trim() === '') {
+      next.delete(key)
+    } else {
+      next.set(key, value)
+    }
+    setSearchParams(next)
+  }
 
   const toDateTimeLocal = (value: string | number | null | undefined): string => {
     if (value === null || value === undefined || value === '') {
@@ -340,17 +366,7 @@ export default function AdminItemPage() {
     }
   }
 
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .filter((product) => {
-        if (publishFilter === 'ALL') return true
-        if (publishFilter === 'PUBLISHED') return product.isPublished
-        return !product.isPublished
-      })
-  }, [products, searchQuery, publishFilter])
+  const filteredProducts = useMemo(() => products, [products])
 
   const selectedProduct = useMemo(() => {
     return products.find((product) => product.id === selectedProductId) ?? null
@@ -362,6 +378,14 @@ export default function AdminItemPage() {
     }
     return categories.find((category) => category.id === detailForm.categoryId) ?? null
   }, [categories, detailForm])
+
+  if (loading) {
+    return (
+      <AdminPageContainer>
+        <div className="text-center text-gray-600">読み込み中...</div>
+      </AdminPageContainer>
+    )
+  }
 
   return (
     <AdminPageContainer>
@@ -389,19 +413,86 @@ export default function AdminItemPage() {
       <AdminSearchBar
         value={searchInput}
         onChange={setSearchInput}
-        onSearch={(value) => setSearchQuery(value.trim())}
+        onSearch={(value) => updateSearchParam('keyword', value.trim() || undefined)}
         placeholder="商品名で検索"
       />
 
-      <AdminFilterChips
-        items={[
-          { key: 'ALL', label: 'すべて' },
-          { key: 'PUBLISHED', label: '公開' },
-          { key: 'UNPUBLISHED', label: '非公開' },
-        ]}
-        selectedKey={publishFilter}
-        onSelect={(key) => setPublishFilter(key as 'ALL' | 'PUBLISHED' | 'UNPUBLISHED')}
-      />
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <label className="text-sm text-zinc-700">
+            公開状態
+            <select
+              value={searchParams.get('isPublished') ?? ''}
+              onChange={(e) => updateSearchParam('isPublished', e.target.value || undefined)}
+              className="mt-1 w-full rounded border px-3 py-2"
+            >
+              <option value="">すべて</option>
+              <option value="true">公開</option>
+              <option value="false">非公開</option>
+            </select>
+          </label>
+          <label className="text-sm text-zinc-700">
+            カテゴリ
+            <select
+              value={searchParams.get('categoryId') ?? ''}
+              onChange={(e) => updateSearchParam('categoryId', e.target.value || undefined)}
+              className="mt-1 w-full rounded border px-3 py-2"
+            >
+              <option value="">すべて</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-zinc-700">
+            引当区分
+            <select
+              value={searchParams.get('allocationType') ?? ''}
+              onChange={(e) => updateSearchParam('allocationType', e.target.value || undefined)}
+              className="mt-1 w-full rounded border px-3 py-2"
+            >
+              <option value="">すべて</option>
+              <option value="REAL">REAL</option>
+              <option value="FRAME">FRAME</option>
+            </select>
+          </label>
+          <label className="text-sm text-zinc-700">
+            在庫閾値以下
+            <input
+              type="number"
+              value={searchParams.get('stockThreshold') ?? ''}
+              onChange={(e) => updateSearchParam('stockThreshold', e.target.value || undefined)}
+              className="mt-1 w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={searchParams.get('zeroStockOnly') === 'true'}
+              onChange={(e) => updateSearchParam('zeroStockOnly', e.target.checked ? 'true' : undefined)}
+            />
+            在庫0のみ
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={searchParams.get('inSalePeriod') === 'true'}
+              onChange={(e) => updateSearchParam('inSalePeriod', e.target.checked ? 'true' : undefined)}
+            />
+            販売期間内のみ
+          </label>
+        </div>
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            onClick={() => setSearchParams(new URLSearchParams())}
+            className="rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+          >
+            クリア
+          </button>
+        </div>
+      </section>
 
       <AdminTableShell className="shadow-sm">
         <table className="min-w-full divide-y divide-gray-200">
@@ -462,6 +553,11 @@ export default function AdminItemPage() {
                 </td>
               </tr>
             ))}
+            {filteredProducts.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-500">該当データなし</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </AdminTableShell>

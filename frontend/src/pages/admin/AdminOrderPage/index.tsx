@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getAllOrders, confirmOrder, shipOrder, deliverOrder, cancelOrder, retryAllocation } from '@entities/order'
-import type { Order } from '@entities/order'
+import { useSearchParams } from 'react-router'
 import {
-  AdminFilterChips,
+  getAllOrders,
+  confirmOrder,
+  shipOrder,
+  deliverOrder,
+  cancelOrder,
+  retryAllocation,
+} from '@entities/order'
+import type { Order, AdminOrderSearchParams } from '@entities/order'
+import {
   AdminModalBase,
   AdminPageContainer,
   AdminPageHeader,
-  AdminSearchBar,
   AdminTableShell,
 } from '@shared/ui/admin'
 
@@ -19,6 +25,8 @@ const STATUS_LABELS: Record<string, string> = {
   DELIVERED: '配達完了',
   CANCELLED: 'キャンセル',
 }
+
+const STATUS_OPTIONS = ['PENDING', 'CONFIRMED', 'PREPARING_SHIPMENT', 'SHIPPED', 'DELIVERED', 'CANCELLED']
 
 function getStatusLabel(status: string): string {
   return STATUS_LABELS[status] ?? status
@@ -43,27 +51,91 @@ function getStatusBadgeClass(status: string): string {
   return 'bg-red-100 text-red-800'
 }
 
+function parseBoolean(value: string | null): boolean | undefined {
+  if (value === 'true') return true
+  if (value === 'false') return false
+  return undefined
+}
+
+function parseNumber(value: string | null): number | undefined {
+  if (!value) return undefined
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) return undefined
+  return parsed
+}
+
+function parseStatuses(value: string | null): string[] {
+  if (!value) {
+    return []
+  }
+  return value.split(',').map((status) => status.trim()).filter((status) => status.length > 0)
+}
+
 export default function AdminOrderPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<string>('ALL')
-  const [searchInput, setSearchInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, totalCount: 0 })
+
+  const page = Math.max(parseNumber(searchParams.get('page')) ?? 1, 1)
+  const limit = Math.max(parseNumber(searchParams.get('limit')) ?? 20, 1)
+  const orderNumber = searchParams.get('orderNumber') ?? ''
+  const customerEmail = searchParams.get('customerEmail') ?? ''
+  const selectedStatuses = parseStatuses(searchParams.get('statuses'))
+  const dateFrom = searchParams.get('dateFrom') ?? ''
+  const dateTo = searchParams.get('dateTo') ?? ''
+  const totalPriceMin = searchParams.get('totalPriceMin') ?? ''
+  const totalPriceMax = searchParams.get('totalPriceMax') ?? ''
+  const allocationIncomplete = parseBoolean(searchParams.get('allocationIncomplete'))
+  const unshipped = parseBoolean(searchParams.get('unshipped'))
+
+  const updateParams = (patch: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(searchParams)
+    Object.entries(patch).forEach(([key, value]) => {
+      if (!value || value.trim() === '') {
+        next.delete(key)
+      } else {
+        next.set(key, value)
+      }
+    })
+    if (!patch.page) {
+      next.set('page', '1')
+    }
+    setSearchParams(next)
+  }
 
   const fetchOrders = async () => {
-    const response = await getAllOrders()
+    setLoading(true)
+    const params: AdminOrderSearchParams = {
+      orderNumber: orderNumber || undefined,
+      customerEmail: customerEmail || undefined,
+      statuses: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      totalPriceMin: totalPriceMin ? Number(totalPriceMin) : undefined,
+      totalPriceMax: totalPriceMax ? Number(totalPriceMax) : undefined,
+      allocationIncomplete,
+      unshipped,
+      page,
+      limit,
+    }
+    const response = await getAllOrders(params)
     if (response.success && response.data) {
-      setOrders(response.data)
+      setOrders(response.data.orders)
+      setPagination(response.data.pagination)
+    } else {
+      setOrders([])
+      setPagination({ page, pageSize: limit, totalCount: 0 })
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchOrders()
-  }, [])
+    void fetchOrders()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const handleStatusChange = async (
     orderId: number,
@@ -76,11 +148,11 @@ export default function AdminOrderPage() {
             ? '確認'
             : action === 'ship'
               ? '発送'
-            : action === 'deliver'
+              : action === 'deliver'
                 ? '配達完了'
                 : action === 'retry'
                   ? '本引当再試行'
-                : 'キャンセル'
+                  : 'キャンセル'
         }しますか？`
       )
     ) {
@@ -119,17 +191,11 @@ export default function AdminOrderPage() {
     setShowDetailModal(true)
   }
 
-  const filteredOrders = useMemo(() => {
-    return orders
-      .filter((order) => filter === 'ALL' || order.status === filter)
-      .filter((order) =>
-        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  }, [orders, filter, searchQuery])
-
   const selectedOrder = useMemo(() => {
     return orders.find((order) => order.orderId === selectedOrderId) ?? null
   }, [orders, selectedOrderId])
+
+  const totalPages = Math.max(Math.ceil(pagination.totalCount / Math.max(pagination.pageSize, 1)), 1)
 
   if (loading) {
     return (
@@ -141,28 +207,100 @@ export default function AdminOrderPage() {
 
   return (
     <AdminPageContainer>
-      {/* ヘッダー */}
       <AdminPageHeader title="注文管理" />
 
-      {/* 検索エリア */}
-      <AdminSearchBar
-        value={searchInput}
-        onChange={setSearchInput}
-        onSearch={(value) => setSearchQuery(value.trim())}
-        placeholder="注文番号で検索"
-      />
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <label className="text-sm text-zinc-700">
+            注文番号
+            <input
+              value={orderNumber}
+              onChange={(e) => updateParams({ orderNumber: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+              placeholder="ORD-"
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            会員メール
+            <input
+              value={customerEmail}
+              onChange={(e) => updateParams({ customerEmail: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+              placeholder="user@example.com"
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            ステータス（カンマ区切り）
+            <input
+              value={selectedStatuses.join(',')}
+              onChange={(e) => updateParams({ statuses: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+              placeholder={STATUS_OPTIONS.join(',')}
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            注文日 FROM
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => updateParams({ dateFrom: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            注文日 TO
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => updateParams({ dateTo: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            合計金額下限
+            <input
+              type="number"
+              value={totalPriceMin}
+              onChange={(e) => updateParams({ totalPriceMin: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label className="text-sm text-zinc-700">
+            合計金額上限
+            <input
+              type="number"
+              value={totalPriceMax}
+              onChange={(e) => updateParams({ totalPriceMax: e.target.value })}
+              className="mt-1 w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={allocationIncomplete === true}
+              onChange={(e) => updateParams({ allocationIncomplete: e.target.checked ? 'true' : undefined })}
+            />
+            引当未完了のみ
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={unshipped === true}
+              onChange={(e) => updateParams({ unshipped: e.target.checked ? 'true' : undefined })}
+            />
+            出荷未指示のみ
+          </label>
+        </div>
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            onClick={() => setSearchParams(new URLSearchParams())}
+            className="rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+          >
+            クリア
+          </button>
+        </div>
+      </section>
 
-      {/* フィルタエリア */}
-      <AdminFilterChips
-        items={['ALL', 'PENDING', 'CONFIRMED', 'PREPARING_SHIPMENT', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => ({
-          key: status,
-          label: getStatusLabel(status),
-        }))}
-        selectedKey={filter}
-        onSelect={setFilter}
-      />
-
-      {/* テーブル */}
       <AdminTableShell>
         <table className="w-full">
           <thead className="border-b bg-gray-50">
@@ -177,7 +315,7 @@ export default function AdminOrderPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <tr key={order.orderId} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <button
@@ -205,9 +343,35 @@ export default function AdminOrderPage() {
                 </td>
               </tr>
             ))}
+            {orders.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">該当データなし</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </AdminTableShell>
+
+      <div className="flex items-center justify-between text-sm text-zinc-600">
+        <p>全 {pagination.totalCount} 件</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => updateParams({ page: String(Math.max(page - 1, 1)) })}
+            disabled={page <= 1}
+            className="rounded border border-zinc-300 px-3 py-1 disabled:opacity-50"
+          >
+            前へ
+          </button>
+          <span>{page} / {totalPages}</span>
+          <button
+            onClick={() => updateParams({ page: String(Math.min(page + 1, totalPages)) })}
+            disabled={page >= totalPages}
+            className="rounded border border-zinc-300 px-3 py-1 disabled:opacity-50"
+          >
+            次へ
+          </button>
+        </div>
+      </div>
 
       <AdminModalBase
         isOpen={showDetailModal && Boolean(selectedOrder)}

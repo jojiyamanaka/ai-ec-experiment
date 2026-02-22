@@ -1,4 +1,4 @@
-export type { Order, OrderItem, CreateOrderRequest } from './model/types'
+export type { Order, OrderItem, CreateOrderRequest, AdminOrderSearchParams, AdminOrderListResponse } from './model/types'
 export {
   createOrder,
   getOrderById,

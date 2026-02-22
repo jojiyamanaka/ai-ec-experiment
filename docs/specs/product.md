@@ -136,3 +136,18 @@ DB上は小数2桁格納可能だが、実運用では整数値（円単位）�
 - Product契約に `allocationType` と `effectiveStock` を追加。
 - Product契約から `stock` を除外。
 - `products.stock` は初期化のみ行い、業務では使用しない。
+
+## CHG-024 追記
+
+- 管理商品一覧（`GET /api/admin/items`）はサーバーサイド検索対応。
+- 追加クエリ:
+  - `keyword`
+  - `categoryId`
+  - `isPublished`
+  - `inSalePeriod`
+  - `allocationType`
+  - `stockThreshold`
+  - `zeroStockOnly`
+  - `page`
+  - `limit`
+- `zeroStockOnly=true` を指定した場合は `stockThreshold` より優先される。

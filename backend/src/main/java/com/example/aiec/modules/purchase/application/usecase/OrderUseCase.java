@@ -8,9 +8,12 @@ import com.example.aiec.modules.customer.domain.repository.UserRepository;
 import com.example.aiec.modules.inventory.application.service.FrameAllocationService;
 import com.example.aiec.modules.inventory.application.port.InventoryCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderDto;
+import com.example.aiec.modules.purchase.application.port.AdminOrderListResponse;
+import com.example.aiec.modules.purchase.application.port.AdminOrderSearchParams;
 import com.example.aiec.modules.purchase.application.port.UnavailableProductDetail;
 import com.example.aiec.modules.purchase.application.port.OrderCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderQueryPort;
+import com.example.aiec.modules.purchase.application.spec.OrderSpecifications;
 import com.example.aiec.modules.purchase.cart.entity.Cart;
 import com.example.aiec.modules.purchase.cart.repository.CartRepository;
 import com.example.aiec.modules.purchase.cart.service.CartService;
@@ -24,6 +27,10 @@ import com.example.aiec.modules.shared.exception.ResourceNotFoundException;
 import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -289,10 +296,21 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
 
     @Override
     @Transactional(readOnly = true, rollbackFor = Exception.class)
-    public List<OrderDto> getAllOrders() {
-        return orderRepository.findAll().stream()
+    public AdminOrderListResponse getAllOrders(AdminOrderSearchParams searchParams, int page, int limit) {
+        int safePage = Math.max(page, 1);
+        int safeLimit = Math.max(limit, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safeLimit);
+        Specification<Order> specification = OrderSpecifications.byAdminSearchParams(searchParams);
+        Page<Order> orderPage = orderRepository.findAll(specification, pageable);
+        List<OrderDto> orders = orderPage.getContent().stream()
                 .map(OrderDto::fromEntity)
                 .toList();
+        AdminOrderListResponse.Pagination pagination = new AdminOrderListResponse.Pagination(
+                safePage,
+                safeLimit,
+                orderPage.getTotalElements()
+        );
+        return new AdminOrderListResponse(orders, pagination);
     }
 
     @Override

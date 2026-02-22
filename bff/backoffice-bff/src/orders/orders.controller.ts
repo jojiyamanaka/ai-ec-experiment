@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, Req, Query } from '@nestjs/common';
 import { BoAuthGuard } from '../auth/bo-auth.guard';
 import { OrdersService } from './orders.service';
 import { ApiResponse } from '@app/shared';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 @Controller(['api/admin/orders', 'api/order'])
 @UseGuards(BoAuthGuard)
@@ -12,10 +12,50 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: '注文一覧取得' })
+  @ApiQuery({ name: 'orderNumber', required: false, type: String })
+  @ApiQuery({ name: 'customerEmail', required: false, type: String })
+  @ApiQuery({ name: 'statuses', required: false, type: String })
+  @ApiQuery({ name: 'dateFrom', required: false, type: String })
+  @ApiQuery({ name: 'dateTo', required: false, type: String })
+  @ApiQuery({ name: 'totalPriceMin', required: false, type: String })
+  @ApiQuery({ name: 'totalPriceMax', required: false, type: String })
+  @ApiQuery({ name: 'allocationIncomplete', required: false, type: String })
+  @ApiQuery({ name: 'unshipped', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: String })
+  @ApiQuery({ name: 'limit', required: false, type: String })
   @ApiOkResponse({ description: '注文一覧を返却' })
   @ApiUnauthorizedResponse({ description: '認証エラー' })
-  async getOrders(@Req() req: any): Promise<ApiResponse<any>> {
-    return this.ordersService.getOrders(req.token, req.traceId);
+  async getOrders(
+    @Query('orderNumber') orderNumber?: string,
+    @Query('customerEmail') customerEmail?: string,
+    @Query('statuses') statuses?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('totalPriceMin') totalPriceMin?: string,
+    @Query('totalPriceMax') totalPriceMax?: string,
+    @Query('allocationIncomplete') allocationIncomplete?: string,
+    @Query('unshipped') unshipped?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Req() req?: any,
+  ): Promise<ApiResponse<any>> {
+    return this.ordersService.getOrders(
+      {
+        orderNumber,
+        customerEmail,
+        statuses,
+        dateFrom,
+        dateTo,
+        totalPriceMin,
+        totalPriceMax,
+        allocationIncomplete,
+        unshipped,
+        page,
+        limit,
+      },
+      req.token,
+      req.traceId,
+    );
   }
 
   @Get(':id')

@@ -10,9 +10,33 @@ export class ProductsService {
     private redisService: RedisService,
   ) {}
 
-  async getProducts(page: number, limit: number, token: string, traceId?: string): Promise<ApiResponse<any>> {
+  async getProducts(
+    params: {
+      page: number;
+      limit: number;
+      keyword?: string;
+      categoryId?: string;
+      isPublished?: string;
+      inSalePeriod?: string;
+      allocationType?: string;
+      stockThreshold?: string;
+      zeroStockOnly?: string;
+    },
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    query.set('page', String(params.page));
+    query.set('limit', String(params.limit));
+    if (params.keyword) query.set('keyword', params.keyword);
+    if (params.categoryId) query.set('categoryId', params.categoryId);
+    if (params.isPublished) query.set('isPublished', params.isPublished);
+    if (params.inSalePeriod) query.set('inSalePeriod', params.inSalePeriod);
+    if (params.allocationType) query.set('allocationType', params.allocationType);
+    if (params.stockThreshold) query.set('stockThreshold', params.stockThreshold);
+    if (params.zeroStockOnly) query.set('zeroStockOnly', params.zeroStockOnly);
     return this.coreApiService.get<ApiResponse<any>>(
-      `/api/bo/admin/items?page=${page}&limit=${limit}`,
+      `/api/bo/admin/items?${query.toString()}`,
       token,
       traceId,
     );

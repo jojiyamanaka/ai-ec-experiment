@@ -2,6 +2,7 @@ package com.example.aiec.modules.product.application.usecase;
 
 import com.example.aiec.modules.product.application.port.ProductDto;
 import com.example.aiec.modules.product.application.port.ProductListResponse;
+import com.example.aiec.modules.product.application.port.AdminProductSearchParams;
 import com.example.aiec.modules.product.application.port.CreateProductRequest;
 import com.example.aiec.modules.product.application.port.CreateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.ProductCategoryDto;
@@ -9,6 +10,7 @@ import com.example.aiec.modules.product.application.port.UpdateProductRequest;
 import com.example.aiec.modules.product.application.port.UpdateProductCategoryRequest;
 import com.example.aiec.modules.product.application.port.ProductCommandPort;
 import com.example.aiec.modules.product.application.port.ProductQueryPort;
+import com.example.aiec.modules.product.application.spec.ProductSpecifications;
 import com.example.aiec.modules.product.domain.entity.AllocationType;
 import com.example.aiec.modules.product.domain.entity.Product;
 import com.example.aiec.modules.product.domain.entity.ProductCategory;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,11 +85,13 @@ class ProductUseCase implements ProductQueryPort, ProductCommandPort {
 
     @Override
     @Transactional(readOnly = true, rollbackFor = Exception.class)
-    public ProductListResponse getAdminProducts(int page, int limit) {
+    public ProductListResponse getAdminProducts(AdminProductSearchParams searchParams, int page, int limit) {
         int safePage = Math.max(page, 1);
         int safeLimit = Math.max(limit, 1);
         Pageable pageable = PageRequest.of(safePage - 1, safeLimit);
-        Page<Product> productPage = productRepository.findAll(pageable);
+        Instant now = Instant.now();
+        Specification<Product> specification = ProductSpecifications.byAdminSearchParams(searchParams, now);
+        Page<Product> productPage = productRepository.findAll(specification, pageable);
         Map<Long, String> categoryNames = loadCategoryNames(productPage.getContent());
         List<ProductDto> items = productPage.getContent().stream()
                 .map(product -> ProductDto.fromEntity(

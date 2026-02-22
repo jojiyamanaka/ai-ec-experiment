@@ -132,3 +132,20 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
 - 注文/注文明細レスポンスに `orderedQuantity` と `committedQuantity` を追加。
 - 出荷条件は `committedQuantity == orderedQuantity`。
 - 管理API `POST /api/order/{id}/allocation/retry` を追加（未引当がある注文に対して本引当を再試行）。
+
+## CHG-024 追記
+
+- 管理注文一覧（`GET /api/order`）は検索・ページネーション対応。
+- 追加クエリ:
+  - `orderNumber`
+  - `customerEmail`
+  - `statuses`
+  - `dateFrom`
+  - `dateTo`
+  - `totalPriceMin`
+  - `totalPriceMax`
+  - `allocationIncomplete`
+  - `unshipped`
+  - `page`
+  - `limit`
+- レスポンスは `orders` + `pagination` 構造を返す。
