@@ -46,7 +46,7 @@ CHG番号: $ARGUMENTS
 ファイル名は要件定義書と同じ命名規則 (`CHG-XXX_<機能名>.md`) に従う。
 
 構成テンプレートは [template.md](template.md) を参照。
-過去の設計書の例は [examples/](examples/) を参照。
+過去の設計書の例は `docs/archive/02_designs/` を参照。
 
 セクションは機能の規模に応じて取捨選択する。小規模な変更で不要なセクションは省略してよい。
 
