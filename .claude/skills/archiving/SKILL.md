@@ -1,6 +1,6 @@
 ---
 name: archiving
-description: 実装完了したCHG案件のドキュメントをarchiveに移動し、主要仕様書を更新する。
+description: 実装完了したCHG案件のドキュメントをarchiveに移動し、主要仕様書を更新する。verify PASS済みが前提。
 argument-hint: "[CHG番号 例: CHG-011]"
 model: haiku
 ---
@@ -11,6 +11,17 @@ CHG番号: $ARGUMENTS
 
 ## 手順
 
+### 0. verify PASS 確認（ゲート）
+
+`docs/04_review-note/$ARGUMENTS.md` の `## Verify` セクションを確認し、`### 判定` 行に `PASS` が含まれることを検証する。
+
+```bash
+grep -A1 "### 判定" docs/04_review-note/$ARGUMENTS.md
+```
+
+`PASS` が確認できない場合（FAILまたはセクション未存在）は、ユーザーに報告して**ここで終了する**。
+先に `/verify $ARGUMENTS` を実行するよう案内する。
+
 ### 1. 対象ファイルの特定
 
 `docs/01_requirements/`, `docs/02_designs/`, `docs/03_tasks/` , `docs/04_review-note/` から $ARGUMENTS に一致するファイルを Glob で検索する。
@@ -20,7 +31,7 @@ CHG番号: $ARGUMENTS
 
 ### 2. ドキュメント更新の判定
 
-要件定義書の内容から、更新が必要なドキュメントを [checklist.md](checklist.md) に基づいて判定する。
+要件定義書の内容と verify セクションの「docs更新要否判定」から、更新が必要なドキュメントを [checklist.md](checklist.md) に基づいて判定する。
 影響がないドキュメントは読み込まずスキップする。
 
 ### 3. 主要ドキュメントの更新

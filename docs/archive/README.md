@@ -8,6 +8,16 @@
 - **詳細な履歴・背景を保持**: CHG案件の詳細な要件定義、設計、実装タスクは参照可能
 - **ドキュメントディレクトリの整理**: 現在進行中の案件と完了済み案件を分離
 
+## 運用フロー
+
+```
+/implementing → /verify → /archiving → PR レビュー
+  (Codex)      (Sonnet)    (Haiku)      (人)
+```
+
+- `/verify` PASS が `/archiving` の前提条件
+- `04_review-note/` には実装判断（Review Packet）と監査結果（Verify セクション）の両方が含まれる
+
 ## ディレクトリ構成
 
 ```
@@ -15,7 +25,7 @@ archive/
 ├── 01_requirements/     # 要件定義ドキュメント
 ├── 02_designs/          # 技術設計ドキュメント
 ├── 03_tasks/            # 実装タスクドキュメント
-└── 04_review-note/      # 実装レビュー記録
+└── 04_review-note/      # 実装判断 + verify 監査結果
 ```
 
 ## アーカイブ済み案件

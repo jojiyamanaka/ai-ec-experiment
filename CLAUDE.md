@@ -48,7 +48,25 @@ npm run dev:admin     # 管理画面（:5174）
 2. **技術設計** (`docs/02_designs/`) — API設計、実装方針、処理フロー
 3. **実装タスク** (`docs/03_tasks/`) — 作業単位への分割・触る範囲（クラス名レベル）・Done条件・検証コマンドを明記。コード断片・挿入位置は含まない（実装詳細は Codex が設計書を読んで判断）
 
-実装完了後、主要ドキュメント反映済みのCHG案件は `docs/archive/` に移動する。
+ドキュメント作成後は以下の実行フェーズで進める:
+
+```
+/implementing CHG-XXX  → Codex が実装（review-note に Review Packet を記録）
+/verify CHG-XXX        → Claude Code が監査（PASS/FAIL 判定）
+/archiving CHG-XXX     → Haiku がドキュメント整地・archive 移動（verify PASS 必須）
+PR レビュー            → 人が承認
+```
+
+### 役割マップ
+
+| フェーズ | スキル | 担当モデル |
+|---------|--------|-----------|
+| 実装 | `/implementing` | Codex |
+| 監査 | `/verify` | Claude Code（Sonnet） |
+| 整地 | `/archiving` | Haiku |
+| 承認 | PR レビュー | 人 |
+
+**IMPORTANT**: `/verify` で FAIL が出た場合、Codex修正→再 `/verify` のサイクルを繰り返す。PASS なしに `/archiving` は実行しない。
 
 ## 実装ルール
 
@@ -69,10 +87,18 @@ npm run dev:admin     # 管理画面（:5174）
 - `docs/agent-rules/implementation-policy.md` — 実装/レビュー/テスト運用ポリシー
 - `docs/agent-rules/testing-operations.md` — テスト実施手順
 
-## Codex 実行ルール
+## エージェントスキル
 
-`/implementing` スキルは `.claude/skills/implementing/SKILL.md` の手順に従う。
-レビュー観点・テスト報告ルールの正本は `docs/agent-rules/implementation-policy.md` を参照する。
+| スキル | 説明 |
+|--------|------|
+| `/implementing CHG-XXX` | Codex が task.md に従い実装する |
+| `/verify CHG-XXX` | 設計契約・境界・要件を監査し PASS/FAIL を判定する |
+| `/archiving CHG-XXX` | verify PASS 後にドキュメント整地・archive 移動・コミットを行う |
+| `/designing CHG-XXX` | 要件定義書から技術設計書を生成する |
+| `/task-planning CHG-XXX` | 技術設計書から実装タスクファイルを生成する |
+
+各スキルの手順正本: `.claude/skills/<スキル名>/SKILL.md`
+レビュー観点・テスト報告ルールの正本: `docs/agent-rules/implementation-policy.md`
 
 ## ドキュメント
 
