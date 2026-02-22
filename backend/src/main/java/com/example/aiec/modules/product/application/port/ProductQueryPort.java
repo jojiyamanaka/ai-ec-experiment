@@ -10,7 +10,7 @@ public interface ProductQueryPort {
      */
     ProductListResponse getPublishedProducts(int page, int limit);
 
-    ProductListResponse getAdminProducts(int page, int limit);
+    ProductListResponse getAdminProducts(AdminProductSearchParams searchParams, int page, int limit);
 
     /**
      * 商品詳細を取得（公開されている商品のみ）

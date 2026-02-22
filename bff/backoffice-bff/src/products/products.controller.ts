@@ -14,14 +14,42 @@ export class ProductsController {
   @ApiOperation({ summary: '管理向け商品一覧取得' })
   @ApiQuery({ name: 'page', required: false, type: String })
   @ApiQuery({ name: 'limit', required: false, type: String })
+  @ApiQuery({ name: 'keyword', required: false, type: String })
+  @ApiQuery({ name: 'categoryId', required: false, type: String })
+  @ApiQuery({ name: 'isPublished', required: false, type: String })
+  @ApiQuery({ name: 'inSalePeriod', required: false, type: String })
+  @ApiQuery({ name: 'allocationType', required: false, type: String })
+  @ApiQuery({ name: 'stockThreshold', required: false, type: String })
+  @ApiQuery({ name: 'zeroStockOnly', required: false, type: String })
   @ApiOkResponse({ description: '商品一覧を返却' })
   @ApiUnauthorizedResponse({ description: '認証エラー' })
   async getProducts(
     @Query('page') page = '1',
     @Query('limit') limit = '20',
-    @Req() req: any,
+    @Query('keyword') keyword?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('isPublished') isPublished?: string,
+    @Query('inSalePeriod') inSalePeriod?: string,
+    @Query('allocationType') allocationType?: string,
+    @Query('stockThreshold') stockThreshold?: string,
+    @Query('zeroStockOnly') zeroStockOnly?: string,
+    @Req() req?: any,
   ): Promise<ApiResponse<any>> {
-    return this.productsService.getProducts(parseInt(page, 10), parseInt(limit, 10), req.token, req.traceId);
+    return this.productsService.getProducts(
+      {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        keyword,
+        categoryId,
+        isPublished,
+        inSalePeriod,
+        allocationType,
+        stockThreshold,
+        zeroStockOnly,
+      },
+      req.token,
+      req.traceId,
+    );
   }
 
   @Get('items/:id')

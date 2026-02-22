@@ -4,6 +4,8 @@ import com.example.aiec.modules.purchase.adapter.dto.CartDto;
 import com.example.aiec.modules.purchase.adapter.dto.CartItemDto;
 import com.example.aiec.modules.purchase.adapter.dto.AddToCartRequest;
 import com.example.aiec.modules.purchase.adapter.dto.UpdateQuantityRequest;
+import com.example.aiec.modules.purchase.application.port.AdminOrderListResponse;
+import com.example.aiec.modules.purchase.application.port.AdminOrderSearchParams;
 import com.example.aiec.modules.purchase.application.port.OrderDto;
 import com.example.aiec.modules.purchase.adapter.dto.CreateOrderRequest;
 import com.example.aiec.modules.shared.dto.ApiResponse;
@@ -26,6 +28,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * 注文・カートコントローラ
@@ -326,8 +331,19 @@ public class OrderController {
      */
     @GetMapping
     @Operation(summary = "全注文取得", description = "管理者が全注文を取得")
-    public ApiResponse<java.util.List<OrderDto>> getAllOrders(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ApiResponse<AdminOrderListResponse> getAllOrders(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String orderNumber,
+            @RequestParam(required = false) String customerEmail,
+            @RequestParam(required = false) String statuses,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) BigDecimal totalPriceMin,
+            @RequestParam(required = false) BigDecimal totalPriceMax,
+            @RequestParam(required = false) Boolean allocationIncomplete,
+            @RequestParam(required = false) Boolean unshipped,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int limit) {
 
         // 認証・認可チェック
         String token = extractToken(authHeader);
@@ -335,16 +351,53 @@ public class OrderController {
         requireAdmin(boUser, "/api/order");
 
         // 管理操作実行
-        java.util.List<OrderDto> orders = orderQuery.getAllOrders();
+        AdminOrderSearchParams searchParams = new AdminOrderSearchParams(
+                orderNumber,
+                customerEmail,
+                parseStatuses(statuses),
+                parseDate(dateFrom),
+                parseDate(dateTo),
+                totalPriceMin,
+                totalPriceMax,
+                allocationIncomplete,
+                unshipped
+        );
+        AdminOrderListResponse orders = orderQuery.getAllOrders(searchParams, page, limit);
 
         // 監査ログ記録イベント発行
         outboxEventPublisher.publish("OPERATION_PERFORMED", null, Map.of(
                 "operationType", "ADMIN_ACTION",
                 "performedBy", boUser.getEmail(),
                 "requestPath", "/api/order",
-                "details", "Retrieved all orders (count: " + orders.size() + ")"));
+                "details", "Retrieved all orders (count: " + orders.getOrders().size() + ")"));
 
         return ApiResponse.success(orders);
+    }
+
+    private List<com.example.aiec.modules.purchase.order.entity.Order.OrderStatus> parseStatuses(String statuses) {
+        if (statuses == null || statuses.isBlank()) {
+            return List.of();
+        }
+        try {
+            return Arrays.stream(statuses.split(","))
+                    .map(String::trim)
+                    .filter(value -> !value.isEmpty())
+                    .map(com.example.aiec.modules.purchase.order.entity.Order.OrderStatus::valueOf)
+                    .toList();
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException("INVALID_REQUEST", "リクエストパラメータが不正です");
+        }
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (Exception ex) {
+            throw new BusinessException("INVALID_REQUEST", "リクエストパラメータが不正です");
+        }
     }
 
     /**

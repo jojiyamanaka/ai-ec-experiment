@@ -25,6 +25,18 @@ export interface ProductListResponse {
   limit: number
 }
 
+export interface AdminProductSearchParams {
+  keyword?: string
+  categoryId?: number
+  isPublished?: boolean
+  inSalePeriod?: boolean
+  allocationType?: AllocationType
+  stockThreshold?: number
+  zeroStockOnly?: boolean
+  page?: number
+  limit?: number
+}
+
 export interface CreateProductRequest {
   productCode: string
   name: string

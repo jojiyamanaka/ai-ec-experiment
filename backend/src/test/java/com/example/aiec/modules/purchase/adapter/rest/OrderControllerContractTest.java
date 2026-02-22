@@ -143,6 +143,18 @@ class OrderControllerContractTest {
         verify(cartService).getOrCreateCart(eq("session-1"));
     }
 
+    @Test
+    void getAllOrders_withInvalidStatuses_shouldReturnBadRequest() throws Exception {
+        when(boAuthService.verifyToken("token")).thenReturn(adminUser());
+
+        mockMvc.perform(get("/api/order")
+                        .header("Authorization", "Bearer token")
+                        .param("statuses", "INVALID_STATUS"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("INVALID_REQUEST"));
+    }
+
     private BoUser adminUser() {
         BoUser boUser = new BoUser();
         boUser.setId(1L);

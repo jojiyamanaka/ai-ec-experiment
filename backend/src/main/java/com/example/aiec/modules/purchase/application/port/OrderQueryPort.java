@@ -1,6 +1,8 @@
 package com.example.aiec.modules.purchase.application.port;
 
 import com.example.aiec.modules.purchase.application.port.OrderDto;
+import com.example.aiec.modules.purchase.application.port.AdminOrderListResponse;
+import com.example.aiec.modules.purchase.application.port.AdminOrderSearchParams;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public interface OrderQueryPort {
     /**
      * 全注文を取得（管理者用）
      */
-    List<OrderDto> getAllOrders();
+    AdminOrderListResponse getAllOrders(AdminOrderSearchParams searchParams, int page, int limit);
 
     /**
      * 会員の注文履歴を取得

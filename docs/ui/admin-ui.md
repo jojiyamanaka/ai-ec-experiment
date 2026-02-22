@@ -92,8 +92,17 @@
 ### 注文一覧
 
 - 全注文をテーブル表示（注文番号, 日時, 合計金額, ステータス）
-- ステータスフィルタ: ALL, PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+- サーバーサイド検索条件:
+  - `orderNumber`（部分一致）
+  - `customerEmail`（部分一致）
+  - `statuses`（カンマ区切り複数指定）
+  - `dateFrom` / `dateTo`（注文日範囲）
+  - `totalPriceMin` / `totalPriceMax`（合計金額範囲）
+  - `allocationIncomplete`（引当未完了のみ）
+  - `unshipped`（PENDING/CONFIRMED/PREPARING_SHIPMENT のみ）
 - 注文単位の引当進捗（`committedQuantity / orderedQuantity`）を表示
+- クリア操作で検索クエリを全削除し初期状態に戻す
+- 0件時は「該当データなし」を表示する
 
 ### 注文詳細モーダル
 
@@ -139,6 +148,20 @@ PENDING(グレー), CONFIRMED(ブルー), SHIPPED(パープル), DELIVERED(グ�
 - 実在庫カード: `locationStock.committedQty`（本引当済）, `locationStock.remainingQty`（引当可能数）
 - 枠在庫カード: `salesLimit.consumedQty`（枠消費）, `salesLimit.remainingQty`（枠残数）
 - 最新反映表示: `realRemaining` / `frameRemaining`
+
+### 商品一覧検索（/bo/item）
+
+- サーバーサイド検索条件:
+  - `keyword`（商品名・品番）
+  - `categoryId`
+  - `isPublished`
+  - `inSalePeriod`
+  - `allocationType`
+  - `stockThreshold`
+  - `zeroStockOnly`
+- `zeroStockOnly=true` は `stockThreshold=0` と等価として扱う
+- クリア操作で検索クエリを全削除し初期状態に戻す
+- 0件時は「該当データなし」を表示する
 
 ---
 

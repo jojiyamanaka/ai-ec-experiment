@@ -5,6 +5,7 @@ import type {
   CreateProductRequest,
   Product,
   ProductCategory,
+  AdminProductSearchParams,
   UpdateProductCategoryRequest,
   UpdateProductRequest,
 } from './types'
@@ -26,7 +27,7 @@ interface ProductContextType {
   categories: ProductCategory[]
   loading: boolean
   error: string | null
-  refreshProducts: () => Promise<void>
+  refreshProducts: (params?: AdminProductSearchParams) => Promise<void>
   refreshCategories: () => Promise<void>
   getPublishedProducts: () => Product[]
   createProduct: (payload: CreateProductRequest) => Promise<void>
@@ -52,7 +53,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const isAdminMode = APP_MODE === 'admin'
 
   // 商品一覧を取得
-  const refreshProducts = useCallback(async () => {
+  const refreshProducts = useCallback(async (params?: AdminProductSearchParams) => {
     if (isAdminMode && !hasBoToken()) {
       setProducts([])
       setLoading(false)
@@ -63,7 +64,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setError(null)
     try {
-      const response = isAdminMode ? await getAdminItems() : await getItems()
+      const response = isAdminMode ? await getAdminItems(params) : await getItems()
       if (response.success && response.data) {
         if (!isAdminMode || hasBoToken()) {
           setProducts(response.data.items)

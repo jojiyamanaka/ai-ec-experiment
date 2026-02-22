@@ -6,59 +6,49 @@ import { ApiResponse } from '@app/shared';
 export class OrdersService {
   constructor(private coreApiService: CoreApiService) {}
 
-  async getOrders(token: string, traceId?: string): Promise<ApiResponse<any>> {
-    const response = await this.coreApiService.get<ApiResponse<any[]>>(
-      '/api/order',
+  async getOrders(
+    params: {
+      orderNumber?: string;
+      customerEmail?: string;
+      statuses?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      totalPriceMin?: string;
+      totalPriceMax?: string;
+      allocationIncomplete?: string;
+      unshipped?: string;
+      page?: string;
+      limit?: string;
+    },
+    token: string,
+    traceId?: string,
+  ): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params.orderNumber) query.set('orderNumber', params.orderNumber);
+    if (params.customerEmail) query.set('customerEmail', params.customerEmail);
+    if (params.statuses) query.set('statuses', params.statuses);
+    if (params.dateFrom) query.set('dateFrom', params.dateFrom);
+    if (params.dateTo) query.set('dateTo', params.dateTo);
+    if (params.totalPriceMin) query.set('totalPriceMin', params.totalPriceMin);
+    if (params.totalPriceMax) query.set('totalPriceMax', params.totalPriceMax);
+    if (params.allocationIncomplete) query.set('allocationIncomplete', params.allocationIncomplete);
+    if (params.unshipped) query.set('unshipped', params.unshipped);
+    if (params.page) query.set('page', params.page);
+    if (params.limit) query.set('limit', params.limit);
+    return this.coreApiService.get<ApiResponse<any>>(
+      `/api/order?${query.toString()}`,
       token,
       traceId,
     );
-
-    if (!response.success || !response.data) {
-      return response as ApiResponse<any>;
-    }
-
-    return {
-      success: true,
-      data: {
-        orders: response.data.map((order) => this.normalizeOrder(order)),
-        pagination: {
-          page: 1,
-          pageSize: 20,
-          totalCount: response.data.length,
-        },
-      },
-    };
   }
 
   async getOrderById(id: number, token: string, traceId?: string): Promise<ApiResponse<any>> {
-    const response = await this.coreApiService.get<ApiResponse<any[]>>(
-      '/api/order',
+    const response = await this.coreApiService.get<ApiResponse<any>>(
+      `/api/order/${id}`,
       token,
       traceId,
     );
-
-    if (!response.success || !response.data) {
-      return response as ApiResponse<any>;
-    }
-
-    const target = response.data.find((order) => {
-      const orderId = order.orderId ?? order.id;
-      return Number(orderId) === id;
-    });
-    if (!target) {
-      return {
-        success: false,
-        error: {
-          code: 'RESOURCE_NOT_FOUND',
-          message: '注文が見つかりません',
-        },
-      };
-    }
-
-    return {
-      success: true,
-      data: this.normalizeOrder(target),
-    };
+    return response as ApiResponse<any>;
   }
 
   async updateOrderStatus(
@@ -85,14 +75,7 @@ export class OrdersService {
       traceId,
     );
 
-    if (!response.success || !response.data) {
-      return response as ApiResponse<any>;
-    }
-
-    return {
-      success: true,
-      data: this.normalizeOrder(response.data),
-    };
+    return response as ApiResponse<any>;
   }
 
   async retryAllocation(id: number, token: string, traceId?: string): Promise<ApiResponse<any>> {
@@ -103,14 +86,7 @@ export class OrdersService {
       traceId,
     );
 
-    if (!response.success || !response.data) {
-      return response as ApiResponse<any>;
-    }
-
-    return {
-      success: true,
-      data: this.normalizeOrder(response.data),
-    };
+    return response as ApiResponse<any>;
   }
 
   private resolveActionPath(id: number, status: string): string | null {
@@ -128,41 +104,4 @@ export class OrdersService {
     }
   }
 
-  private normalizeOrder(order: any): any {
-    const status = order.status;
-    const orderedQuantity = Number(order.orderedQuantity ?? 0);
-    const committedQuantity = Number(order.committedQuantity ?? 0);
-    return {
-      ...order,
-      id: order.id ?? order.orderId,
-      orderId: order.orderId ?? order.id,
-      orderedQuantity,
-      committedQuantity,
-      items: (order.items ?? []).map((item: any) => ({
-        ...item,
-        orderedQuantity: Number(item.orderedQuantity ?? item.quantity ?? 0),
-        committedQuantity: Number(item.committedQuantity ?? 0),
-      })),
-      statusLabel: this.toStatusLabel(status),
-    };
-  }
-
-  private toStatusLabel(status?: string): string {
-    switch (status) {
-      case 'PENDING':
-        return '作成済み';
-      case 'CONFIRMED':
-        return '確認済み';
-      case 'PREPARING_SHIPMENT':
-        return '出荷準備中';
-      case 'SHIPPED':
-        return '発送済み';
-      case 'DELIVERED':
-        return '配達完了';
-      case 'CANCELLED':
-        return 'キャンセル';
-      default:
-        return status ?? '';
-    }
-  }
 }

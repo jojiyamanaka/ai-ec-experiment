@@ -27,3 +27,26 @@ export interface Order {
 export interface CreateOrderRequest {
   cartId: string
 }
+
+export interface AdminOrderSearchParams {
+  orderNumber?: string
+  customerEmail?: string
+  statuses?: string[]
+  dateFrom?: string
+  dateTo?: string
+  totalPriceMin?: number
+  totalPriceMax?: number
+  allocationIncomplete?: boolean
+  unshipped?: boolean
+  page?: number
+  limit?: number
+}
+
+export interface AdminOrderListResponse {
+  orders: Order[]
+  pagination: {
+    page: number
+    pageSize: number
+    totalCount: number
+  }
+}
