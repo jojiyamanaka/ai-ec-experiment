@@ -3,5 +3,5 @@
 These files are preserved for reference after baseline consolidation.
 
 - Active migrations are under `backend/src/main/resources/db/flyway/`.
-- Archived files are intentionally outside the active Flyway location.
+- Archived files are stored under `backend/db-archive/` (outside Maven resource scope, not on classpath).
 - Baseline replacement: `backend/src/main/resources/db/flyway/V2__baseline_current_schema.sql`.
