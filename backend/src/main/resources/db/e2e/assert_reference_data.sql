@@ -20,6 +20,22 @@ DECLARE
     actual_count INTEGER;
 BEGIN
     SELECT COUNT(*) INTO actual_count
+      FROM products
+     WHERE product_code IN ('P-E2E-0001', 'P-E2E-0002', 'P-E2E-0003', 'P-E2E-0004', 'P-E2E-0005')
+       AND is_returnable = TRUE
+       AND is_deleted = FALSE;
+
+    IF actual_count <> 5 THEN
+        RAISE EXCEPTION 'E2E assertion failed: products returnable expected=5 actual=%', actual_count;
+    END IF;
+END
+$$;
+
+DO $$
+DECLARE
+    actual_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO actual_count
       FROM bo_users
      WHERE email = 'admin@example.com'
        AND is_deleted = FALSE;

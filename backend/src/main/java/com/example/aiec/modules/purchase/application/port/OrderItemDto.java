@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 @Schema(description = "注文アイテム情報")
 public class OrderItemDto {
 
+    @Schema(description = "注文明細ID", example = "1")
+    private Long orderItemId;
     @Schema(description = "商品情報")
     private ProductDto product;
     @Schema(description = "数量", example = "2")
@@ -34,6 +36,7 @@ public class OrderItemDto {
      */
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return new OrderItemDto(
+                orderItem.getId(),
                 ProductDto.fromEntity(orderItem.getProduct()),
                 orderItem.getQuantity(),
                 orderItem.getQuantity(),

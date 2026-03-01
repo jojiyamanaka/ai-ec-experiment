@@ -13,6 +13,7 @@ import com.example.aiec.modules.purchase.application.port.AdminOrderSearchParams
 import com.example.aiec.modules.purchase.application.port.UnavailableProductDetail;
 import com.example.aiec.modules.purchase.application.port.OrderCommandPort;
 import com.example.aiec.modules.purchase.application.port.OrderQueryPort;
+import com.example.aiec.modules.purchase.application.port.ReturnShipmentSummary;
 import com.example.aiec.modules.purchase.application.spec.OrderSpecifications;
 import com.example.aiec.modules.purchase.cart.entity.Cart;
 import com.example.aiec.modules.purchase.cart.repository.CartRepository;
@@ -20,6 +21,8 @@ import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.purchase.order.entity.Order;
 import com.example.aiec.modules.purchase.order.entity.OrderItem;
 import com.example.aiec.modules.purchase.order.repository.OrderRepository;
+import com.example.aiec.modules.purchase.shipment.entity.Shipment;
+import com.example.aiec.modules.purchase.shipment.repository.ShipmentRepository;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.InsufficientStockException;
 import com.example.aiec.modules.shared.exception.ItemNotAvailableException;
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +55,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     private final InventoryCommandPort inventoryCommand;
     private final FrameAllocationService frameAllocationService;
     private final UserRepository userRepository;
+    private final ShipmentRepository shipmentRepository;
     private final OutboxEventPublisher outboxEventPublisher;
     private final MeterRegistry meterRegistry;
 
@@ -184,7 +189,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
         inventoryCommand.releaseCommittedReservations(orderId);
 
         order = orderRepository.findById(orderId).orElseThrow();
-        return OrderDto.fromEntity(order);
+        return OrderDto.fromEntity(order, findReturnShipmentSummary(order.getId()));
     }
 
     /**
@@ -268,6 +273,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
         }
 
         order.setStatus(Order.OrderStatus.DELIVERED);
+        order.setDeliveredAt(Instant.now());
         order = orderRepository.save(order);
         return OrderDto.fromEntity(order);
     }
@@ -303,7 +309,7 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
         Specification<Order> specification = OrderSpecifications.byAdminSearchParams(searchParams);
         Page<Order> orderPage = orderRepository.findAll(specification, pageable);
         List<OrderDto> orders = orderPage.getContent().stream()
-                .map(OrderDto::fromEntity)
+                .map(order -> OrderDto.fromEntity(order, findReturnShipmentSummary(order.getId())))
                 .toList();
         AdminOrderListResponse.Pagination pagination = new AdminOrderListResponse.Pagination(
                 safePage,
@@ -317,8 +323,14 @@ class OrderUseCase implements OrderQueryPort, OrderCommandPort {
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public List<OrderDto> getOrderHistory(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(OrderDto::fromEntity)
+                .map(order -> OrderDto.fromEntity(order, findReturnShipmentSummary(order.getId())))
                 .toList();
+    }
+
+    private ReturnShipmentSummary findReturnShipmentSummary(Long orderId) {
+        return shipmentRepository.findByOrderIdAndShipmentType(orderId, Shipment.ShipmentType.RETURN)
+                .map(ReturnShipmentSummary::fromEntity)
+                .orElse(null);
     }
 
     private String generateOrderNumber() {

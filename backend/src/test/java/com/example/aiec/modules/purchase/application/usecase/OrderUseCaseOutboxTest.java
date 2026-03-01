@@ -9,6 +9,7 @@ import com.example.aiec.modules.purchase.cart.repository.CartRepository;
 import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.purchase.order.entity.Order;
 import com.example.aiec.modules.purchase.order.repository.OrderRepository;
+import com.example.aiec.modules.purchase.shipment.repository.ShipmentRepository;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.outbox.application.OutboxEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +55,9 @@ class OrderUseCaseOutboxTest {
     private UserRepository userRepository;
 
     @Mock
+    private ShipmentRepository shipmentRepository;
+
+    @Mock
     private OutboxEventPublisher outboxEventPublisher;
 
     @Mock
@@ -73,6 +77,7 @@ class OrderUseCaseOutboxTest {
                 inventoryCommand,
                 frameAllocationService,
                 userRepository,
+                shipmentRepository,
                 outboxEventPublisher,
                 meterRegistry
         );

@@ -41,6 +41,8 @@ public class OrderDto {
     private Integer committedQuantity;
     @Schema(description = "注文ステータス", example = "PENDING")
     private String status;
+    @Schema(description = "返品サマリ")
+    private ReturnShipmentSummary returnShipment;
     @Schema(description = "注文日時（ISO 8601）")
     private String createdAt;
     @Schema(description = "更新日時（ISO 8601）")
@@ -53,6 +55,10 @@ public class OrderDto {
      * エンティティから DTO を生成
      */
     public static OrderDto fromEntity(Order order) {
+        return fromEntity(order, null);
+    }
+
+    public static OrderDto fromEntity(Order order, ReturnShipmentSummary returnShipment) {
         OrderDto dto = new OrderDto();
         dto.setOrderId(order.getId());
         dto.setOrderNumber(order.getOrderNumber());
@@ -76,6 +82,7 @@ public class OrderDto {
         dto.setOrderedQuantity(orderedQuantity);
         dto.setCommittedQuantity(committedQuantity);
         dto.setStatus(order.getStatus().name());
+        dto.setReturnShipment(returnShipment);
         dto.setCreatedAt(order.getCreatedAt().atZone(ZoneId.of("Asia/Tokyo")).format(ISO_FORMATTER));
         dto.setUpdatedAt(order.getUpdatedAt().atZone(ZoneId.of("Asia/Tokyo")).format(ISO_FORMATTER));
         return dto;

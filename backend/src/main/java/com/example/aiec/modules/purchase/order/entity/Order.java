@@ -50,6 +50,9 @@ public class Order {
     @Column(nullable = false, length = 50)
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
+
     // 監査カラム
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

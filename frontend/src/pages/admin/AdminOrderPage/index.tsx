@@ -10,6 +10,13 @@ import {
 } from '@entities/order'
 import type { Order, AdminOrderSearchParams } from '@entities/order'
 import {
+  getReturn,
+  approveReturn,
+  rejectReturn,
+  confirmReturn as confirmOrderReturn,
+} from '@entities/return'
+import type { ReturnShipment } from '@entities/return'
+import {
   AdminModalBase,
   AdminPageContainer,
   AdminPageHeader,
@@ -48,6 +55,15 @@ function getStatusBadgeClass(status: string): string {
   if (status === 'DELIVERED') {
     return 'bg-green-100 text-green-800'
   }
+  if (status === 'RETURN_PENDING') {
+    return 'bg-amber-100 text-amber-800'
+  }
+  if (status === 'RETURN_APPROVED') {
+    return 'bg-blue-100 text-blue-800'
+  }
+  if (status === 'RETURN_CONFIRMED') {
+    return 'bg-emerald-100 text-emerald-800'
+  }
   return 'bg-red-100 text-red-800'
 }
 
@@ -77,6 +93,8 @@ export default function AdminOrderPage() {
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [selectedReturn, setSelectedReturn] = useState<ReturnShipment | null>(null)
+  const [returnLoading, setReturnLoading] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, totalCount: 0 })
 
   const page = Math.max(parseNumber(searchParams.get('page')) ?? 1, 1)
@@ -195,7 +213,79 @@ export default function AdminOrderPage() {
     return orders.find((order) => order.orderId === selectedOrderId) ?? null
   }, [orders, selectedOrderId])
 
+  useEffect(() => {
+    if (!showDetailModal || !selectedOrder?.returnShipment) {
+      setSelectedReturn(null)
+      setReturnLoading(false)
+      return
+    }
+
+    let active = true
+    setReturnLoading(true)
+    void getReturn(selectedOrder.orderId, 'bo').then((response) => {
+      if (!active) {
+        return
+      }
+      if (response.success && response.data) {
+        setSelectedReturn(response.data)
+      } else {
+        setSelectedReturn(null)
+      }
+      setReturnLoading(false)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [showDetailModal, selectedOrder])
+
   const totalPages = Math.max(Math.ceil(pagination.totalCount / Math.max(pagination.pageSize, 1)), 1)
+
+  const syncReturnSummary = (returnShipment: ReturnShipment) => {
+    setOrders((current) =>
+      current.map((order) =>
+        order.orderId === returnShipment.orderId
+          ? {
+              ...order,
+              returnShipment: {
+                shipmentId: returnShipment.shipmentId,
+                status: returnShipment.status,
+                statusLabel: returnShipment.statusLabel,
+                createdAt: returnShipment.createdAt,
+              },
+            }
+          : order
+      )
+    )
+  }
+
+  const handleReturnAction = async (action: 'approve' | 'reject' | 'confirm') => {
+    if (!selectedOrder || !selectedReturn) {
+      return
+    }
+
+    let response
+    if (action === 'approve') {
+      response = await approveReturn(selectedOrder.orderId)
+    } else if (action === 'confirm') {
+      response = await confirmOrderReturn(selectedOrder.orderId)
+    } else {
+      const reason = window.prompt('拒否理由を入力してください')
+      if (reason === null || reason.trim() === '') {
+        return
+      }
+      response = await rejectReturn(selectedOrder.orderId, { reason: reason.trim() })
+    }
+
+    if (response.success && response.data) {
+      setSelectedReturn(response.data)
+      syncReturnSummary(response.data)
+      alert('返品情報を更新しました')
+      return
+    }
+
+    alert(response.error?.message || '返品情報の更新に失敗しました')
+  }
 
   if (loading) {
     return (
@@ -485,6 +575,111 @@ export default function AdminOrderPage() {
                   </tbody>
                 </table>
               </div>
+            </section>
+
+            <section className="mt-6 space-y-3">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900">返品情報</h3>
+                <p className="mt-1 text-xs text-gray-500">返品申請の状態と明細を確認できます。</p>
+              </div>
+              {returnLoading ? (
+                <div className="rounded border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
+                  読み込み中...
+                </div>
+              ) : selectedReturn ? (
+                <>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="text-sm text-zinc-700">
+                      ステータス
+                      <div className="mt-1">
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusBadgeClass(selectedReturn.status)}`}>
+                          {selectedReturn.statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <label className="text-sm text-zinc-700">
+                      申請日時
+                      <input
+                        value={new Date(selectedReturn.createdAt).toLocaleString('ja-JP')}
+                        readOnly
+                        className="mt-1 w-full rounded border bg-white px-3 py-2 text-sm text-zinc-900"
+                      />
+                    </label>
+                    <label className="text-sm text-zinc-700 md:col-span-2">
+                      返品理由
+                      <textarea
+                        value={selectedReturn.reason}
+                        readOnly
+                        rows={3}
+                        className="mt-1 w-full rounded border bg-white px-3 py-2 text-sm text-zinc-900"
+                      />
+                    </label>
+                    {selectedReturn.rejectionReason ? (
+                      <label className="text-sm text-zinc-700 md:col-span-2">
+                        拒否理由
+                        <textarea
+                          value={selectedReturn.rejectionReason}
+                          readOnly
+                          rows={3}
+                          className="mt-1 w-full rounded border bg-white px-3 py-2 text-sm text-zinc-900"
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+
+                  <div className="overflow-hidden rounded-lg border">
+                    <table className="w-full">
+                      <thead className="border-b bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">商品</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">数量</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500">小計</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {selectedReturn.items.map((item) => (
+                          <tr key={item.shipmentItemId} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm text-gray-900">{item.productName}</td>
+                            <td className="px-4 py-3 text-sm tabular-nums text-gray-900">{item.quantity}</td>
+                            <td className="px-4 py-3 text-sm tabular-nums text-gray-900">{item.subtotal.toLocaleString()}円</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {selectedReturn.status === 'RETURN_PENDING' ? (
+                      <>
+                        <button
+                          onClick={() => handleReturnAction('approve')}
+                          className="flex-1 rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+                        >
+                          返品承認
+                        </button>
+                        <button
+                          onClick={() => handleReturnAction('reject')}
+                          className="flex-1 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                        >
+                          返品拒否
+                        </button>
+                      </>
+                    ) : null}
+                    {selectedReturn.status === 'RETURN_APPROVED' ? (
+                      <button
+                        onClick={() => handleReturnAction('confirm')}
+                        className="flex-1 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                      >
+                        返品確定
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="rounded border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
+                  返品情報はありません
+                </div>
+              )}
             </section>
 
             <div className="mt-6 flex flex-wrap gap-2">

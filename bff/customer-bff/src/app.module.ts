@@ -7,6 +7,7 @@ import { RedisModule } from './redis/redis.module';
 import { ProductsModule } from './products/products.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
+import { ReturnsModule } from './returns/returns.module';
 import { MembersModule } from './members/members.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
@@ -29,6 +30,7 @@ const testModules = process.env.NODE_ENV === 'production' ? [] : [TestModule];
     CartModule,
     AuthModule,
     OrdersModule,
+    ReturnsModule,
     MembersModule,
     ...testModules,
   ],
