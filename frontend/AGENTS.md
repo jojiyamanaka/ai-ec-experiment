@@ -24,6 +24,15 @@ ESLint `boundaries/element-types` ルールで違反を検出。
 - `useAuth` / `AuthProvider` — 顧客認証（`@features/auth`）
 - `useBoAuth` / `BoAuthProvider` — 管理者認証（`@features/bo-auth`）
 
+## エンティティ一覧
+
+| エンティティ | 型定義 | API呼び出し | 用途 |
+|------------|-------|-----------|------|
+| Product | `@entities/product/model/types.ts` | `@entities/product/model/api.ts` | 商品マスタ |
+| Cart | `@features/cart/model/types.ts` | `@features/cart/model/api.ts` | カート（フィーチャー） |
+| Order | `@entities/order/model/types.ts` | `@entities/order/model/api.ts` | 注文 |
+| Return | `@entities/return/model/types.ts` | `@entities/return/model/api.ts` | 返品（CHG-026） |
+
 ## API接続先（BFF構成）
 
 - 顧客画面: `frontend (5173) -> customer-bff (3001) -> backend (8080/internal)`

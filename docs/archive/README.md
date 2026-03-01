@@ -208,6 +208,19 @@ archive/
 - **主要ドキュメント反映先**:
   - agent-rules/testing-operations.md: `./mvnw test`（clean なし）の使用可能を明記
 
+### CHG-026: 返品機能
+- **実装完了日**: 2026-03-01
+- **内容**: 注文者が購入後30日以内に返品を申請でき、管理者が承認・拒否・確定する返品管理機能を実装。返品は `shipment_type = RETURN` の Shipment で管理
+- **主要ドキュメント反映先**:
+  - data-model.md: `orders.delivered_at`、`shipments.rejection_reason`、`products.is_returnable` 追加
+  - requirements.md: 返品機能ビジネスルール（申請条件、返品可能期限、返品不可商品）追加
+  - specs/order.md: 返品フロー、`delivered_at` フィールド追加
+  - ui/customer-ui.md: OrderHistoryPage に返品申請・返品ステータス表示追加
+  - ui/admin-ui.md: AdminOrderPage に返品情報セクション・承認/拒否/確定操作追加
+  - docs/api/openapi.json: Core API 返品エンドポイント（申請、取得、承認、拒否、確定、一覧）追加
+  - docs/api/customer-bff-openapi.json: Customer BFF 返品エンドポイント追加
+  - docs/api/backoffice-bff-openapi.json: BackOffice BFF 返品エンドポイント追加
+
 ## 参照方法
 
 アーカイブされた案件を参照する場合:

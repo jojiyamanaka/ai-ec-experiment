@@ -62,6 +62,19 @@
 | デフォルト住所制約 | `isDefault=true` は会員ごとに最大1件 |
 | 重複メール | 管理画面の会員新規登録で重複メールは `EMAIL_ALREADY_EXISTS` で拒否 |
 
+### 6. 返品機能
+
+| ルール | 内容 |
+|--------|------|
+| 返品申請条件 | 注文ステータス = `DELIVERED` かつ配達完了日から30日以内 |
+| 返品不可商品 | `products.is_returnable = false` の商品は返品申請対象外（`PRODUCT_NOT_RETURNABLE`） |
+| 返品申請数量 | 注文明細ごとに0〜注文数量の範囲で指定可能 |
+| 返品重複 | 同一注文に対して複数の返品申請は不可（`RETURN_ALREADY_EXISTS`） |
+| 返品ステータス | `RETURN_PENDING`（申請）→ `RETURN_APPROVED`（承認）or `RETURN_CANCELLED`（拒否）→ `RETURN_CONFIRMED`（確定） |
+| 返品確定後 | ステータス遷移不可（終端状態） |
+| 返金・在庫戻し | 返品確定時は対象外（Phase 1） |
+| 返品表示 | 顧客は注文履歴から返品状態を確認可能。管理画面で返品一覧・詳細表示、ステータスフィルタ、ページングに対応 |
+
 ---
 
 ## 在庫状態のルール（`effectiveStock` 基準）
