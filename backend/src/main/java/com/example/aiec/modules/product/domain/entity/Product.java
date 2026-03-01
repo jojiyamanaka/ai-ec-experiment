@@ -49,6 +49,9 @@ public class Product {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = true;
 
+    @Column(name = "is_returnable", nullable = false)
+    private Boolean isReturnable = true;
+
     @Column(name = "product_code", nullable = false, unique = true, length = 100)
     private String productCode;
 

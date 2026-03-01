@@ -1,6 +1,8 @@
 import type { Product } from '@entities/product'
+import type { ReturnShipmentSummary } from '@entities/return'
 
 export interface OrderItem {
+  orderItemId: number
   product: Product
   quantity: number
   orderedQuantity: number
@@ -20,6 +22,7 @@ export interface Order {
   committedQuantity: number
   status: string
   statusLabel?: string
+  returnShipment?: ReturnShipmentSummary | null
   createdAt: string
   updatedAt?: string
 }

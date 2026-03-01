@@ -10,6 +10,7 @@ import com.example.aiec.modules.purchase.cart.repository.CartRepository;
 import com.example.aiec.modules.purchase.cart.service.CartService;
 import com.example.aiec.modules.purchase.order.entity.Order;
 import com.example.aiec.modules.purchase.order.repository.OrderRepository;
+import com.example.aiec.modules.purchase.shipment.repository.ShipmentRepository;
 import com.example.aiec.modules.shared.exception.BusinessException;
 import com.example.aiec.modules.shared.exception.InsufficientStockException;
 import com.example.aiec.modules.shared.exception.ItemNotAvailableException;
@@ -47,6 +48,7 @@ class OrderUseCaseStateTransitionTest {
     @Mock InventoryCommandPort inventoryCommand;
     @Mock FrameAllocationService frameAllocationService;
     @Mock UserRepository userRepository;
+    @Mock ShipmentRepository shipmentRepository;
     @Mock OutboxEventPublisher outboxEventPublisher;
 
     private OrderUseCase orderUseCase;
@@ -57,7 +59,7 @@ class OrderUseCaseStateTransitionTest {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         orderUseCase = new OrderUseCase(
                 orderRepository, cartRepository, cartService,
-                inventoryCommand, frameAllocationService, userRepository, outboxEventPublisher, meterRegistry);
+                inventoryCommand, frameAllocationService, userRepository, shipmentRepository, outboxEventPublisher, meterRegistry);
         ReflectionTestUtils.invokeMethod(orderUseCase, "initMetrics");
     }
 

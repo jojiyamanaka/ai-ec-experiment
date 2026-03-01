@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useAuth } from '@features/auth'
 import { getOrderHistory } from '@entities/order'
 import type { Order } from '@entities/order'
+import { requestReturn } from '@entities/return'
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: '作成済み',
@@ -21,6 +22,10 @@ export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [returnOrderId, setReturnOrderId] = useState<number | null>(null)
+  const [returnReason, setReturnReason] = useState('')
+  const [returnQuantities, setReturnQuantities] = useState<Record<number, number>>({})
+  const [submittingReturn, setSubmittingReturn] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -47,6 +52,84 @@ export default function OrderHistoryPage() {
 
     fetchOrders()
   }, [isAuthenticated])
+
+  const selectedReturnOrder = orders.find((order) => order.orderId === returnOrderId) ?? null
+
+  const openReturnModal = (order: Order) => {
+    setReturnOrderId(order.orderId)
+    setReturnReason('')
+    setReturnQuantities(
+      Object.fromEntries(order.items.map((item) => [item.orderItemId, 0]))
+    )
+  }
+
+  const closeReturnModal = () => {
+    setReturnOrderId(null)
+    setReturnReason('')
+    setReturnQuantities({})
+    setSubmittingReturn(false)
+  }
+
+  const handleReturnQuantityChange = (orderItemId: number, quantity: number) => {
+    setReturnQuantities((current) => ({
+      ...current,
+      [orderItemId]: quantity,
+    }))
+  }
+
+  const handleSubmitReturn = async () => {
+    if (!selectedReturnOrder || submittingReturn) {
+      return
+    }
+
+    const items = selectedReturnOrder.items
+      .map((item) => ({
+        orderItemId: item.orderItemId,
+        quantity: Math.max(0, Math.min(item.quantity, Number(returnQuantities[item.orderItemId] ?? 0))),
+      }))
+      .filter((item) => item.quantity > 0)
+
+    if (items.length === 0) {
+      alert('返品対象の商品を選択してください')
+      return
+    }
+
+    if (returnReason.trim() === '') {
+      alert('返品理由を入力してください')
+      return
+    }
+
+    setSubmittingReturn(true)
+    const response = await requestReturn(selectedReturnOrder.orderId, {
+      reason: returnReason.trim(),
+      items,
+    })
+
+    if (response.success && response.data) {
+      const returnShipment = response.data
+      setOrders((current) =>
+        current.map((order) =>
+          order.orderId === selectedReturnOrder.orderId
+            ? {
+                ...order,
+                returnShipment: {
+                  shipmentId: returnShipment.shipmentId,
+                  status: returnShipment.status,
+                  statusLabel: returnShipment.statusLabel,
+                  createdAt: returnShipment.createdAt,
+                },
+              }
+            : order
+        )
+      )
+      closeReturnModal()
+      alert('返品を申請しました')
+      return
+    }
+
+    setSubmittingReturn(false)
+    alert(response.error?.message || '返品申請に失敗しました')
+  }
 
   if (!isAuthenticated) {
     return (
@@ -123,6 +206,11 @@ export default function OrderHistoryPage() {
                 >
                   {getStatusLabel(order.status)}
                 </span>
+                {order.returnShipment ? (
+                  <span className="ml-2 rounded bg-amber-100 px-3 py-1 text-sm text-amber-800">
+                    {order.returnShipment.statusLabel}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -173,9 +261,90 @@ export default function OrderHistoryPage() {
                 詳細を見る
               </Link>
             </div>
+            {order.status === 'DELIVERED' && !order.returnShipment ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => openReturnModal(order)}
+                  className="block w-full rounded border border-zinc-300 px-4 py-2 text-center text-sm uppercase tracking-widest text-zinc-900 hover:bg-zinc-100"
+                >
+                  返品申請
+                </button>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
+
+      {selectedReturnOrder ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-2xl rounded bg-white p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-2xl tracking-wider">返品申請</h2>
+              <button
+                type="button"
+                onClick={closeReturnModal}
+                className="text-sm text-zinc-500 hover:text-zinc-900"
+              >
+                閉じる
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {selectedReturnOrder.items.map((item) => (
+                <div key={item.orderItemId} className="rounded border border-zinc-200 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium">{item.product.name}</p>
+                      <p className="text-sm text-zinc-500">
+                        購入数量: {item.quantity}
+                      </p>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={item.quantity}
+                      value={returnQuantities[item.orderItemId] ?? 0}
+                      onChange={(e) => handleReturnQuantityChange(item.orderItemId, Number(e.target.value))}
+                      className="w-24 rounded border border-zinc-300 px-3 py-2 text-right"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm text-zinc-700">
+                返品理由
+                <textarea
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  rows={4}
+                  className="mt-1 w-full rounded border border-zinc-300 px-3 py-2"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={closeReturnModal}
+                className="flex-1 rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitReturn}
+                disabled={submittingReturn}
+                className="flex-1 rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800 disabled:opacity-50"
+              >
+                申請する
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

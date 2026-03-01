@@ -16,7 +16,7 @@
 - **DBMS**: PostgreSQL 16
 - **ORM**: Hibernate（Spring Boot 3.4.2）
 - **マイグレーション**: Flyway
-- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql` + `backend/src/main/resources/db/flyway/V2__baseline_current_schema.sql`
+- **スキーマ定義**: `backend/src/main/resources/db/flyway/V1__create_schema.sql` + `backend/src/main/resources/db/flyway/V2__baseline_current_schema.sql` + `backend/src/main/resources/db/flyway/V3__add_return_feature.sql`
 - **最新DDLスナップショット**: `backend/src/main/resources/db/snapshots/latest_schema.sql`
 - **E2E参照データ**: `backend/src/main/resources/db/e2e/seed_reference_data.sql`（会員・商品・在庫）
 - **E2E整合アサート**: `backend/src/main/resources/db/e2e/assert_reference_data.sql`（件数・FK）
@@ -91,6 +91,7 @@ CREATE TABLE products (
   category_id BIGINT NOT NULL,
   image VARCHAR(500),
   is_published BOOLEAN NOT NULL DEFAULT TRUE,
+  is_returnable BOOLEAN NOT NULL DEFAULT TRUE,
   publish_start_at TIMESTAMP WITH TIME ZONE,
   publish_end_at TIMESTAMP WITH TIME ZONE,
   sale_start_at TIMESTAMP WITH TIME ZONE,
@@ -99,7 +100,7 @@ CREATE TABLE products (
 );
 ```
 
-**制約**: product_code必須(ユニーク), category_id必須(FK), name必須(255字), price必須(0以上・整数運用), stock必須(0以上), is_published必須(デフォルトTRUE), 公開期間/販売期間の開始≦終了
+**制約**: product_code必須(ユニーク), category_id必須(FK), name必須(255字), price必須(0以上・整数運用), stock必須(0以上), is_published必須(デフォルトTRUE), is_returnable必須(デフォルトTRUE), 公開期間/販売期間の開始≦終了
 **ルール**: 顧客向け表示は `product.is_published && category.is_published && 公開期間内`。購入可否は `顧客向け表示 && 販売期間内 && stock > 0`。`stock = 0` → 「売り切れ」表示。有効在庫 = `stock - Σ(引当数量)`
 
 ### ProductCategory（商品カテゴリ）
@@ -159,13 +160,15 @@ CREATE TABLE orders (
   user_id BIGINT,
   session_id VARCHAR(255),
   total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0),
-  status VARCHAR(50) NOT NULL CHECK (status IN ('PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED')),
+  status VARCHAR(50) NOT NULL CHECK (status IN ('PENDING', 'CONFIRMED', 'PREPARING_SHIPMENT', 'SHIPPED', 'DELIVERED', 'CANCELLED')),
+  delivered_at TIMESTAMP WITH TIME ZONE,
   -- 監査カラム（共通設計参照）
   CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 ```
 
 **制約**: order_number必須(ユニーク, `ORD-xxxxxxxxxx`形式)、status必須(CHECK)
+**ルール**: `delivered_at` は配達完了時に設定し、返品期限判定の基準に使う。
 
 ### OrderItem（注文アイテム）
 
@@ -365,23 +368,21 @@ CREATE INDEX idx_outbox_events_status_scheduled
 ### Shipment（出荷）
 
 ```sql
-CREATE TYPE shipment_type AS ENUM ('OUTBOUND', 'RETURN');
-CREATE TYPE shipment_status AS ENUM ('READY_FOR_SHIP', 'INSTRUCTED', 'TRANSFERRED', 'DELIVERED');
-
 CREATE TABLE shipments (
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL,
-  shipment_type shipment_type NOT NULL DEFAULT 'OUTBOUND',
-  status shipment_status NOT NULL DEFAULT 'READY_FOR_SHIP',
-  instruction_number VARCHAR(50),
-  file_exported_at TIMESTAMP WITH TIME ZONE,
-  file_transferred_at TIMESTAMP WITH TIME ZONE,
+  shipment_type VARCHAR(50) NOT NULL CHECK (shipment_type IN ('OUTBOUND', 'RETURN')),
+  status VARCHAR(50) NOT NULL CHECK (status IN ('READY', 'EXPORTED', 'TRANSFERRED', 'RETURN_PENDING', 'RETURN_APPROVED', 'RETURN_CONFIRMED', 'RETURN_CANCELLED')),
+  export_file_path VARCHAR(500),
+  reason VARCHAR(500),
+  rejection_reason VARCHAR(500),
   -- 監査カラム（共通設計参照）
-  CONSTRAINT fk_shipments_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+  CONSTRAINT fk_shipments_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT uk_shipments_order_type UNIQUE (order_id, shipment_type)
 );
 ```
 
-**ルール**: 注文 1:N 出荷。OUTBOUND は通常出荷（今回実装）。READY_FOR_SHIP → INSTRUCTED → TRANSFERRED → DELIVERED の遷移。
+**ルール**: 注文 1:N 出荷。OUTBOUND は `READY -> EXPORTED -> TRANSFERRED`。返品は `shipment_type = 'RETURN'` の単一レコードで表現し、`reason` に申請理由、`rejection_reason` に拒否理由を保持する。状態は `RETURN_PENDING -> RETURN_APPROVED -> RETURN_CONFIRMED` または `RETURN_PENDING -> RETURN_CANCELLED` で遷移する。
 
 ### ShipmentItem（出荷商品）
 
@@ -392,7 +393,9 @@ CREATE TABLE shipment_items (
   order_item_id BIGINT NOT NULL,
   product_id BIGINT NOT NULL,
   product_name VARCHAR(255) NOT NULL,
+  product_price NUMERIC(10, 2) NOT NULL,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
+  subtotal NUMERIC(10, 2) NOT NULL CHECK (subtotal >= 0),
   -- 監査カラム（共通設計参照）
   CONSTRAINT fk_shipment_items_shipment FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE,
   CONSTRAINT fk_shipment_items_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE RESTRICT

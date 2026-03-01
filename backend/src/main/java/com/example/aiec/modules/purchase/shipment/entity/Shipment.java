@@ -41,6 +41,12 @@ public class Shipment {
     @Column(name = "export_file_path", length = 500)
     private String exportFilePath;
 
+    @Column(length = 500)
+    private String reason;
+
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShipmentItem> items = new ArrayList<>();
 
@@ -105,6 +111,10 @@ public class Shipment {
     public enum ShipmentStatus {
         READY,
         EXPORTED,
-        TRANSFERRED
+        TRANSFERRED,
+        RETURN_PENDING,
+        RETURN_APPROVED,
+        RETURN_CONFIRMED,
+        RETURN_CANCELLED
     }
 }

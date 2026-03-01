@@ -469,6 +469,90 @@
         ]
       }
     },
+    "/api/orders/{id}/return": {
+      "post": {
+        "operationId": "ReturnsController_createReturn",
+        "summary": "返品申請",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "orderItemId": {
+                          "type": "number"
+                        },
+                        "quantity": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "reason",
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "返品情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "returns"
+        ]
+      },
+      "get": {
+        "operationId": "ReturnsController_getReturn",
+        "summary": "返品取得",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "返品情報を返却"
+          },
+          "401": {
+            "description": "認証エラー"
+          }
+        },
+        "tags": [
+          "returns"
+        ]
+      }
+    },
     "/api/members/me": {
       "get": {
         "operationId": "MembersController_getMe",
@@ -718,15 +802,5 @@
   "servers": [],
   "components": {
     "schemas": {}
-  },
-  "x-chg-023": {
-    "allocationType": "REAL|FRAME",
-    "effectiveStock": "enabled",
-    "location_stocks": "enabled",
-    "sales_limits": "enabled",
-    "orderedQuantity": "enabled",
-    "committedQuantity": "enabled",
-    "allocationRetryPath": "/api/order/{id}/allocation/retry",
-    "legacyStock": "products.stock is non-business field"
   }
 }

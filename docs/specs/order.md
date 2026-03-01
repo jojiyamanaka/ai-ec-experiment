@@ -149,3 +149,22 @@ AI EC Experimentにおける注文管理の振る舞いを定義する。
   - `page`
   - `limit`
 - レスポンスは `orders` + `pagination` 構造を返す。
+
+## CHG-026 追記
+
+- `POST /api/order/{id}/deliver` 成功時に `orders.delivered_at` を設定する。
+- 返品は `shipments.shipment_type = RETURN` で管理し、返品ステータスは `RETURN_PENDING / RETURN_APPROVED / RETURN_CONFIRMED / RETURN_CANCELLED` を使用する。
+- 顧客は以下の条件をすべて満たす場合のみ返品申請できる。
+  - 注文ステータスが `DELIVERED`
+  - `delivered_at` が存在し、現在時刻がその30日以内
+  - 指定した `orderItemId` が当該注文に属する
+  - 返品数量が注文数量以下
+  - 対象商品の `products.is_returnable = true`
+- Core API:
+  - `POST /api/order/{id}/return`
+  - `GET /api/order/{id}/return`
+  - `POST /api/order/{id}/return/approve`
+  - `POST /api/order/{id}/return/reject`
+  - `POST /api/order/{id}/return/confirm`
+  - `GET /api/return`
+- 注文取得系レスポンスは `returnShipment` サマリを含み、返品が存在しない場合は `null`。
