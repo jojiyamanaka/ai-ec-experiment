@@ -75,9 +75,8 @@ mv docs/04_review-note/CHG-XXX*.md docs/archive/04_review-note/
 実装ファイルは PR マージ済みのため、ここではドキュメント変更のみをコミットする:
 
 ```bash
-# ドキュメント更新分のみ
-git add docs/archive/ docs/SPEC.md docs/requirements.md docs/data-model.md \
-        docs/ui/ docs/specs/ docs/design-system.md
+# ドキュメント更新分のみ（mv 後の削除も含めて docs/ 以下を一括ステージ）
+git add -A docs/
 
 git status
 ```

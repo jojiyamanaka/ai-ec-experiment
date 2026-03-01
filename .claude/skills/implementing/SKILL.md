@@ -12,9 +12,10 @@ CHG番号: $ARGUMENTS
 
 ### 0. ブランチ準備
 
-現在のブランチが `feat/$ARGUMENTS` でない場合、作成して切り替える:
+初回実装時は main を起点にブランチを作成する:
 
 ```bash
+git checkout main && git pull origin main
 git checkout -b feat/$ARGUMENTS 2>/dev/null || git checkout feat/$ARGUMENTS
 ```
 
@@ -73,11 +74,18 @@ UI 手動確認が必要な場合は MCP Playwright で必ず実施する。Dock
 ### テスト結果（PASS/FAIL、失敗時は30行以内）
 ```
 
-### 5. push + Draft PR 作成
+### 5. commit + push + Draft PR 作成
 
-実装と Review Packet を push し、Draft PR を作成する:
+実装と Review Packet をコミットし、push して Draft PR を作成する:
 
 ```bash
+git add -u
+git add docs/
+git commit -m "$(cat <<'EOF'
+$ARGUMENTS: <案件名> 実装
+
+EOF
+)"
 git push -u origin feat/$ARGUMENTS
 ```
 

@@ -13,6 +13,14 @@ CHG番号: $ARGUMENTS
 `docs/04_review-note/$ARGUMENTS.md` が存在すること（implement 完了の証左）。
 存在しない場合はユーザーに報告して終了する。
 
+現在のブランチが `feat/$ARGUMENTS` であることを確認する:
+
+```bash
+git branch --show-current
+```
+
+`feat/$ARGUMENTS` でない場合は `git checkout feat/$ARGUMENTS` でブランチを切り替える。
+
 ## 手順
 
 ### 1. review-note 読み込み
@@ -77,8 +85,22 @@ cd backend && ./mvnw test -Dtest="*ArchTest" -q 2>&1 | tail -20
 PASS / FAIL
 ```
 
-### 9. ユーザーへ報告
+### 9. review-note + 修正ファイルをコミット・push
+
+```bash
+git add -u
+git add docs/04_review-note/$ARGUMENTS.md
+git commit -m "$(cat <<'EOF'
+$ARGUMENTS verify: PASS（または FAIL）
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+EOF
+)"
+git push
+```
+
+### 10. ユーザーへ報告
 
 - 判定: PASS / FAIL
-- PASS 時: `/archiving $ARGUMENTS` 実行可能
-- FAIL 時: 確認必須事項と対応案のリスト
+- PASS 時: Draft PR を **Ready for Review** に変更して人にレビュー依頼する（`gh pr ready feat/$ARGUMENTS`）
+- FAIL 時: 確認必須事項と対応案のリスト。修正後に `/implementing $ARGUMENTS` 再実行または手動修正 → `/verify $ARGUMENTS` 再実行を案内する

@@ -9,7 +9,10 @@
       "Bash(xargs:*)",
       "mcp__plugin_claude-mem_mcp-search__search",
       "Bash(curl:*)",
-      "mcp__serena__write_memory"
+      "mcp__serena__write_memory",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git mv:*)"
     ]
   },
   "hooks": {
